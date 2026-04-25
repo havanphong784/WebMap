@@ -1,3 +1,5 @@
+import L from 'leaflet';
+
 export const pointIcon = new L.Icon({
   iconUrl: "/icons/point.svg",
   iconSize: [45, 45],

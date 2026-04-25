@@ -4,6 +4,7 @@ import {useState} from "react";
 import MapStyleSwitcher from "./MapStyleSwitcher";
 import {MapStyles} from "./MapStyles.jsx";
 import MapHandleClick from "./MapHandleClick.jsx";
+import RoutingMarker from "./RoutingMarkers.jsx";
 
 export default function MapViewer() {
   const [activeStyle, setActiveStyle] = useState(MapStyles[0]);
@@ -21,7 +22,9 @@ export default function MapViewer() {
           attribution={activeStyle.attribution}
           url={activeStyle.url}
         />
+        <RoutingMarker/>
         <MapHandleClick clickedPoint={clickedPoint} setClickedPoint={setClickedPoint}/>
+
 
       </MapContainer>
 

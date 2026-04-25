@@ -6,6 +6,6 @@ export const getAddress = async (x, y) => {
     return result;
   } catch (err) {
     console.log(err);
-    return "Không xác định";
+    return {display_name: "Không xác định"};
   }
 }
