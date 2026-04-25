@@ -3,9 +3,11 @@ import "leaflet/dist/leaflet.css";
 import {useState} from "react";
 import MapStyleSwitcher from "./MapStyleSwitcher";
 import {MapStyles} from "./MapStyles.jsx";
+import MapHandleClick from "./MapHandleClick.jsx";
 
 export default function MapViewer() {
   const [activeStyle, setActiveStyle] = useState(MapStyles[0]);
+  const [clickedPoint, setClickedPoint] = useState(null);
 
   return (
     <div className="h-screen w-full relative bg-gray-900">
@@ -19,6 +21,8 @@ export default function MapViewer() {
           attribution={activeStyle.attribution}
           url={activeStyle.url}
         />
+        <MapHandleClick clickedPoint={clickedPoint} setClickedPoint={setClickedPoint}/>
+
       </MapContainer>
 
       <MapStyleSwitcher
