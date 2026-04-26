@@ -38,7 +38,7 @@ export default function MapStyleSwitcher({currentStyleUrl, onStyleChange}) {
 
   return (
     <div
-      className="absolute top-4 left-4 z-[100] flex flex-col gap-2 bg-white/10 p-2 rounded-xl backdrop-blur-md shadow-lg border border-white/20 max-h-[60vh] overflow-y-auto custom-scrollbar">
+      className="absolute bottom-8 left-4 md:top-4 md:bottom-auto z-[100] flex flex-col gap-2 bg-white/10 p-2 rounded-xl backdrop-blur-md shadow-lg border border-white/20 max-h-[40vh] md:max-h-[60vh] overflow-y-auto custom-scrollbar">
       <h3 className="text-xs font-bold text-white uppercase tracking-wider text-center drop-shadow-md">
         Kiểu Bản Đồ
       </h3>

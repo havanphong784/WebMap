@@ -5,6 +5,7 @@ import ClickedMarker from "./ClickedMarker.jsx";
 import {useRef, useState} from "react";
 import {getAddress} from "../../utils/Map.jsx";
 import MapStyleSwitcher from "./MapStyleSwitcher.jsx";
+import SearchBox from "./SearchBox.jsx";
 
 export default function MapViewer() {
   const mapRef = useRef();
@@ -26,6 +27,16 @@ export default function MapViewer() {
 
     setInfoClicked({lng, lat, address: diachi});
   }
+
+  const handleSearchSelect = (lng, lat, addressName) => {
+    mapRef.current.flyTo({
+      center: [lng, lat],
+      zoom: 16,
+      pitch: 45,
+      duration: 2500
+    });
+    setInfoClicked({lng, lat, address: addressName});
+  };
 
   return (
     <div className="h-screen w-full relative bg-gray-900">
@@ -52,6 +63,7 @@ export default function MapViewer() {
         />
         <NavigationControl position="top-right"/>
         <ClickedMarker point={infoClicked} setPoint={setInfoClicked}/>
+        <SearchBox onSelectLocation={handleSearchSelect}/>
         <MapStyleSwitcher
           currentStyleUrl={activeStyle}
           onStyleChange={(newStyle) => setActiveStyle(newStyle)}
