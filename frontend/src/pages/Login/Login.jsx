@@ -1,20 +1,16 @@
 import {signInWithPopup} from "firebase/auth";
 import {useNavigate} from "react-router-dom";
 import {auth, googleProvider} from "../../config/firebase";
+import {syncUserWithBackend} from "../../api/auth.api.js";
 
 export default function Login() {
   const navigate = useNavigate();
 
   const handleGoogleLogin = async () => {
     try {
-      // 1. Mở popup đăng nhập Google
       const result = await signInWithPopup(auth, googleProvider);
-
-      // 2. Log thử để xem thông tin user Firebase trả về
-      console.log("Đăng nhập thành công! Xin chào:", result.user.displayName);
-
-      // 3. Sau khi login xong, chuyển hướng vào trang Map
-      // (Vì AuthContext sẽ tự động cập nhật state user, nên PrivateRoutes sẽ cho phép qua)
+      console.log("Đăng nhập thành công!", result.user.displayName);
+      const backendData = await syncUserWithBackend(result.user);
       navigate("/home");
     } catch (error) {
       console.error("Lỗi đăng nhập:", error.message);
