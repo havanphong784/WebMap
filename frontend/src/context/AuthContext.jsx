@@ -1,32 +1,34 @@
-import { createContext, useLayoutEffect, useState } from "react";
+import {createContext, useContext, useEffect, useState} from "react";
+import {onAuthStateChanged, signOut} from "firebase/auth";
+import {auth} from "../config/firebase";
 
 export const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({children}) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useLayoutEffect(() => {
-    const saveUser = localStorage.getItem("user");
-    if (saveUser) {
-      setUser(JSON.parse(saveUser));
-    }
-    setLoading(false);
-  }, [])
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setLoading(false);
+    });
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-  }
+    return () => unsubscribe();
+  }, []);
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-  }
+  const logout = async () => {
+    await signOut(auth);
+  };
+
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{user, loading, logout}}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
+
+export const useAuth = () => {
+  return useContext(AuthContext);
+};
