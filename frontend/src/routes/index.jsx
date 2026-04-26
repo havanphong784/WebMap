@@ -1,19 +1,15 @@
-import MainLayout from "../layout/MainLayout/index.jsx";
 import Errors404 from "../components/Errors404/index.jsx";
 import Login from "../pages/Login/Login.jsx";
 import MapViewer from "../components/MapViewer/index.jsx";
+import PrivateRoutes from "../components/PrivateRoutes/index.jsx";
 
 export const routes = [
   {
     path: '/',
-    element: <MainLayout/>,
+    element: <PrivateRoutes/>,
     children: [
       {
-        path: "/",
-        element: <h1>Home</h1>
-      },
-      {
-        path: "map",
+        path: "home",
         element: <MapViewer/>
       },
       {
