@@ -29,7 +29,7 @@ export default function MapViewer() {
       center: [lng, lat],
       zoom: 16,
       pitch: 45,
-      bearing: 90,
+      bearing: 0,
       duration: 2000
     });
     setInfoClicked({lng, lat, address: "Đang tìm địa chỉ..."});
@@ -38,15 +38,17 @@ export default function MapViewer() {
     setInfoClicked({lng, lat, address: diachi});
   }
 
-  const handleSearchSelect = (lng, lat, addressName) => {
+  const handleSearchSelect = async (lng, lat, addressName) => {
     mapRef.current.flyTo({
       center: [lng, lat],
       zoom: 16,
       pitch: 45,
-      bearing: 90,
+      bearing: 0,
       duration: 2500
     });
     setInfoClicked({lng, lat, address: addressName});
+    const diachi = await getAddress(lat, lng);
+    setInfoClicked({lng, lat, address: diachi});
   };
 
   const handleMapChange = useCallback(() => {

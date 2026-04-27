@@ -60,7 +60,6 @@ export default function MapStyleSwitcher({currentStyleUrl, onStyleChange}) {
         </svg>
       </button>
 
-      {/* Chỉ hiển thị danh sách khi isOpen = true */}
       {isOpen && (
         <div
           className="flex flex-col gap-2 bg-white/10 p-2 rounded-xl backdrop-blur-md shadow-lg border border-white/20 mt-2 min-w-[200px] animate-in fade-in zoom-in duration-200">

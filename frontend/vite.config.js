@@ -9,6 +9,7 @@ export default defineConfig({
     // basicSsl()
   ],
   server: {
-    host: true // Cho phép truy cập qua Lan
+    host: true, // Cho phép truy cập qua Lan,
+    allowedHosts: true // Chấp nhận mọi miền
   }
 })
