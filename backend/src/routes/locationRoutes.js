@@ -3,18 +3,26 @@ import pool from '../config/db.js';
 
 const router = express.Router();
 
-router.get('/:user_id', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const {user_id} = req.params;
-    const query = 'SELECT * FROM locations WHERE user_id = $1 ORDER BY created_at DESC';
-    const result = await pool.query(query, [user_id]);
-
+    const {user_id, minLng, maxLng, minLat, maxLat} = req.query;
+    const query = `
+        SELECT *
+        FROM locations
+        WHERE (lat BETWEEN $1 AND $2)
+          AND (lng BETWEEN $3 AND $4)
+          AND (is_public = true OR user_id = $5)
+        ORDER BY created_at DESC LIMIT 500; -- Tránh sập server nếu khu vực đó có quá nhiều điểm
+    `;
+    const values = [minLat, maxLat, minLng, maxLng, user_id || 'guest'];
+    const result = await pool.query(query, values);
     res.status(200).json({success: true, data: result.rows});
   } catch (error) {
     console.error("Lỗi lấy danh sách địa điểm:", error);
     res.status(500).json({success: false, message: 'Lỗi Server'});
   }
 });
+
 
 router.post('/', async (req, res) => {
   try {

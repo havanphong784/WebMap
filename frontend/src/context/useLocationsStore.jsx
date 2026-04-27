@@ -5,10 +5,19 @@ const API_URL = 'http://localhost:3000/api/locations';
 export const useLocationStore = create((set) => ({
   locations: [],
   isLoading: false,
-  fetchLocations: async (userId) => {
+
+  fetchLocations: async (userId, bounds) => {
+    if (!bounds) return;
     set({isLoading: true});
     try {
-      const response = await fetch(`${API_URL}/${userId}`);
+      const params = new URLSearchParams({
+        user_id: userId || "",
+        minLng: bounds.getWest(),
+        maxLng: bounds.getEast(),
+        minLat: bounds.getSouth(),
+        maxLat: bounds.getNorth()
+      });
+      const response = await fetch(`${API_URL}?${params.toString()}`);
       const result = await response.json();
       if (result.success) {
         set({locations: result.data, isLoading: false});
@@ -18,6 +27,7 @@ export const useLocationStore = create((set) => ({
       set({isLoading: false});
     }
   },
+
 
   addLocation: async (locationData) => {
     set({isLoading: true});

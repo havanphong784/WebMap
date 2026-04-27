@@ -2,15 +2,20 @@ import Map, {GeolocateControl, NavigationControl} from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import ClickedMarker from "./ClickedMarker.jsx";
-import {useRef, useState} from "react";
+import {useCallback, useRef, useState} from "react";
 import {getAddress} from "../../utils/Map.jsx";
 import MapStyleSwitcher from "./MapStyleSwitcher.jsx";
 import SearchBox from "./SearchBox.jsx";
+import {useLocationStore} from "../../context/useLocationsStore.jsx";
+import {useAuthStore} from "../../context/AuthContext.jsx";
+import ClusterLocations from "./ClusterLocations.jsx";
 
 export default function MapViewer() {
-  const mapRef = useRef();
+  const mapRef = useRef(null);
   const [infoClicked, setInfoClicked] = useState(null);
   const [activeStyle, setActiveStyle] = useState("https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json");
+  const fetchLocations = useLocationStore(state => state.fetchLocations);
+  const {user} = useAuthStore();
 
 
   const handleClick = async (e) => {
@@ -38,9 +43,18 @@ export default function MapViewer() {
     setInfoClicked({lng, lat, address: addressName});
   };
 
+  const handleMapChange = useCallback(() => {
+    if (mapRef.current) {
+      const bounds = mapRef.current.getMap().getBounds();
+      fetchLocations(user?.uid, bounds);
+    }
+  }, [user, fetchLocations]);
+
   return (
     <div className="h-screen w-full relative bg-gray-900">
       <Map ref={mapRef}
+           onLoad={handleMapChange}
+           onMoveEnd={handleMapChange}
            mapLib={maplibregl}
            antialias={true}
            initialViewState={{
@@ -64,6 +78,7 @@ export default function MapViewer() {
         <NavigationControl position="top-right"/>
         <ClickedMarker point={infoClicked} setPoint={setInfoClicked}/>
         <SearchBox onSelectLocation={handleSearchSelect}/>
+        <ClusterLocations/>
         <MapStyleSwitcher
           currentStyleUrl={activeStyle}
           onStyleChange={(newStyle) => setActiveStyle(newStyle)}
