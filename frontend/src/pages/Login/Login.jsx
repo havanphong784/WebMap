@@ -2,9 +2,17 @@ import {signInWithPopup} from "firebase/auth";
 import {useNavigate} from "react-router-dom";
 import {auth, googleProvider} from "../../config/firebase";
 import {syncUserWithBackend} from "../../api/auth.api.js";
+import {useContext} from "react";
+import {AuthContext} from "../../context/AuthContext.jsx";
 
 export default function Login() {
   const navigate = useNavigate();
+
+  const user = useContext(AuthContext);
+
+  if (user) {
+    navigate("/");
+  }
 
   const handleGoogleLogin = async () => {
     try {
