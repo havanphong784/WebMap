@@ -9,13 +9,18 @@ import SearchBox from "./SearchBox.jsx";
 import {useLocationStore} from "../../context/useLocationsStore.jsx";
 import {useAuthStore} from "../../context/AuthContext.jsx";
 import ClusterLocations from "./ClusterLocations.jsx";
+import LocationCard from "./LocationCard.jsx";
+import LocationSidebar from "../SideBar/Posts.jsx";
 
 export default function MapViewer() {
   const mapRef = useRef(null);
   const [infoClicked, setInfoClicked] = useState(null);
   const [activeStyle, setActiveStyle] = useState("https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json");
   const fetchLocations = useLocationStore(state => state.fetchLocations);
+  const locations = useLocationStore(state => state.locations);
   const {user} = useAuthStore();
+  const [currentZoom, setCurrentZoom] = useState(10);
+  const [activeLocation, setActiveLocation] = useState(null);
 
 
   const handleClick = async (e) => {
@@ -23,7 +28,7 @@ export default function MapViewer() {
     mapRef.current.flyTo({
       center: [lng, lat],
       zoom: 16,
-      pitch: 0,
+      pitch: 45,
       bearing: 90,
       duration: 2000
     });
@@ -38,6 +43,7 @@ export default function MapViewer() {
       center: [lng, lat],
       zoom: 16,
       pitch: 45,
+      bearing: 90,
       duration: 2500
     });
     setInfoClicked({lng, lat, address: addressName});
@@ -47,11 +53,12 @@ export default function MapViewer() {
     if (mapRef.current) {
       const bounds = mapRef.current.getMap().getBounds();
       fetchLocations(user?.uid, bounds);
+      setCurrentZoom(mapRef.current.getZoom());
     }
   }, [user, fetchLocations]);
 
   return (
-    <div className="h-screen w-full relative bg-gray-900">
+    <div className="h-screen w-full relative overflow-hidden bg-gray-900">
       <Map ref={mapRef}
            onLoad={handleMapChange}
            onMoveEnd={handleMapChange}
@@ -79,11 +86,25 @@ export default function MapViewer() {
         <ClickedMarker point={infoClicked} setPoint={setInfoClicked}/>
         <SearchBox onSelectLocation={handleSearchSelect}/>
         <ClusterLocations/>
+        {currentZoom >= 13 && locations.map(loc => (
+          <LocationCard
+            key={loc.id}
+            location={loc}
+            onClick={(locData) => setActiveLocation(locData)}
+          />
+        ))}
         <MapStyleSwitcher
           currentStyleUrl={activeStyle}
           onStyleChange={(newStyle) => setActiveStyle(newStyle)}
         />
       </Map>
+
+      {activeLocation && (
+        <LocationSidebar
+          location={activeLocation}
+          onClose={() => setActiveLocation(null)}
+        />
+      )}
     </div>
   );
 }

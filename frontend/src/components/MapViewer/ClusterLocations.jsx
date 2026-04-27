@@ -54,6 +54,7 @@ export default function ClusterLocations() {
       <Layer
         id="unclustered-point"
         type="circle"
+        maxzoom={14}
         filter={['!', ['has', 'point_count']]}
         paint={{
           'circle-color': '#10b981',
