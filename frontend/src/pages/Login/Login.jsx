@@ -11,7 +11,7 @@ export default function Login() {
       const result = await signInWithPopup(auth, googleProvider);
       console.log("Đăng nhập thành công!", result.user.displayName);
       const backendData = await syncUserWithBackend(result.user);
-      navigate("/home");
+      navigate("/");
     } catch (error) {
       console.error("Lỗi đăng nhập:", error.message);
       alert("Đăng nhập thất bại: " + error.message);

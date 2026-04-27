@@ -1,30 +1,48 @@
+import {useState} from "react";
 import {Marker, Popup} from "react-map-gl/maplibre";
+import LocationFormModal from "./LocationFormModal.jsx";
 
 export default function ClickedMarker({point, setPoint}) {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
   if (!point) return null;
+
   return (
     <>
-      <Marker
-        longitude={point.lng}
-        latitude={point.lat}
-        color="#F59E0B"
-      />
-      <Popup
-        longitude={point.lng}
-        latitude={point.lat}
-        anchor="bottom"
-        offset={40}
-        closeOnClick={false}
-      >
-        <div className="text-sm min-w-[200px]">
-          <p className="font-bold text-gray-800 mb-1">📍 Thông tin vị trí</p>
-          <p className="text-gray-600 mb-3">
-            {typeof point.address === 'string'
-              ? point.address
-              : point.address?.display_name || "Không xác định"}
-          </p>
-        </div>
-      </Popup>
+      <Marker longitude={point.lng} latitude={point.lat} color="red"/>
+
+      {!isFormOpen && (
+        <Popup
+          longitude={point.lng}
+          latitude={point.lat}
+          anchor="bottom"
+          offset={30}
+          onClose={() => setPoint(null)}
+          className="z-50"
+        >
+          <div className="w-48 text-center p-1">
+            <p className="text-sm font-medium text-gray-800 mb-2">
+              {point.address.display_name || "Chưa xác định địa chỉ"}
+            </p>
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="w-full bg-blue-600 text-white text-sm py-1.5 rounded-md hover:bg-blue-700 font-medium transition-colors shadow-sm"
+            >
+              + Thêm địa điểm này
+            </button>
+          </div>
+        </Popup>
+      )}
+
+      {isFormOpen && (
+        <LocationFormModal
+          point={point}
+          onClose={() => {
+            setIsFormOpen(false);
+            setPoint(null);
+          }}
+        />
+      )}
     </>
   );
 }

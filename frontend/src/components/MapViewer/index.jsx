@@ -55,11 +55,11 @@ export default function MapViewer() {
            onClick={handleClick}
       >
         <GeolocateControl
-          position="bottom-right" // Đặt ở góc dưới bên phải (Chuẩn UX Mobile)
-          trackUserLocation={true} // Tự động cập nhật vị trí khi người dùng di chuyển (Lái xe/Đi bộ)
-          showUserHeading={true} // Hiển thị "cái nón" ánh sáng báo hiệu hướng điện thoại đang quay về đâu
-          showAccuracyCircle={true} // Hiển thị vòng tròn sai số của GPS
-          style={{marginBottom: '40px', marginRight: '20px'}} // Đẩy nhẹ nó lên để không dính sát lề
+          position="bottom-right"
+          trackUserLocation={true}
+          showUserHeading={true}
+          showAccuracyCircle={true}
+          style={{marginBottom: '40px', marginRight: '20px'}}
         />
         <NavigationControl position="top-right"/>
         <ClickedMarker point={infoClicked} setPoint={setInfoClicked}/>

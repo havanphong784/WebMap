@@ -29,6 +29,6 @@ export const AuthProvider = ({children}) => {
   );
 };
 
-export const useAuth = () => {
+export const useAuthStore = () => {
   return useContext(AuthContext);
 };
