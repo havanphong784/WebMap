@@ -19,13 +19,13 @@ router.get('/:user_id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const {
-      user_id, name, address, category, review_text, rating, lat, lng, image_url
+      user_id, name, address, category, review_text, rating, lat, lng, image_url, is_public
     } = req.body;
 
     const query = `
         INSERT INTO locations
-        (user_id, name, address, category, review_text, rating, lat, lng, image_url)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
+        (user_id, name, address, category, review_text, rating, lat, lng, image_url, is_public)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *;
     `;
 
     const values = [
@@ -37,7 +37,8 @@ router.post('/', async (req, res) => {
       rating || 5,
       lat,
       lng,
-      image_url || null
+      image_url || null,
+      is_public !== undefined ? is_public : true
     ];
 
     const result = await pool.query(query, values);
