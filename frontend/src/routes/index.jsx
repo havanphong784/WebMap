@@ -9,7 +9,7 @@ export const routes = [
     element: <PrivateRoutes/>,
     children: [
       {
-        path: "home",
+        path: "/",
         element: <MapViewer/>
       },
       {
