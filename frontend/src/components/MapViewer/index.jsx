@@ -11,6 +11,7 @@ import {useAuthStore} from "../../context/AuthContext.jsx";
 import ClusterLocations from "./ClusterLocations.jsx";
 import LocationCard from "./LocationCard.jsx";
 import LocationSidebar from "../SideBar/Posts.jsx";
+import RouteLayer from "./RouteLayer.jsx";
 
 export default function MapViewer() {
   const mapRef = useRef(null);
@@ -88,6 +89,7 @@ export default function MapViewer() {
         <ClickedMarker point={infoClicked} setPoint={setInfoClicked}/>
         <SearchBox onSelectLocation={handleSearchSelect}/>
         <ClusterLocations/>
+        <RouteLayer/>
         {currentZoom >= 13 && locations.map(loc => (
           <LocationCard
             key={loc.id}

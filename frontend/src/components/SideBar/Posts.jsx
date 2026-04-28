@@ -1,5 +1,17 @@
+import {useLocationStore} from "../../context/useLocationsStore.jsx";
+
 export default function LocationSidebar({location, onClose}) {
+  const fetchRoute = useLocationStore(state => state.fetchRoute);
+
   if (!location) return null;
+
+  const handleDirections = () => {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const start = [pos.coords.longitude, pos.coords.latitude];
+      const end = [location.lng, location.lat];
+      fetchRoute(start, end);
+    });
+  };
 
   return (
     <div
@@ -38,6 +50,13 @@ export default function LocationSidebar({location, onClose}) {
           <span>📍</span>
           <p>{location.address}</p>
         </div>
+
+        <button
+          onClick={handleDirections}
+          className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mb-4 hover:bg-blue-700 transition"
+        >
+          🚗 Chỉ đường đến đây
+        </button>
 
         <div className="mb-8">
           <h3 className="font-bold text-zinc-100 mb-2 border-b border-white/10 pb-1">Bài Review</h3>
