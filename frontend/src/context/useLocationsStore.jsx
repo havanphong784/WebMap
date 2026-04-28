@@ -5,6 +5,7 @@ const API_URL = 'http://localhost:3000/api/locations';
 export const useLocationStore = create((set) => ({
   locations: [],
   routeData: null,
+  routeLoading: false,
   isLoading: false,
 
   fetchLocations: async (userId, bounds) => {
@@ -54,7 +55,10 @@ export const useLocationStore = create((set) => ({
     }
   },
 
+  setRouteLoading: (routeLoading) => set({routeLoading}),
+
   fetchRoute: async (start, end) => {
+    set({routeLoading: true, routeData: null});
     try {
       const url = `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`;
 
@@ -65,6 +69,8 @@ export const useLocationStore = create((set) => ({
       }
     } catch (error) {
       console.error("Lỗi lấy đường đi:", error);
+    } finally {
+      set({routeLoading: false});
     }
   },
 

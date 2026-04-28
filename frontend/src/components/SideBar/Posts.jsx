@@ -2,14 +2,31 @@ import {useLocationStore} from "../../context/useLocationsStore.jsx";
 
 export default function LocationSidebar({location, onClose}) {
   const fetchRoute = useLocationStore(state => state.fetchRoute);
+  const routeLoading = useLocationStore(state => state.routeLoading);
+  const clearRoute = useLocationStore(state => state.clearRoute);
+  const setRouteLoading = useLocationStore(state => state.setRouteLoading);
 
   if (!location) return null;
 
   const handleDirections = () => {
+    if (routeLoading) return;
+
+    clearRoute();
+    setRouteLoading(true);
+
+    if (!navigator.geolocation) {
+      setRouteLoading(false);
+      alert("Trình duyệt của bạn không hỗ trợ định vị.");
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition((pos) => {
       const start = [pos.coords.longitude, pos.coords.latitude];
       const end = [location.lng, location.lat];
       fetchRoute(start, end);
+    }, () => {
+      setRouteLoading(false);
+      alert("Không thể lấy vị trí của bạn. Vui lòng cho phép quyền truy cập vị trí.");
     });
   };
 
@@ -53,9 +70,10 @@ export default function LocationSidebar({location, onClose}) {
 
         <button
           onClick={handleDirections}
-          className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mb-4 hover:bg-blue-700 transition"
+          disabled={routeLoading}
+          className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mb-4 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-wait transition"
         >
-          🚗 Chỉ đường đến đây
+          {routeLoading ? "Đang chỉ đường..." : "🚗 Chỉ đường đến đây"}
         </button>
 
         <div className="mb-8">
