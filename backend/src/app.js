@@ -2,7 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import "./config/db.js";
-import authRoutes from "./routes/auth.route.js";
+import authRoutes from "./routes/authRoutes.js";
 import locationRoutes from "./routes/locationRoutes.js";
 import likeRoutes from "./routes/likeRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";

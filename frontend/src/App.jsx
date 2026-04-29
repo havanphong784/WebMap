@@ -1,11 +1,10 @@
-import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import MapPage from './pages/Map/MapPage';
-import DiscoveryFeed from './pages/Discovery/DiscoveryFeed';
-import ProfilePage from './pages/Profile/ProfilePage';
-import Login from './pages/Login/Login';
-import BottomNav from './components/layout/BottomNav';
+import MapPage from "./features/map/mapPage.jsx";
+import DiscoveryFeed from "./features/discovery/discoveryFeed.jsx";
+import ProfilePage from "./features/profile/profilePage.jsx";
+import Login from "./features/auth/loginPage.jsx";
+import BottomNav from "./shared/components/layout/bottomNav.jsx";
 
 function App() {
   const location = useLocation();
