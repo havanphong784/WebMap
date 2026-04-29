@@ -2,7 +2,7 @@ import Map, {GeolocateControl, NavigationControl} from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import ClickedMarker from "./ClickedMarker.jsx";
-import {useCallback, useRef, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {getAddress} from "../../utils/Map.jsx";
 import MapStyleSwitcher from "./MapStyleSwitcher.jsx";
 import SearchBox from "./SearchBox.jsx";
@@ -19,9 +19,28 @@ export default function MapViewer() {
   const [activeStyle, setActiveStyle] = useState("https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json");
   const fetchLocations = useLocationStore(state => state.fetchLocations);
   const locations = useLocationStore(state => state.locations);
+  const routeData = useLocationStore(state => state.routeData);
   const {user} = useAuthStore();
   const [currentZoom, setCurrentZoom] = useState(10);
   const [activeLocation, setActiveLocation] = useState(null);
+
+  useEffect(() => {
+    const coordinates = routeData?.coordinates;
+
+    if (!mapRef.current || !coordinates?.length) return;
+
+    const map = mapRef.current.getMap();
+    if (!map) return;
+
+    const bounds = new maplibregl.LngLatBounds(coordinates[0], coordinates[0]);
+    coordinates.slice(1).forEach((coordinate) => bounds.extend(coordinate));
+
+    map.fitBounds(bounds, {
+      padding: {top: 100, bottom: 100, left: 100, right: 100},
+      duration: 1200,
+      essential: true,
+    });
+  }, [routeData]);
 
 
   const handleClick = async (e) => {

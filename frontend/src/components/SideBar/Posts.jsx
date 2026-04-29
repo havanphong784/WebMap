@@ -32,7 +32,7 @@ export default function LocationSidebar({location, onClose}) {
 
   return (
     <div
-      className="absolute top-0 right-0 w-124 h-full bg-zinc-950/90 backdrop-blur-xl shadow-2xl border-l border-white/10 z-[100] flex flex-col transform transition-transform duration-300">
+      className="absolute top-0 right-0 w-124 h-full bg-zinc-950/90 backdrop-blur-xl shadow-2xl border-l border-white/10 z-100 flex flex-col transform transition-transform duration-300">
 
       <div className="p-4 flex justify-between items-center border-b border-white/10">
         <h2 className="font-bold text-lg text-white">Chi tiết địa điểm</h2>
