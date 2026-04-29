@@ -1,29 +1,46 @@
-import Map, { GeolocateControl, NavigationControl } from 'react-map-gl/maplibre';
+import {useLocation, useNavigate} from 'react-router-dom';
+import Map, {GeolocateControl, NavigationControl} from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import ClickedMarker from "../../components/Map/ClickedMarker.jsx";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { getAddress } from "../../utils/geocoding.js";
-import { debounce } from "../../utils/performance.js";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {getAddress} from "../../utils/geocoding.js";
+import {debounce} from "../../utils/performance.js";
 import MapStyleSwitcher from "../../components/Map/MapStyleSwitcher.jsx";
 import SearchBox from "../../components/Map/SearchBox.jsx";
-import { useLocationStore } from "../../store/useLocationsStore.jsx";
-import { useAuthStore } from "../../context/AuthContext.jsx";
+import {useLocationStore} from "../../store/useLocationsStore.jsx";
+import {useAuthStore} from "../../context/AuthContext.jsx";
 import ClusterLocations from "../../components/Map/ClusterLocations.jsx";
 import LocationCard from "../../components/Map/LocationCard.jsx";
 import LocationSidebar from "../../components/Map/LocationSidebar.jsx";
 import RouteLayer from "../../components/Map/RouteLayer.jsx";
 
 export default function MapPage() {
+  const navigate = useNavigate();
+  const routerLocation = useLocation();
   const mapRef = useRef(null);
+
   const [infoClicked, setInfoClicked] = useState(null);
   const [activeStyle, setActiveStyle] = useState("https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json");
   const fetchLocations = useLocationStore(state => state.fetchLocations);
   const locations = useLocationStore(state => state.locations);
   const routeData = useLocationStore(state => state.routeData);
-  const { user } = useAuthStore();
+  const {user} = useAuthStore();
   const [currentZoom, setCurrentZoom] = useState(10);
   const [activeLocation, setActiveLocation] = useState(null);
+
+  useEffect(() => {
+    if (routerLocation.state?.focusLocation && mapRef.current) {
+      const loc = routerLocation.state.focusLocation;
+      setActiveLocation(loc);
+      mapRef.current.flyTo({
+        center: [loc.lng, loc.lat],
+        zoom: 16,
+        duration: 2000
+      });
+    }
+  }, [routerLocation.state, mapRef.current]);
+
 
   useEffect(() => {
     const coordinates = routeData?.coordinates;
@@ -37,7 +54,7 @@ export default function MapPage() {
     coordinates.slice(1).forEach((coordinate) => bounds.extend(coordinate));
 
     map.fitBounds(bounds, {
-      padding: { top: 100, bottom: 100, left: 100, right: 100 },
+      padding: {top: 100, bottom: 100, left: 100, right: 100},
       duration: 1200,
       essential: true,
     });
@@ -45,7 +62,7 @@ export default function MapPage() {
 
 
   const handleClick = async (e) => {
-    const { lng, lat } = e.lngLat;
+    const {lng, lat} = e.lngLat;
     mapRef.current.flyTo({
       center: [lng, lat],
       zoom: 16,
@@ -53,10 +70,10 @@ export default function MapPage() {
       bearing: 0,
       duration: 2000
     });
-    setInfoClicked({ lng, lat, address: "Đang tìm địa chỉ..." });
+    setInfoClicked({lng, lat, address: "Đang tìm địa chỉ..."});
     const diachi = await getAddress(lat, lng);
 
-    setInfoClicked({ lng, lat, address: diachi });
+    setInfoClicked({lng, lat, address: diachi});
   }
 
   const handleSearchSelect = async (lng, lat, addressName) => {
@@ -67,9 +84,9 @@ export default function MapPage() {
       bearing: 0,
       duration: 2500
     });
-    setInfoClicked({ lng, lat, address: addressName });
+    setInfoClicked({lng, lat, address: addressName});
     const diachi = await getAddress(lat, lng);
-    setInfoClicked({ lng, lat, address: diachi });
+    setInfoClicked({lng, lat, address: diachi});
   };
 
   const debouncedFetch = useRef(
@@ -93,33 +110,43 @@ export default function MapPage() {
   return (
     <div className="h-screen w-full relative overflow-hidden bg-gray-900">
       <Map ref={mapRef}
-        onLoad={handleMapChange}
-        onMoveEnd={handleMapChange}
-        mapLib={maplibregl}
-        antialias={true}
-        initialViewState={{
-          longitude: 105.804817,
-          latitude: 21.028511,
-          zoom: 13,
-          pitch: 45,
-          bearing: 0
-        }}
-        style={{ width: '100%', height: '100%' }}
-        mapStyle={activeStyle}
-        onClick={handleClick}
+           onLoad={handleMapChange}
+           onMoveEnd={handleMapChange}
+           mapLib={maplibregl}
+           antialias={true}
+           initialViewState={{
+             longitude: 105.804817,
+             latitude: 21.028511,
+             zoom: 13,
+             pitch: 45,
+             bearing: 0
+           }}
+           style={{width: '100%', height: '100%'}}
+           mapStyle={activeStyle}
+           onClick={handleClick}
       >
+        <div className="absolute top-4 right-20 z-[100]">
+          <button
+            onClick={() => navigate(`/profile/${user?.uid}`)}
+            className="flex items-center gap-2 bg-zinc-900/90 backdrop-blur-md border border-white/20 p-1.5 pr-4 rounded-full hover:bg-zinc-800 transition shadow-xl"
+          >
+            <img src={user?.photoURL} className="w-8 h-8 rounded-full border border-white/10"/>
+            <span className="text-white text-xs font-bold">Cá nhân</span>
+          </button>
+        </div>
+
         <GeolocateControl
           position="bottom-right"
           trackUserLocation={true}
           showUserHeading={true}
           showAccuracyCircle={true}
-          style={{ marginBottom: '40px', marginRight: '20px' }}
+          style={{marginBottom: '40px', marginRight: '20px'}}
         />
-        <NavigationControl position="top-right" />
-        <ClickedMarker point={infoClicked} setPoint={setInfoClicked} />
-        <SearchBox onSelectLocation={handleSearchSelect} />
-        <ClusterLocations />
-        <RouteLayer />
+        <NavigationControl position="top-right"/>
+        <ClickedMarker point={infoClicked} setPoint={setInfoClicked}/>
+        <SearchBox onSelectLocation={handleSearchSelect}/>
+        <ClusterLocations/>
+        <RouteLayer/>
         {currentZoom >= 13 && locations.map(loc => (
           <LocationCard
             key={loc.id}

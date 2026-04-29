@@ -61,4 +61,28 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.get('/user/:uid', async (req, res) => {
+  try {
+    const {uid} = req.params;
+    const {current_user_id} = req.query;
+
+    const query = `
+        SELECT l.*,
+               (SELECT COUNT(*) FROM likes WHERE location_id = l.id)                  AS likes_count,
+               (SELECT COUNT(*) FROM comments WHERE location_id = l.id)               AS comments_count,
+               EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
+        FROM locations l
+        WHERE l.user_id = $1
+        ORDER BY l.created_at DESC;
+    `;
+
+    const result = await pool.query(query, [uid, current_user_id || 'guest']);
+    res.status(200).json({success: true, data: result.rows});
+  } catch (error) {
+    console.error("Lỗi lấy địa điểm theo User:", error);
+    res.status(500).json({success: false, message: 'Lỗi Server'});
+  }
+});
+
 export default router;
+

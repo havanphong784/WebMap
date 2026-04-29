@@ -1,6 +1,7 @@
 import Errors404 from "../components/Errors404/index.jsx";
 import Login from "../pages/Login/Login.jsx";
 import MapPage from "../pages/Map/MapPage.jsx";
+import ProfilePage from "../pages/Profile/ProfilePage.jsx";
 import PrivateRoutes from "../components/PrivateRoutes/index.jsx";
 
 export const routes = [
@@ -11,6 +12,10 @@ export const routes = [
       {
         index: true,
         element: <MapPage />
+      },
+      {
+        path: "profile/:uid",
+        element: <ProfilePage />
       },
 
       {
