@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {Marker, Popup} from "react-map-gl/maplibre";
 import LocationFormModal from "./LocationFormModal.jsx";
-import {useLocationStore} from "../../context/useLocationsStore.jsx";
+import {useLocationStore} from "../../store/useLocationsStore.jsx";
 
 export default function ClickedMarker({point, setPoint}) {
   const [isFormOpen, setIsFormOpen] = useState(false);

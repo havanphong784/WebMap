@@ -1,19 +1,19 @@
 import Map, {GeolocateControl, NavigationControl} from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import ClickedMarker from "./ClickedMarker.jsx";
+import ClickedMarker from "../../components/Map/ClickedMarker.jsx";
 import {useCallback, useEffect, useRef, useState} from "react";
-import {getAddress} from "../../utils/Map.jsx";
-import MapStyleSwitcher from "./MapStyleSwitcher.jsx";
-import SearchBox from "./SearchBox.jsx";
-import {useLocationStore} from "../../context/useLocationsStore.jsx";
+import {getAddress} from "../../utils/geocoding.js";
+import MapStyleSwitcher from "../../components/Map/MapStyleSwitcher.jsx";
+import SearchBox from "../../components/Map/SearchBox.jsx";
+import {useLocationStore} from "../../store/useLocationsStore.jsx";
 import {useAuthStore} from "../../context/AuthContext.jsx";
-import ClusterLocations from "./ClusterLocations.jsx";
-import LocationCard from "./LocationCard.jsx";
-import LocationSidebar from "../SideBar/Posts.jsx";
-import RouteLayer from "./RouteLayer.jsx";
+import ClusterLocations from "../../components/Map/ClusterLocations.jsx";
+import LocationCard from "../../components/Map/LocationCard.jsx";
+import LocationSidebar from "../../components/Map/LocationSidebar.jsx";
+import RouteLayer from "../../components/Map/RouteLayer.jsx";
 
-export default function MapViewer() {
+export default function MapPage() {
   const mapRef = useRef(null);
   const [infoClicked, setInfoClicked] = useState(null);
   const [activeStyle, setActiveStyle] = useState("https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json");

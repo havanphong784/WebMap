@@ -9,6 +9,7 @@ router.get('/', async (req, res) => {
     const query = `
         SELECT l.*,
                (SELECT COUNT(*) FROM likes WHERE location_id = l.id)                  AS likes_count,
+               (SELECT COUNT(*) FROM comments WHERE location_id = l.id)               AS comments_count,
                EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $5) AS is_liked
         FROM locations l
         WHERE (l.lat BETWEEN $1 AND $2)
@@ -16,6 +17,7 @@ router.get('/', async (req, res) => {
           AND (l.is_public = true OR l.user_id = $5)
         ORDER BY l.created_at DESC LIMIT 500;
     `;
+
     const values = [minLat, maxLat, minLng, maxLng, user_id || 'guest'];
     const result = await pool.query(query, values);
     res.status(200).json({success: true, data: result.rows});

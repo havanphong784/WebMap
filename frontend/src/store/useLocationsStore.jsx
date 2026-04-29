@@ -1,6 +1,6 @@
-import {create} from 'zustand';
+import { create } from 'zustand';
 
-const API_URL = 'http://localhost:3000/api/locations';
+const BASE_URL = 'http://localhost:3000/api';
 
 export const useLocationStore = create((set) => ({
   locations: [],
@@ -10,7 +10,7 @@ export const useLocationStore = create((set) => ({
 
   fetchLocations: async (userId, bounds) => {
     if (!bounds) return;
-    set({isLoading: true});
+    set({ isLoading: true });
     try {
       const params = new URLSearchParams({
         user_id: userId || "",
@@ -19,24 +19,23 @@ export const useLocationStore = create((set) => ({
         minLat: bounds.getSouth(),
         maxLat: bounds.getNorth()
       });
-      const response = await fetch(`${API_URL}?${params.toString()}`);
+      const response = await fetch(`${BASE_URL}/locations?${params.toString()}`);
       const result = await response.json();
       if (result.success) {
-        set({locations: result.data, isLoading: false});
+        set({ locations: result.data, isLoading: false });
       }
     } catch (error) {
       console.error("Lỗi Fetch Data:", error);
-      set({isLoading: false});
+      set({ isLoading: false });
     }
   },
 
-
   addLocation: async (locationData) => {
-    set({isLoading: true});
+    set({ isLoading: true });
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${BASE_URL}/locations`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(locationData)
       });
       const result = await response.json();
@@ -46,42 +45,39 @@ export const useLocationStore = create((set) => ({
           locations: [result.data, ...state.locations]
         }));
       }
-
-      set({isLoading: false});
-
+      set({ isLoading: false });
     } catch (error) {
       console.error("Lỗi Lưu Data:", error);
-      set({isLoading: false});
+      set({ isLoading: false });
     }
   },
 
-  setRouteLoading: (routeLoading) => set({routeLoading}),
+  setRouteLoading: (routeLoading) => set({ routeLoading }),
 
   fetchRoute: async (start, end) => {
-    set({routeLoading: true, routeData: null});
+    set({ routeLoading: true, routeData: null });
     try {
       const url = `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`;
-
       const response = await fetch(url);
       const data = await response.json();
       if (data.code === 'Ok') {
-        set({routeData: data.routes[0].geometry});
+        set({ routeData: data.routes[0].geometry });
       }
     } catch (error) {
       console.error("Lỗi lấy đường đi:", error);
     } finally {
-      set({routeLoading: false});
+      set({ routeLoading: false });
     }
   },
 
-  clearRoute: () => set({routeData: null}),
+  clearRoute: () => set({ routeData: null }),
 
   toggleLike: async (locationId, userId) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/likes/${locationId}/like`, {
+      const response = await fetch(`${BASE_URL}/likes/${locationId}/like`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({user_id: userId})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
       });
       const result = await response.json();
 
@@ -92,7 +88,7 @@ export const useLocationStore = create((set) => ({
               ? {
                 ...loc,
                 is_liked: result.action === 'liked',
-                likes_count: result.action === 'liked' ? Number(loc.likes_count) + 1 : Number(loc.likes_count) - 1
+                likes_count: result.action === 'liked' ? Number(loc.likes_count || 0) + 1 : Number(loc.likes_count || 0) - 1
               }
               : loc
           )
@@ -102,17 +98,29 @@ export const useLocationStore = create((set) => ({
       console.error(err);
     }
   },
+
   postComment: async (locationId, userId, content) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/comments/${locationId}/comments`, {
+      const response = await fetch(`${BASE_URL}/comments/${locationId}/comments`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({user_id: userId, content})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, content })
       });
-      return await response.json();
+      const result = await response.json();
+
+      if (result.success) {
+        set((state) => ({
+          locations: state.locations.map(loc =>
+            loc.id === locationId
+              ? { ...loc, comments_count: Number(loc.comments_count || 0) + 1 }
+              : loc
+          )
+        }));
+      }
+      return result;
     } catch (err) {
       console.error(err);
     }
   }
-
 }));
+

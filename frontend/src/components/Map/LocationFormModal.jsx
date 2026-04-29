@@ -1,6 +1,6 @@
 import {useState} from "react";
 import {useAuthStore} from "../../context/AuthContext.jsx";
-import {useLocationStore} from "../../context/useLocationsStore.jsx"
+import {useLocationStore} from "../../store/useLocationsStore.jsx"
 import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
 import {storage} from "../../config/firebase";
 

@@ -1,6 +1,6 @@
 import Errors404 from "../components/Errors404/index.jsx";
 import Login from "../pages/Login/Login.jsx";
-import MapViewer from "../components/MapViewer/index.jsx";
+import MapPage from "../pages/Map/MapPage.jsx";
 import PrivateRoutes from "../components/PrivateRoutes/index.jsx";
 
 export const routes = [
@@ -10,8 +10,9 @@ export const routes = [
     children: [
       {
         index: true,
-        element: <MapViewer />
+        element: <MapPage />
       },
+
       {
         path: "*",
         element: <Errors404 />

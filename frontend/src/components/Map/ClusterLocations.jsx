@@ -1,6 +1,6 @@
 import {useMemo} from "react";
 import {Layer, Source} from "react-map-gl/maplibre";
-import {useLocationStore} from "../../context/useLocationsStore";
+import {useLocationStore} from "../../store/useLocationsStore.jsx";
 
 export default function ClusterLocations() {
   const locations = useLocationStore(state => state.locations);

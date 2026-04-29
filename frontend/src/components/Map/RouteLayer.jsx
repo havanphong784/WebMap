@@ -1,5 +1,5 @@
 import {Layer, Source} from "react-map-gl/maplibre";
-import {useLocationStore} from "../../context/useLocationsStore";
+import {useLocationStore} from "../../store/useLocationsStore.jsx";
 
 export default function RouteLayer() {
   const routeData = useLocationStore(state => state.routeData);
