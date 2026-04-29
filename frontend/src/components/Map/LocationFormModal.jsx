@@ -1,9 +1,25 @@
 import {useState} from "react";
 import {useAuthStore} from "../../context/AuthContext.jsx";
-import {useLocationStore} from "../../store/useLocationsStore.jsx"
+import {useLocationStore} from "../../store/useLocationsStore.jsx";
 import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
 import {storage} from "../../config/firebase";
-
+import {
+  CafeIcon,
+  CloseIcon,
+  EventIcon,
+  FoodIcon,
+  HotelIcon,
+  PhotoIcon,
+  PinIcon,
+  PrivateIcon,
+  PublicIcon,
+  SendIcon,
+  SpinnerIcon,
+  StarIcon
+} from "../common/Icons";
+import GlassPanel from "../common/GlassPanel";
+import ActionButton from "../common/ActionButton";
+import {motion} from "framer-motion";
 
 export default function LocationFormModal({point, onClose}) {
   const addLocation = useLocationStore((state) => state.addLocation);
@@ -64,110 +80,184 @@ export default function LocationFormModal({point, onClose}) {
     }
   };
 
+  const categories = [
+    {value: "restaurant", label: "Nhà hàng", icon: FoodIcon},
+    {value: "cafe", label: "Quán Cafe", icon: CafeIcon},
+    {value: "hotel", label: "Khách sạn", icon: HotelIcon},
+    {value: "entertainment", label: "Giải trí", icon: EventIcon},
+    {value: "other", label: "Khác", icon: PinIcon},
+  ];
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-      <div
-        className="bg-zinc-900/95 backdrop-blur-xl w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center shrink-0">
-          <h3 className="font-bold text-lg text-white tracking-wide">✍️ Review địa điểm</h3>
-          <button onClick={onClose}
-                  className="text-zinc-400 hover:text-white hover:bg-white/10 p-2 rounded-full transition-all">
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleSave} className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Tên địa
-                điểm</label>
-              <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                     className="w-full bg-zinc-950 border border-zinc-700 text-zinc-100 px-4 py-2.5 rounded-lg outline-none focus:border-blue-500 transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Địa chỉ</label>
-              <textarea readOnly value={address}
-                        className="w-full bg-zinc-950/50 text-zinc-500 border border-zinc-800 px-4 py-2.5 rounded-lg text-sm resize-none"
-                        rows={2}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Danh mục</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-700 text-zinc-100 px-3 py-2.5 rounded-lg outline-none focus:border-blue-500 cursor-pointer"
-              >
-                <option value="other">📍 Khác</option>
-                <option value="restaurant">🍜 Nhà hàng</option>
-                <option value="cafe">☕ Quán Cafe</option>
-                <option value="hotel">🏨 Khách sạn</option>
-                <option value="entertainment">🎢 Giải trí</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">Đánh giá</label>
-              <select value={rating} onChange={(e) => setRating(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-700 text-amber-400 font-bold px-3 py-2.5 rounded-lg outline-none focus:border-blue-500 cursor-pointer"
-              >
-                {[5, 4, 3, 2, 1].map(r => <option key={r} value={r}>{"⭐".repeat(r)}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <textarea placeholder="Chia sẻ trải nghiệm của bạn..." value={review}
-                    onChange={(e) => setReview(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-700 text-zinc-100 px-4 py-3 rounded-lg h-24 resize-none outline-none focus:border-blue-500"
-          />
-
-          <div className="flex gap-4 p-3 bg-zinc-950 rounded-lg border border-zinc-800">
-            <label className="flex items-center gap-2 cursor-pointer flex-1">
-              <input type="radio" name="privacy" checked={isPublic === true} onChange={() => setIsPublic(true)}
-                     className="accent-blue-500"/>
-              <span className="text-sm text-zinc-300">🌍 Công khai</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer flex-1">
-              <input type="radio" name="privacy" checked={isPublic === false} onChange={() => setIsPublic(false)}
-                     className="accent-blue-500"/>
-              <span className="text-sm text-zinc-300">🔒 Riêng tư</span>
-            </label>
-          </div>
-
-          <div className="space-y-2">
-            <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider">Thêm Ảnh</label>
-            {previewUrl ? (
-              <div className="relative group">
-                <img src={previewUrl} className="w-full h-32 object-cover rounded-lg border border-zinc-700"/>
-                <button type="button" onClick={() => {
-                  setPreviewUrl(null);
-                  setImageFile(null);
-                }}
-                        className="absolute top-2 right-2 bg-red-500/80 text-white p-1 rounded-full text-xs">✕
-                </button>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[2000] flex items-center justify-center p-4">
+      <motion.div
+        initial={{opacity: 0, scale: 0.9, y: 20}}
+        animate={{opacity: 1, scale: 1, y: 0}}
+        className="w-full max-w-lg h-full max-h-[85vh] overflow-hidden flex flex-col"
+      >
+        <GlassPanel
+          className="w-full h-full flex flex-col border-white/10 bg-obsidian/90 shadow-2xl overflow-hidden p-0 rounded-3xl">
+          <div
+            className="px-8 py-5 border-b border-white/5 flex justify-between items-center shrink-0 bg-obsidian/50 backdrop-blur-3xl z-10">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-cyan-glow/10 text-cyan-glow">
+                <PinIcon size={20}/>
               </div>
-            ) : (
-              <label
-                className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-zinc-700 rounded-lg cursor-pointer bg-zinc-950 hover:border-zinc-500 transition-colors">
-                <span className="text-xl">📸</span>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange}/>
-              </label>
-            )}
+              <h3 className="font-plus font-bold text-lg text-white uppercase tracking-wider">Đánh giá địa điểm</h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-zinc-500 hover:text-white p-2 glass-panel !rounded-full border-white/5 transition-all"
+            >
+              <CloseIcon size={20}/>
+            </button>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose}
-                    className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg font-bold transition-all">Hủy
-            </button>
-            <button type="submit" disabled={isLoading || isUploading}
-                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)]">
-              {isLoading || isUploading ? "Đang xử lí..." : "Đăng Review"}
-            </button>
-          </div>
-        </form>
-      </div>
+          <form onSubmit={handleSave} className="flex-1 overflow-y-auto no-scrollbar p-8 space-y-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Tên địa
+                  điểm</label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-white/5 border border-white/5 text-white px-5 py-3.5 rounded-xl outline-none focus:border-cyan-glow/30 transition-all font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Địa
+                  chỉ</label>
+                <div
+                  className="w-full bg-white/5 border border-white/5 text-zinc-400 px-5 py-3.5 rounded-xl text-xs leading-relaxed italic">
+                  {address}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Danh
+                  mục</label>
+                <div className="relative">
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full bg-white/5 border border-white/5 text-white px-4 py-3.5 rounded-xl outline-none focus:border-cyan-glow/30 cursor-pointer font-medium appearance-none"
+                  >
+                    {categories.map(cat => (
+                      <option key={cat.value} value={cat.value} className="bg-obsidian">{cat.label}</option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
+                    <PinIcon size={14}/>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Xếp
+                  hạng</label>
+                <div
+                  className="flex items-center justify-center gap-2 bg-white/5 border border-white/5 px-4 py-3.5 rounded-xl">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      className={`transition-all duration-300 ${star <= rating ? 'text-amber-400 scale-110' : 'text-white/10 hover:text-white/30'}`}
+                    >
+                      <StarIcon size={18} fill={star <= rating ? "currentColor" : "none"}/>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Cảm
+                nhận</label>
+              <textarea
+                placeholder="Nơi này có gì đặc biệt..."
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                className="w-full bg-white/5 border border-white/5 text-white px-5 py-4 rounded-xl h-32 resize-none outline-none focus:border-cyan-glow/30 transition-all font-medium custom-scrollbar"
+              />
+            </div>
+
+            <div className="flex gap-4 p-1.5 bg-white/5 rounded-2xl border border-white/5">
+              <button
+                type="button"
+                onClick={() => setIsPublic(true)}
+                className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl transition-all duration-500 ${isPublic ? 'bg-cyan-glow/10 text-cyan-glow shadow-neon' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                <PublicIcon size={16}/>
+                <span className="text-xs font-bold uppercase tracking-wider">Công khai</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPublic(false)}
+                className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl transition-all duration-500 ${!isPublic ? 'bg-zinc-500/10 text-zinc-300' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                <PrivateIcon size={16}/>
+                <span className="text-xs font-bold uppercase tracking-wider">Riêng tư</span>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Hình ảnh</label>
+              {previewUrl ? (
+                <div className="relative group overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+                  <img src={previewUrl} className="w-full h-48 object-cover" alt="preview"/>
+                  <div
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewUrl(null);
+                        setImageFile(null);
+                      }}
+                      className="bg-red-500 text-white p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
+                    >
+                      <CloseIcon size={20}/>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label
+                  className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-white/5 rounded-2xl cursor-pointer bg-white/2 hover:bg-white/5 hover:border-cyan-glow/30 transition-all group">
+                  <div className="p-5 rounded-full bg-white/5 group-hover:scale-110 transition-transform mb-3">
+                    <PhotoIcon size={24} className="text-zinc-500 group-hover:text-cyan-glow transition-colors"/>
+                  </div>
+                  <span
+                    className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Chọn ảnh từ thiết bị</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange}/>
+                </label>
+              )}
+            </div>
+
+            <div className="flex gap-4 pt-4 pb-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-4 glass-panel border-white/5 bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all font-bold uppercase tracking-widest text-xs rounded-xl"
+              >
+                Hủy
+              </button>
+              <ActionButton
+                type="submit"
+                disabled={isLoading || isUploading}
+                className="flex-1 !py-4 gap-2 rounded-xl"
+              >
+                {isLoading || isUploading ? (
+                  <SpinnerIcon size={18} className="animate-spin"/>
+                ) : <SendIcon size={18}/>}
+                <span className="uppercase tracking-widest text-xs">Đăng Review</span>
+              </ActionButton>
+            </div>
+          </form>
+        </GlassPanel>
+      </motion.div>
     </div>
   );
 }

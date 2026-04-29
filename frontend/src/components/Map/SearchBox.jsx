@@ -1,5 +1,15 @@
 import {useState} from "react";
 import {searchAddress} from "../../utils/geocoding.js";
+import {AnimatePresence, motion} from 'framer-motion';
+import GlassPanel from '../common/GlassPanel';
+import ActionButton from '../common/ActionButton';
+import { 
+  SearchIcon, 
+  CloseIcon, 
+  SpinnerIcon, 
+  PinIcon, 
+  LocateIcon 
+} from '../common/Icons';
 
 export default function SearchBox({onSelectLocation}) {
   const [query, setQuery] = useState("");
@@ -22,43 +32,80 @@ export default function SearchBox({onSelectLocation}) {
     setQuery(item.display_name.split(',')[0]);
   }
 
+  const clearSearch = () => {
+    setQuery("");
+    setResults([]);
+  }
+
   return (
-    <div
-      className="absolute top-4 left-4 right-14 md:left-1/2 md:-translate-x-1/2 md:right-auto z-[100] w-auto md:w-full md:max-w-md">
-      <form
-        onSubmit={handleSearch}
-        className="relative flex rounded-xl overflow-hidden bg-zinc-900/90 backdrop-blur-md border border-white/20 shadow-2xl shadow-black/50"
-      >
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Nhập địa điểm..."
-          className="w-full px-4 py-3 bg-transparent text-white placeholder-zinc-400 outline-none text-sm"
-        />
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-5 font-semibold transition-all duration-200 active:scale-95"
-        >
-          {isLoading ? "⏳" : "Tìm"}
-        </button>
+    <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-lg">
+      <form onSubmit={handleSearch} className="relative">
+        <GlassPanel className="flex items-center gap-3 py-2.5 px-5 rounded-full border-white/10 bg-black/40 shadow-2xl">
+          <SearchIcon size={20} className={isLoading ? "text-cyan-glow animate-pulse" : "text-zinc-400"}/>
+
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Tìm địa điểm, người dùng..."
+            className="bg-transparent border-none outline-none flex-1 text-white placeholder-zinc-500 font-medium text-sm"
+          />
+
+          <AnimatePresence>
+            {query && (
+              <motion.button
+                initial={{opacity: 0, scale: 0.5}}
+                animate={{opacity: 1, scale: 1}}
+                exit={{opacity: 0, scale: 0.5}}
+                onClick={clearSearch}
+                type="button"
+                className="text-zinc-500 hover:text-white transition-colors"
+              >
+                <CloseIcon size={18}/>
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          <div className="w-[1px] h-6 bg-white/10"></div>
+
+          <ActionButton variant="icon" className="!p-1 bg-transparent border-none shadow-none">
+            {isLoading ? <SpinnerIcon size={18} className="animate-spin text-cyan-glow"/> :
+              <LocateIcon size={18} className="text-zinc-400"/>}
+          </ActionButton>
+        </GlassPanel>
       </form>
 
-      {results.length > 0 && (
-        <ul
-          className="mt-2 bg-zinc-900/95 backdrop-blur-md rounded-xl shadow-2xl border border-white/20 overflow-hidden max-h-60 overflow-y-auto">
-          {results.map((item, index) => (
-            <li
-              key={index}
-              onClick={() => handleSelect(item)}
-              className="px-4 py-3 border-b border-white/10 last:border-b-0 hover:bg-white/10 cursor-pointer text-sm text-zinc-200 transition-colors"
-            >
-              {item.display_name}
-            </li>
-          ))}
-        </ul>
-      )}
+      <AnimatePresence>
+        {results.length > 0 && (
+          <motion.ul
+            initial={{opacity: 0, y: 10}}
+            animate={{opacity: 1, y: 0}}
+            exit={{opacity: 0, y: 10}}
+            className="mt-3 glass-panel p-2 border-white/10 shadow-2xl max-h-72 overflow-y-auto custom-scrollbar"
+          >
+            {results.map((item, index) => (
+              <motion.li
+                key={index}
+                initial={{opacity: 0, x: -10}}
+                animate={{opacity: 1, x: 0}}
+                transition={{delay: index * 0.05}}
+                onClick={() => handleSelect(item)}
+                className="flex items-start gap-3 px-4 py-3 rounded-xl hover:bg-white/10 cursor-pointer group transition-colors"
+              >
+                <div
+                  className="mt-1 p-2 rounded-lg bg-white/5 text-zinc-400 group-hover:text-cyan-glow transition-colors">
+                  <PinIcon size={16}/>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-white leading-tight mb-1">{item.display_name.split(',')[0]}</p>
+                  <p
+                    className="text-[11px] text-zinc-500 leading-tight">{item.display_name.split(',').slice(1).join(',').trim()}</p>
+                </div>
+              </motion.li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

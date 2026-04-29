@@ -1,11 +1,29 @@
-import {useEffect, useState} from "react";
-import {useNavigate, useParams} from "react-router-dom";
-import {useAuthStore} from "../../context/AuthContext";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAuthStore } from "../../context/AuthContext";
+import { motion } from "framer-motion";
+import { 
+  CloseIcon, 
+  PlusIcon, 
+  StarIcon, 
+  LikeIcon, 
+  PinIcon, 
+  SpinnerIcon, 
+  PhotoIcon,
+  SecurityIcon,
+  PowerIcon,
+  ShareIcon,
+  MoreIcon,
+  ArrowIcon,
+  UserIcon
+} from "../../components/common/Icons";
+import GlassPanel from "../../components/common/GlassPanel";
+import ActionButton from "../../components/common/ActionButton";
 
 export default function ProfilePage() {
-  const {uid} = useParams();
+  const { uid } = useParams();
   const navigate = useNavigate();
-  const {user: currentUser} = useAuthStore();
+  const { user: currentUser } = useAuthStore();
   const [profileUser, setProfileUser] = useState(null);
   const [userLocations, setUserLocations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,112 +45,151 @@ export default function ProfilePage() {
       if (userData.success) setProfileUser(userData.user);
       if (locData.success) setUserLocations(locData.data);
     } catch (err) {
-      console.error("Lỗi tải data:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-zinc-950 p-6 flex flex-col items-center justify-center space-y-4 animate-pulse">
-      <div className="w-28 h-28 bg-zinc-900 rounded-full"/>
-      <div className="h-6 w-32 bg-zinc-900 rounded"/>
+    <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center space-y-6">
+      <SpinnerIcon size={48} className="animate-spin text-cyan-glow" />
+      <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-xs">Đang tải hồ sơ...</p>
     </div>
   );
 
+  const stats = [
+    { label: 'Bài viết', value: profileUser?.total_posts || 0, icon: PhotoIcon },
+    { label: 'Điểm', value: profileUser?.total_likes_received * 10 || 0, icon: StarIcon },
+    { label: 'Lượt thích', value: profileUser?.total_likes_received || 0, icon: LikeIcon, color: 'text-sunset' },
+  ];
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-white pb-24 selection:bg-blue-500/30">
-      <div
-        className="h-20 bg-zinc-950/90 backdrop-blur-xl border-b border-white/5 sticky top-0 z-40 px-6 flex items-center justify-between">
-        <button
-          onClick={() => navigate(-1)}
-          className="bg-black/20 backdrop-blur-xl border border-white/10 p-3 rounded-full hover:bg-white/10 transition-all group"
-        >
-          <svg className="w-5 h-5 text-zinc-400 group-hover:text-white" fill="none" stroke="currentColor"
-               viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/>
-          </svg>
-        </button>
-        <h1 className="text-xl font-bold tracking-tight">Hồ Sơ</h1>
-        <div className="w-11"/>
+    <div className="min-h-screen bg-obsidian text-white pb-32">
+      <div className="relative h-64 w-full overflow-hidden">
+        <motion.img 
+          initial={{ scale: 1.2 }}
+          animate={{ scale: 1 }}
+          src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200" 
+          className="w-full h-full object-cover grayscale-[0.3]" 
+          alt="cover" 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent"></div>
+        <div className="absolute top-6 left-6 z-50">
+          <ActionButton variant="icon" onClick={() => navigate(-1)} className="rotate-180">
+            <ArrowIcon size={24} />
+          </ActionButton>
+        </div>
+        {currentUser?.uid === uid && (
+          <div className="absolute top-6 right-6 z-50">
+            <ActionButton variant="icon">
+              <SecurityIcon size={20} />
+            </ActionButton>
+          </div>
+        )}
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-12">
-        <div
-          className="flex flex-col sm:flex-row items-center gap-8 bg-zinc-900 border border-white/5 rounded-3xl p-8 shadow-xl">
-          <div className="relative group">
-            <div
-              className="w-28 h-28 rounded-full border-4 border-zinc-950 shadow-2xl overflow-hidden group-hover:border-blue-500 transition-colors duration-500">
-              <img
-                src={profileUser.avatar_url || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhss08c278ij8ETUWb_pKiO882Ko_kjbwerQ&s"}
-                className="w-full h-full object-cover"/>
+      <div className="px-6 -mt-20 relative z-10">
+        <div className="flex flex-col items-center">
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="relative"
+          >
+            <div className="w-36 h-36 rounded-full border-4 border-obsidian p-1 bg-cyan-glow shadow-neon">
+              <img 
+                src={profileUser.avatar_url || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhss08c278ij8ETUWb_pKiO882Ko_kjbwerQ&s"} 
+                className="w-full h-full rounded-full object-cover" 
+                alt="profile" 
+              />
             </div>
-          </div>
+            <div className="absolute bottom-1 right-1 bg-cyan-glow text-obsidian px-3 py-1 rounded-full text-[10px] font-bold shadow-neon border-2 border-obsidian">
+              EXP 
+            </div>
+          </motion.div>
 
-          <div className="flex-1 text-center sm:text-left space-y-1">
-            <h1 className="text-4xl font-black tracking-tighter text-white">{profileUser.name}</h1>
-            <p className="text-zinc-500 text-sm">{profileUser.email}</p>
-          </div>
-
-          <div className="flex gap-4 sm:flex-col sm:gap-2 sm:w-auto">
-            <div
-              className="flex-1 bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-white/10">
-              <span className="text-4xl font-black text-white tracking-tighter">
-                {profileUser.total_posts}
-              </span>
-              <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mt-1.5">Bài viết</span>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-center mt-6"
+          >
+            <h1 className="text-4xl font-plus font-black tracking-tight">{profileUser.name}</h1>
+            <p className="text-zinc-500 font-medium mt-1">{profileUser.email}</p>
+            <div className="inline-block mt-3 px-4 py-1.5 rounded-full glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[10px] font-bold uppercase tracking-widest shadow-neon">
+              Elite Explorer
             </div>
-            <div
-              className="flex-1 bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-white/10">
-              <span className="text-4xl font-black text-blue-500 tracking-tighter">
-                {profileUser.total_likes_received}
-              </span>
-              <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mt-1.5">Lượt thích</span>
-            </div>
-          </div>
+          </motion.div>
         </div>
 
-        <div className="space-y-6">
-          <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-            <svg className="w-6 h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-            <h2 className="text-lg font-bold">Địa điểm đã ghim </h2>
-            <span className="text-xs px-2.5 py-1 bg-zinc-800 rounded-full font-mono text-zinc-400">
-              {userLocations.length}
+        <div className="grid grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto">
+          {stats.map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + (i * 0.1) }}
+            >
+              <GlassPanel className="py-4 px-2 text-center border-white/5 bg-white/5 hover:bg-white/10 transition-colors">
+                <stat.icon size={18} className={`${stat.color || 'text-cyan-glow'} mx-auto mb-2`} />
+                <div className="text-2xl font-plus font-black tracking-tighter">{stat.value}</div>
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">{stat.label}</div>
+              </GlassPanel>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="mt-16 max-w-5xl mx-auto">
+          <div className="flex items-center gap-3 mb-8 border-b border-white/5 pb-4">
+            <div className="w-1.5 h-6 bg-cyan-glow rounded-full shadow-neon"></div>
+            <h2 className="text-xl font-plus font-bold uppercase tracking-tight">Địa điểm đã chinh phục</h2>
+            <span className="ml-auto glass-panel px-3 py-1 text-[10px] font-mono text-zinc-500 border-white/10">
+              {userLocations.length} GHIM
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {userLocations.map(loc => (
-              <div
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {userLocations.map((loc, i) => (
+              <motion.div
                 key={loc.id}
-                onClick={() => navigate("/", {state: {focusLocation: loc}})}
-                className="group bg-zinc-900 rounded-3xl border border-white/5 overflow-hidden hover:border-blue-500/50 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-blue-500/10 hover:-translate-y-1"
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: (i % 3) * 0.1 }}
+                onClick={() => navigate("/", { state: { focusLocation: loc } })}
+                className="group relative glass-panel rounded-3xl border-white/5 overflow-hidden hover:border-cyan-glow/30 transition-all duration-500 cursor-pointer shadow-2xl"
               >
-                <div className="aspect-video relative overflow-hidden">
-                  <img src={loc.image_url || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500"}
-                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-                  <div
-                    className="absolute top-4 right-4 bg-zinc-900/80 backdrop-blur-lg px-3 py-1.5 rounded-full text-xs font-semibold border border-white/10 flex items-center gap-1.5 shadow-md">
-                    <svg className="w-4 h-4 text-zinc-500 group-hover:text-red-500" viewBox="0 0 24 24"
-                         fill="currentColor">
-                      <path
-                        d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                    </svg>
-                    {loc.likes_count || 0}
+                <div className="aspect-[4/3] relative overflow-hidden">
+                  <img 
+                    src={loc.image_url || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500"}
+                    className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" 
+                    alt={loc.name}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-60"></div>
+                  
+                  <div className="absolute top-4 right-4 glass-panel px-3 py-1.5 rounded-full text-[10px] font-bold border-white/10 flex items-center gap-2 shadow-xl bg-black/40">
+                    <LikeIcon size={14} className={loc.is_liked ? "text-sunset fill-sunset" : "text-zinc-500"} />
+                    <span className={loc.is_liked ? "text-white" : "text-zinc-400"}>{loc.likes_count || 0}</span>
+                  </div>
+
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="flex items-center gap-1.5 text-cyan-glow mb-1">
+                      <PinIcon size={12} className="shadow-neon" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest truncate">{loc.address}</span>
+                    </div>
+                    <h3 className="text-lg font-plus font-bold text-white group-hover:text-cyan-glow transition-colors line-clamp-1">{loc.name}</h3>
                   </div>
                 </div>
-                <div className="p-5 space-y-1.5">
-                  <h3
-                    className="font-bold text-sm text-white group-hover:text-blue-400 transition-colors">{loc.name}</h3>
-                  <p className="text-zinc-500 text-xs line-clamp-2 leading-relaxed">{loc.address}</p>
-                </div>
-              </div>
+              </motion.div>
             ))}
           </div>
+          
+          {userLocations.length === 0 && (
+            <div className="text-center py-20 glass-panel border-white/5 bg-white/2">
+              <PhotoIcon size={48} className="text-zinc-800 mx-auto mb-4 opacity-20" />
+              <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-sm">Chưa có bài viết nào được đăng</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

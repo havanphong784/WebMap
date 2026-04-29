@@ -1,7 +1,10 @@
-import { Marker } from "react-map-gl/maplibre";
-import { useState, memo } from "react";
+import {Marker} from "react-map-gl/maplibre";
+import {memo, useState} from "react";
+import {motion} from "framer-motion";
+import {StarIcon} from "../common/Icons";
+import GlassPanel from "../common/GlassPanel";
 
-const LocationCard = memo(({ location, onClick }) => {
+const LocationCard = memo(({location, onClick}) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -9,47 +12,74 @@ const LocationCard = memo(({ location, onClick }) => {
       longitude={Number(location.lng)}
       latitude={Number(location.lat)}
       anchor="bottom"
-      style={{ zIndex: isHovered ? 100 : 1 }}
+      style={{zIndex: isHovered ? 100 : 1}}
       onClick={(e) => {
         e.originalEvent.stopPropagation();
         onClick(location);
       }}
     >
-      <div onMouseEnter={() => setIsHovered(true)}
+      <div
+        onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={(e) => {
           e.stopPropagation();
           onClick(location);
         }}
-        className="bg-zinc-950 border-2 border-white/60 rounded-xl p-1.5 w-48 cursor-pointer transition-all duration-300 hover:scale-105 hover:border-white shadow-[0_15px_30px_rgba(0,0,0,0.8),_0_0_15px_rgba(255,255,255,0.15)] group">
+        className="relative cursor-pointer"
+      >
+        <motion.div
+          animate={{
+            scale: isHovered ? 1.05 : 1,
+            y: isHovered ? -5 : 0
+          }}
+          transition={{type: "spring", stiffness: 300, damping: 20}}
+        >
+          <GlassPanel
+            className="p-2 w-48 border-white/20 bg-black/80 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden ring-1 ring-white/5">
+            {location.image_url && (
+              <div className="overflow-hidden rounded-xl p-0 mb-2 border border-white/5 aspect-video relative group">
+                <img
+                  src={location.image_url}
+                  alt={location.name}
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              </div>
+            )}
 
-        {location.image_url && (
-          <div className="overflow-hidden rounded-lg mb-2 border border-white/10">
-            <img
-              src={location.image_url}
-              alt={location.name}
-              loading="lazy"
-              className="w-full aspect-video object-cover"
-            />
-          </div>
-        )}
+            <div className="px-1.5 py-1">
+              <h4 className="text-[11px] font-bold text-white leading-tight truncate uppercase tracking-wider mb-1"
+                  title={location.name}>
+                {location.name}
+              </h4>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <StarIcon
+                      key={i}
+                      size={10}
+                      className={i < location.rating ? "text-amber-400 fill-amber-400" : "text-white/10"}
+                    />
+                  ))}
+                </div>
+                <div className="text-[9px] font-bold text-cyan-glow uppercase tracking-widest opacity-60">
+                  {location.category}
+                </div>
+              </div>
+            </div>
+          </GlassPanel>
+        </motion.div>
 
-        <div className="px-1">
-          <h4 className="text-sm font-bold text-white leading-tight truncate drop-shadow-md" title={location.name}>
-            {location.name}
-          </h4>
-          <div className="flex items-center mt-1">
-            <span className="text-xs text-yellow-400 font-bold drop-shadow-sm">
-              {"★".repeat(location.rating)}
-            </span>
-          </div>
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 flex items-center justify-center">
+          <div className="w-2 h-2 bg-cyan-glow rounded-full shadow-neon ring-4 ring-cyan-glow/10"></div>
+          <div className="absolute -bottom-1 w-1 h-1 bg-cyan-glow/40 rounded-full animate-ping"></div>
         </div>
-
-        <div
-          className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-zinc-950 border-r-2 border-b-2 border-white/60 rotate-45"></div>
       </div>
     </Marker>
   );
 });
+
+LocationCard.displayName = "LocationCard";
 
 export default LocationCard;

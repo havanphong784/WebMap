@@ -84,5 +84,25 @@ router.get('/user/:uid', async (req, res) => {
   }
 });
 
+router.get('/trending', async (req, res) => {
+  try {
+    const { user_id } = req.query;
+    const query = `
+        SELECT l.*,
+               (SELECT COUNT(*) FROM likes WHERE location_id = l.id)                  AS likes_count,
+               (SELECT COUNT(*) FROM comments WHERE location_id = l.id)               AS comments_count,
+               EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $1) AS is_liked
+        FROM locations l
+        WHERE l.is_public = true
+        ORDER BY likes_count DESC, l.created_at DESC LIMIT 20;
+    `;
+    const result = await pool.query(query, [user_id || 'guest']);
+    res.status(200).json({success: true, data: result.rows});
+  } catch (error) {
+    console.error("Lỗi lấy địa điểm xu hướng:", error);
+    res.status(500).json({success: false, message: 'Lỗi Server'});
+  }
+});
+
 export default router;
 

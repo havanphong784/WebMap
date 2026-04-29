@@ -1,92 +1,81 @@
-export const API_KEY = "a18c9f5b-e70f-43d5-afb5-7da5351c027d";
+import {motion} from 'framer-motion';
 
 export const styleVetor = [
   {
     id: "dark",
-    name: "Dark Mode",
+    name: "Obsidian Deep",
     url: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
   },
   {
     id: "light",
-    name: "Positron (Sáng)",
+    name: "Aether Light",
     url: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
   },
   {
-    id: "alidade_smooth",
-    name: "Alidade smooth",
-    url: "https://tiles.stadiamaps.com/styles/alidade_smooth.json",
-  },
-  {
     id: "alidade_smooth_dark",
-    name: "Alidade smooth dark",
+    name: "Alidade Dark",
     url: "https://tiles.stadiamaps.com/styles/alidade_smooth_dark.json",
   },
   {
     id: "stamen_terrain",
-    name: "Stamen terrain",
+    name: "Topo Terrain",
     url: "https://tiles.stadiamaps.com/styles/stamen_terrain.json",
   },
   {
     id: "alidade_satellite",
-    name: "Alidade satellite",
+    name: "Satellite View",
     url: "https://tiles.stadiamaps.com/styles/alidade_satellite.json",
   },
-
 ];
 
-import {useState} from 'react';
-
-export default function MapStyleSwitcher({currentStyleUrl, onStyleChange}) {
-  const [isOpen, setIsOpen] = useState(false);
-
+export default function MapStyleSwitcher({currentStyleUrl, onStyleChange, isStandalone = true}) {
   const handleStyleSelection = (url) => {
     onStyleChange(url);
-    setIsOpen(false);
   };
+
+  const listContent = (
+    <motion.div
+      initial={{opacity: 0, scale: 0.9, x: 20}}
+      animate={{opacity: 1, scale: 1, x: 0}}
+      exit={{opacity: 0, scale: 0.9, x: 20}}
+      className="flex flex-col gap-2 glass-panel p-3 border-white/10 shadow-2xl min-w-37.5 bg-obsidian/80 backdrop-blur-3xl"
+    >
+      <div className="flex items-center gap-2 mb-2 px-2">
+        <div className="w-1.5 h-1.5 rounded-full bg-cyan-glow shadow-neon"></div>
+        <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+          Kiểu Bản Đồ
+        </h3>
+      </div>
+
+      <div className="space-y-1">
+        {styleVetor.map((style) => {
+          const isActive = currentStyleUrl === style.url;
+
+          return (
+            <motion.button
+              key={style.id}
+              whileHover={{x: 4}}
+              whileTap={{scale: 0.98}}
+              onClick={() => handleStyleSelection(style.url)}
+              className={`w-full px-4 py-2.5 text-[11px] font-bold rounded-xl transition-all duration-300 text-left uppercase tracking-wider border ${
+                isActive
+                  ? "bg-cyan-glow text-obsidian border-cyan-glow shadow-neon"
+                  : "bg-white/5 text-zinc-400 border-transparent hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {style.name}
+            </motion.button>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+
+  if (!isStandalone) return listContent;
 
   return (
     <div className="absolute bottom-8 left-4 md:top-4 md:bottom-auto z-[100]">
-
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-md rounded-full shadow-lg border border-white/20 hover:bg-white/30 transition-all outline-none"
-        aria-label="Toggle map styles"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-          <polyline points="2 17 12 22 22 17"></polyline>
-          <polyline points="2 12 12 17 22 12"></polyline>
-        </svg>
-      </button>
-
-      {isOpen && (
-        <div
-          className="flex flex-col gap-2 bg-white/10 p-2 rounded-xl backdrop-blur-md shadow-lg border border-white/20 mt-2 min-w-[200px] animate-in fade-in zoom-in duration-200">
-          <h3
-            className="text-xs font-bold text-white uppercase tracking-wider text-center drop-shadow-md pb-1 border-b border-white/10">
-            Kiểu Bản Đồ
-          </h3>
-
-          {styleVetor.map((style) => {
-            const isActive = currentStyleUrl === style.url;
-
-            return (
-              <button
-                key={style.id}
-                onClick={() => handleStyleSelection(style.url)}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 whitespace-nowrap text-left ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-inner"
-                    : "bg-white/80 text-gray-700 hover:bg-white"
-                }`}
-              >
-                {style.name}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {listContent}
     </div>
   );
 }
