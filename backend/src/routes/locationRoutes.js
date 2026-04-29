@@ -7,12 +7,14 @@ router.get('/', async (req, res) => {
   try {
     const {user_id, minLng, maxLng, minLat, maxLat} = req.query;
     const query = `
-        SELECT *
-        FROM locations
-        WHERE (lat BETWEEN $1 AND $2)
-          AND (lng BETWEEN $3 AND $4)
-          AND (is_public = true OR user_id = $5)
-        ORDER BY created_at DESC LIMIT 500; -- Tránh sập server nếu khu vực đó có quá nhiều điểm
+        SELECT l.*,
+               (SELECT COUNT(*) FROM likes WHERE location_id = l.id)                  AS likes_count,
+               EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $5) AS is_liked
+        FROM locations l
+        WHERE (l.lat BETWEEN $1 AND $2)
+          AND (l.lng BETWEEN $3 AND $4)
+          AND (l.is_public = true OR l.user_id = $5)
+        ORDER BY l.created_at DESC LIMIT 500;
     `;
     const values = [minLat, maxLat, minLng, maxLng, user_id || 'guest'];
     const result = await pool.query(query, values);

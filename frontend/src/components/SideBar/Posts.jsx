@@ -1,93 +1,118 @@
-import {useLocationStore} from "../../context/useLocationsStore.jsx";
+import { useEffect, useState } from "react";
+import { useLocationStore } from "../../context/useLocationsStore.jsx";
+import { useAuthStore } from "../../context/AuthContext.jsx";
 
-export default function LocationSidebar({location, onClose}) {
-  const fetchRoute = useLocationStore(state => state.fetchRoute);
-  const routeLoading = useLocationStore(state => state.routeLoading);
-  const clearRoute = useLocationStore(state => state.clearRoute);
-  const setRouteLoading = useLocationStore(state => state.setRouteLoading);
+export default function LocationSidebar({ location, onClose }) {
+  const { fetchRoute, routeLoading, clearRoute, setRouteLoading, toggleLike, postComment } = useLocationStore();
+  const { user } = useAuthStore();
+
+  const [comments, setComments] = useState([]);
+  const [commentLoading, setCommentLoading] = useState(false);
+
+  useEffect(() => {
+    if (location?.id) {
+      loadComments();
+    }
+  }, [location?.id]);
+
+  const loadComments = async () => {
+    setCommentLoading(true);
+    try {
+      const response = await fetch(`http://localhost:3000/api/comments/${location.id}/comments`);
+      const result = await response.json();
+      if (result.success) setComments(result.data);
+    } catch (err) {
+      console.error("Lỗi tải bình luận:", err);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const handleSendComment = async (e) => {
+    if (e.key === 'Enter' && e.target.value.trim()) {
+      const content = e.target.value;
+      e.target.value = '';
+      const result = await postComment(location.id, user.uid, content);
+      if (result.success) {
+        loadComments();
+      }
+    }
+  };
 
   if (!location) return null;
 
   const handleDirections = () => {
     if (routeLoading) return;
-
     clearRoute();
     setRouteLoading(true);
-
     if (!navigator.geolocation) {
       setRouteLoading(false);
-      alert("Trình duyệt của bạn không hỗ trợ định vị.");
+      alert("Trình duyệt không hỗ trợ định vị.");
       return;
     }
-
     navigator.geolocation.getCurrentPosition((pos) => {
       const start = [pos.coords.longitude, pos.coords.latitude];
       const end = [location.lng, location.lat];
       fetchRoute(start, end);
     }, () => {
       setRouteLoading(false);
-      alert("Không thể lấy vị trí của bạn. Vui lòng cho phép quyền truy cập vị trí.");
+      alert("Vui lòng cho phép truy cập vị trí.");
     });
   };
 
   return (
-    <div
-      className="absolute top-0 right-0 w-124 h-full bg-zinc-950/90 backdrop-blur-xl shadow-2xl border-l border-white/10 z-100 flex flex-col transform transition-transform duration-300">
-
+    <div className="absolute top-0 right-0 w-96 h-full bg-zinc-950/90 backdrop-blur-xl shadow-2xl border-l border-white/10 z-[100] flex flex-col animate-in slide-in-from-right duration-300">
       <div className="p-4 flex justify-between items-center border-b border-white/10">
         <h2 className="font-bold text-lg text-white">Chi tiết địa điểm</h2>
-        <button
-          onClick={onClose}
-          className="text-zinc-400 hover:text-white hover:bg-white/10 p-2 rounded-full transition-colors"
-        >
-          ✕
-        </button>
+        <button onClick={onClose} className="text-zinc-400 hover:text-white p-2">✕</button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-        <img
-          src={location.image_url || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&q=80"}
-          alt={location.name}
-          className="w-full aspect-video object-cover rounded-xl mb-4 shadow-lg border border-white/5"
-        />
+        <img src={location.image_url || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500"} className="w-full aspect-video object-cover rounded-xl mb-4 shadow-lg border border-white/10" />
+        <h1 className="text-2xl font-black text-white">{location.name}</h1>
 
-        <div className="mb-4">
-          <h1 className="text-2xl font-black text-white leading-tight">{location.name}</h1>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="bg-yellow-900/50 text-yellow-400 text-sm font-bold px-2 py-1 rounded">
-              ⭐ {location.rating}/5
-            </span>
-            <span className="text-xs text-zinc-400 bg-zinc-800 px-2 py-1 rounded-full uppercase tracking-wider">
-              {location.category}
-            </span>
+        <div className="flex items-center gap-4 my-4">
+          <button
+            onClick={() => toggleLike(location.id, user.uid)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition ${location.is_liked ? 'bg-red-500/20 border-red-500 text-red-500' : 'border-white/10 text-zinc-400'}`}
+          >
+            <span>{location.is_liked ? '❤️' : '🤍'}</span>
+            <span className="font-bold">{location.likes_count || 0}</span>
+          </button>
+          <button onClick={handleDirections} disabled={routeLoading} className="bg-blue-600 text-white px-4 py-2 rounded-full font-bold text-sm">
+            {routeLoading ? "..." : "🚗 Chỉ đường"}
+          </button>
+        </div>
+
+        <p className="text-zinc-400 text-sm mb-6">{location.review_text}</p>
+
+        <div className="border-t border-white/10 pt-6">
+          <h3 className="text-white font-bold mb-4">💬 Bình luận</h3>
+
+          <div className="flex gap-2 mb-6">
+            <img src={user?.photoURL} className="w-8 h-8 rounded-full border border-white/20" />
+            <input
+              type="text" placeholder="Viết bình luận..."
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+              onKeyDown={handleSendComment}
+            />
           </div>
-        </div>
 
-        <div className="flex gap-2 text-zinc-300 text-sm mb-6 bg-blue-900/20 p-3 rounded-lg border border-blue-900/30">
-          <span>📍</span>
-          <p>{location.address}</p>
-        </div>
-
-        <button
-          onClick={handleDirections}
-          disabled={routeLoading}
-          className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mb-4 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-wait transition"
-        >
-          {routeLoading ? "Đang chỉ đường..." : "🚗 Chỉ đường đến đây"}
-        </button>
-
-        <div className="mb-8">
-          <h3 className="font-bold text-zinc-100 mb-2 border-b border-white/10 pb-1">Bài Review</h3>
-          <p className="text-zinc-400 leading-relaxed text-sm">
-            {location.review_text || "Người dùng chưa để lại bài đánh giá nào."}
-          </p>
-        </div>
-
-        <div className="border-t border-white/10 pt-4">
-          <h3 className="font-bold text-zinc-100 mb-3">💬 Bình luận</h3>
-          <div
-            className="bg-zinc-900 text-zinc-500 p-4 rounded-lg text-center text-sm border border-dashed border-zinc-700">
-            Tính năng bình luận sẽ sớm ra mắt...
+          <div className="space-y-4">
+            {commentLoading ? <p className="text-zinc-500 text-xs text-center py-4">Đang tải...</p> :
+              comments.length > 0 ? comments.map(c => (
+                <div key={c.id} className="flex gap-3">
+                  <img src={c.avatar_url || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"} className="w-8 h-8 rounded-full" />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs font-bold text-zinc-300">{c.name}</p>
+                      <p className="text-[10px] text-zinc-600">{new Date(c.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <p className="text-sm text-zinc-400 mt-0.5">{c.content}</p>
+                  </div>
+                </div>
+              )) : <p className="text-zinc-600 text-xs text-center py-4">Chưa có bình luận nào.</p>
+            }
           </div>
         </div>
       </div>

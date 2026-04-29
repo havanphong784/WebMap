@@ -20,3 +20,19 @@ export const searchAddress = async (query) => {
     return [];
   }
 };
+
+export const getCurrentPosition = () =>
+  new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Trình duyệt không hỗ trợ định vị"));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({
+        lng: pos.coords.longitude,
+        lat: pos.coords.latitude
+      }),
+      reject
+    );
+  });

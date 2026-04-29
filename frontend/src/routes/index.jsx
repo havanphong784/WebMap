@@ -6,20 +6,21 @@ import PrivateRoutes from "../components/PrivateRoutes/index.jsx";
 export const routes = [
   {
     path: '/',
-    element: <PrivateRoutes/>,
+    element: <PrivateRoutes />,
     children: [
       {
-        path: "/",
-        element: <MapViewer/>
+        index: true,
+        element: <MapViewer />
       },
       {
         path: "*",
-        element: <Errors404/>
+        element: <Errors404 />
       }
     ]
   },
+
   {
     path: "login",
-    element: <Login/>
+    element: <Login />
   }
 ]

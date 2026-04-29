@@ -1,30 +1,33 @@
-import {signInWithPopup} from "firebase/auth";
-import {useNavigate} from "react-router-dom";
-import {auth, googleProvider} from "../../config/firebase";
-import {syncUserWithBackend} from "../../api/auth.api.js";
-import {useContext} from "react";
-import {AuthContext} from "../../context/AuthContext.jsx";
+import { useEffect } from "react";
+import { signInWithPopup } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { auth, googleProvider } from "../../config/firebase";
+import { syncUserWithBackend } from "../../api/auth.api.js";
+import { useAuthStore } from "../../context/AuthContext.jsx";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { user, loading } = useAuthStore();
 
-  const user = useContext(AuthContext);
-
-  if (user) {
-    navigate("/");
-  }
+  useEffect(() => {
+    if (user && !loading) {
+      navigate("/", { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       console.log("Đăng nhập thành công!", result.user.displayName);
-      const backendData = await syncUserWithBackend(result.user);
-      navigate("/");
+
+      await syncUserWithBackend(result.user);
+
     } catch (error) {
       console.error("Lỗi đăng nhập:", error.message);
       alert("Đăng nhập thất bại: " + error.message);
     }
   };
+
 
   return (
     <div className="h-screen w-full flex items-center justify-center bg-gray-900 text-white">

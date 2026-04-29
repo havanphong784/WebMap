@@ -74,6 +74,45 @@ export const useLocationStore = create((set) => ({
     }
   },
 
-  clearRoute: () => set({routeData: null})
+  clearRoute: () => set({routeData: null}),
+
+  toggleLike: async (locationId, userId) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/likes/${locationId}/like`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({user_id: userId})
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        set((state) => ({
+          locations: state.locations.map(loc =>
+            loc.id === locationId
+              ? {
+                ...loc,
+                is_liked: result.action === 'liked',
+                likes_count: result.action === 'liked' ? Number(loc.likes_count) + 1 : Number(loc.likes_count) - 1
+              }
+              : loc
+          )
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  },
+  postComment: async (locationId, userId, content) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/comments/${locationId}/comments`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({user_id: userId, content})
+      });
+      return await response.json();
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
 }));
