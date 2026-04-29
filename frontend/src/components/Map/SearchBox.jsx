@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {searchAddress} from "../../utils/Map.jsx";
+import {searchAddress} from "../../utils/geocoding.js";
 
 export default function SearchBox({onSelectLocation}) {
   const [query, setQuery] = useState("");

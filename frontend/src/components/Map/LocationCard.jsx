@@ -1,7 +1,7 @@
-import {Marker} from "react-map-gl/maplibre";
-import {useState} from "react";
+import { Marker } from "react-map-gl/maplibre";
+import { useState, memo } from "react";
 
-export default function LocationCard({location, onClick}) {
+const LocationCard = memo(({ location, onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -9,25 +9,26 @@ export default function LocationCard({location, onClick}) {
       longitude={Number(location.lng)}
       latitude={Number(location.lat)}
       anchor="bottom"
-      style={{zIndex: isHovered ? 100 : 1}}
+      style={{ zIndex: isHovered ? 100 : 1 }}
       onClick={(e) => {
         e.originalEvent.stopPropagation();
         onClick(location);
       }}
     >
       <div onMouseEnter={() => setIsHovered(true)}
-           onMouseLeave={() => setIsHovered(false)}
-           onClick={(e) => {
-             e.stopPropagation();
-             onClick(location);
-           }}
-           className="bg-zinc-950 border-2 border-white/60 rounded-xl p-1.5 w-48 cursor-pointer transition-all duration-300 hover:scale-110 hover:border-white shadow-[0_15px_30px_rgba(0,0,0,0.8),_0_0_15px_rgba(255,255,255,0.15)] group">
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick(location);
+        }}
+        className="bg-zinc-950 border-2 border-white/60 rounded-xl p-1.5 w-48 cursor-pointer transition-all duration-300 hover:scale-105 hover:border-white shadow-[0_15px_30px_rgba(0,0,0,0.8),_0_0_15px_rgba(255,255,255,0.15)] group">
 
         {location.image_url && (
           <div className="overflow-hidden rounded-lg mb-2 border border-white/10">
             <img
               src={location.image_url}
               alt={location.name}
+              loading="lazy"
               className="w-full aspect-video object-cover"
             />
           </div>
@@ -49,4 +50,6 @@ export default function LocationCard({location, onClick}) {
       </div>
     </Marker>
   );
-}
+});
+
+export default LocationCard;
