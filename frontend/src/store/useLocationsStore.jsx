@@ -57,7 +57,8 @@ export const useLocationStore = create((set) => ({
   fetchRoute: async (start, end) => {
     set({ routeLoading: true, routeData: null });
     try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`;
+      // Sử dụng overview=simplified để giảm dung lượng dữ liệu truyền tải, giúp load nhanh hơn
+      const url = `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=simplified&geometries=geojson`;
       const response = await fetch(url);
       const data = await response.json();
       if (data.code === 'Ok') {
@@ -69,6 +70,7 @@ export const useLocationStore = create((set) => ({
       set({ routeLoading: false });
     }
   },
+
 
   clearRoute: () => set({ routeData: null }),
 

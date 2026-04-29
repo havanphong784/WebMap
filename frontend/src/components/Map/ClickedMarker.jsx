@@ -5,12 +5,15 @@ import {useLocationStore} from "../../store/useLocationsStore.jsx";
 
 export default function ClickedMarker({point, setPoint}) {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const fetchRoute = useLocationStore((state) => state.fetchRoute);
+  const {fetchRoute, routeLoading, setRouteLoading} = useLocationStore();
 
   if (!point) return null;
 
   const handleGetDirections = (e) => {
     e.stopPropagation();
+    if (routeLoading) return;
+
+    setRouteLoading(true);
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -19,10 +22,13 @@ export default function ClickedMarker({point, setPoint}) {
         fetchRoute(start, end);
       },
       () => {
+        setRouteLoading(false);
         alert("Không thể lấy vị trí của bạn. Vui lòng cho phép quyền truy cập vị trí.");
-      }
+      },
+      {timeout: 10000}
     );
   };
+
 
   return (
     <>
@@ -49,10 +55,12 @@ export default function ClickedMarker({point, setPoint}) {
             </button>
             <button
               onClick={handleGetDirections}
-              className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white text-xs py-2 px-3 rounded-lg transition"
+              disabled={routeLoading}
+              className={`flex items-center justify-center gap-2 text-white text-xs py-2 px-3 rounded-lg transition ${routeLoading ? 'bg-zinc-600' : 'bg-blue-500 hover:bg-blue-600'}`}
             >
-              🚗 Chỉ đường
+              {routeLoading ? "⏳ Đang tính toán..." : "🚗 Chỉ đường"}
             </button>
+
           </div>
         </Popup>
       )}
