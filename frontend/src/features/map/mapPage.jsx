@@ -29,6 +29,7 @@ export default function MapPage() {
   const [infoClicked, setInfoClicked] = useState(null);
   const [activeStyle, setActiveStyle] = useState(colorfull);
   const [showStyleSwitcher, setShowStyleSwitcher] = useState(false);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   const fetchLocations = useLocationStore(state => state.fetchLocations);
   const locations = useLocationStore(state => state.locations);
@@ -53,18 +54,22 @@ export default function MapPage() {
   }, []);
 
   useEffect(() => {
-    if (mapRef.current) {
-      const loc = routerLocation.state.focusLocation;
-      const lng = parseFloat(loc.lng);
-      const lat = parseFloat(loc.lat);
+    const focusLocation = routerLocation.state?.focusLocation;
+    if (!focusLocation || !isMapReady) return;
 
-      if (!isNaN(lng) && !isNaN(lat)) {
-        setTimeout(() => {
-          flyToLocation(lng, lat, 17);
-        }, 100);
-      }
-    }
-  }, [routerLocation.state]);
+    const lng = parseFloat(focusLocation.lng);
+    const lat = parseFloat(focusLocation.lat);
+
+    if (Number.isNaN(lng) || Number.isNaN(lat)) return;
+
+    const timer = setTimeout(() => {
+      setActiveLocation(focusLocation);
+      setInfoClicked(null);
+      flyToLocation(lng, lat, 17);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [routerLocation.state, isMapReady, flyToLocation]);
 
   useEffect(() => {
     const coordinates = routeData?.coordinates;
@@ -161,7 +166,10 @@ export default function MapPage() {
     <div className="h-screen w-full relative overflow-hidden bg-map-bg text-white">
       <Map ref={mapRef}
            mapStyle={activeStyle}
-           onLoad={handleMapChange}
+           onLoad={() => {
+             setIsMapReady(true);
+             handleMapChange();
+           }}
            onMoveEnd={handleMapChange}
            mapLib={maplibregl}
            antialias={true}
@@ -176,7 +184,7 @@ export default function MapPage() {
            style={{width: '100%', height: '100%'}}
            onClick={handleClick}
       >
-        <div className="absolute top-6 right-6 z-[100]">
+        <div className="absolute top-6 right-6 z-100">
           <motion.div
             whileHover={{scale: 1.05}}
             whileTap={{scale: 0.95}}
@@ -199,7 +207,7 @@ export default function MapPage() {
           </motion.div>
         </div>
 
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 z-[100] flex flex-col gap-4">
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 z-100 flex flex-col gap-4">
           <ActionButton
             variant="icon"
             onClick={() => setShowStyleSwitcher(!showStyleSwitcher)}
@@ -221,7 +229,7 @@ export default function MapPage() {
             <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={zoomIn}>
               <PlusIcon size={22} className="text-text-primary"/>
             </ActionButton>
-            <div className="h-[1px] w-full bg-glass-border mx-auto" style={{width: '60%'}}></div>
+            <div className="h-px w-full bg-glass-border mx-auto" style={{width: '60%'}}></div>
             <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={zoomOut}>
               <MinusIcon size={22} className="text-text-primary"/>
             </ActionButton>

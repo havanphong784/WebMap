@@ -40,7 +40,11 @@ const DiscoveryFeed = () => {
   }, [user]);
 
   useEffect(() => {
-    fetchTrending();
+    const timeoutId = window.setTimeout(() => {
+      fetchTrending();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [fetchTrending]);
 
   const filteredPosts = activeCategory === 'All'
@@ -113,7 +117,7 @@ const DiscoveryFeed = () => {
                 animate={{opacity: 1, y: 0}}
                 transition={{delay: i * 0.05}}
                 className="break-inside-avoid relative group cursor-pointer glass-panel rounded-3xl border-glass-border overflow-hidden hover:border-cyan-glow/20 transition-all duration-500"
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/", {state: {focusLocation: post}})}
               >
                 <img
                   src={post.image_url || `https://picsum.photos/400/600?random=${post.id}`}
@@ -156,7 +160,7 @@ const DiscoveryFeed = () => {
       </div>
 
       <div className="fixed bottom-32 right-6 z-20">
-        <ActionButton variant="primary" className="!p-5 shadow-neon" onClick={() => navigate('/')}>
+        <ActionButton variant="primary" className="p-5! shadow-neon" onClick={() => navigate('/')}>
           <PlusIcon size={28}/>
         </ActionButton>
       </div>
