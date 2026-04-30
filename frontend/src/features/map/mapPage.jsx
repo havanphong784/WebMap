@@ -18,6 +18,8 @@ import {AnimatePresence, motion} from 'framer-motion';
 import {LocateIcon, MinusIcon, PlusIcon, SpinnerIcon, StyleIcon} from "../../shared/components/common/icons.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
+import colorfull from "./style/colorful";
+
 
 export default function MapPage() {
   const navigate = useNavigate();
@@ -25,7 +27,7 @@ export default function MapPage() {
   const mapRef = useRef(null);
 
   const [infoClicked, setInfoClicked] = useState(null);
-  const [activeStyle, setActiveStyle] = useState("https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json");
+  const [activeStyle, setActiveStyle] = useState(colorfull);
   const [showStyleSwitcher, setShowStyleSwitcher] = useState(false);
 
   const fetchLocations = useLocationStore(state => state.fetchLocations);
@@ -156,8 +158,9 @@ export default function MapPage() {
   };
 
   return (
-    <div className="h-screen   w-full relative overflow-hidden bg-obsidian">
+    <div className="h-screen w-full relative overflow-hidden bg-map-bg text-white">
       <Map ref={mapRef}
+           mapStyle={activeStyle}
            onLoad={handleMapChange}
            onMoveEnd={handleMapChange}
            mapLib={maplibregl}
@@ -171,7 +174,6 @@ export default function MapPage() {
              bearing: 0
            }}
            style={{width: '100%', height: '100%'}}
-           mapStyle={activeStyle}
            onClick={handleClick}
       >
         <div className="absolute top-6 right-6 z-[100]">
@@ -182,16 +184,16 @@ export default function MapPage() {
               if (user?.uid) navigate(`/profile/${user.uid}`);
               else navigate('/login');
             }}
-            className="flex items-center gap-2 glass-panel p-1.5 pr-4 border-white/20 cursor-pointer shadow-neon"
+            className="flex items-center gap-2 glass-panel p-1.5 pr-4 border-glass-border cursor-pointer shadow-neon"
           >
-            <div className="w-9 h-9 rounded-full border-2 border-cyan-glow shadow-neon overflow-hidden bg-white/10">
+            <div className="w-9 h-9 rounded-full border-2 border-cyan-glow shadow-neon overflow-hidden bg-glass-white">
               <img
                 src={user?.photoURL || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"}
                 className="w-full h-full object-cover"
                 alt="user"
               />
             </div>
-            <span className="text-white text-[10px] font-bold tracking-widest uppercase">
+            <span className="text-text-primary text-[10px] font-bold tracking-widest uppercase">
               {user ? 'Hồ sơ' : 'Đăng nhập'}
             </span>
           </motion.div>
@@ -203,7 +205,7 @@ export default function MapPage() {
             onClick={() => setShowStyleSwitcher(!showStyleSwitcher)}
             className={showStyleSwitcher ? "bg-cyan-glow/20 border-cyan-glow" : ""}
           >
-            <StyleIcon size={22} className={showStyleSwitcher ? "text-cyan-glow" : "text-white"}/>
+            <StyleIcon size={22} className={showStyleSwitcher ? "text-cyan-glow" : "text-text-primary"}/>
           </ActionButton>
 
           <ActionButton
@@ -215,13 +217,13 @@ export default function MapPage() {
               <LocateIcon size={22} className="text-cyan-glow"/>}
           </ActionButton>
 
-          <div className="flex flex-col gap-2 glass-panel p-2 rounded-2xl border-white/10">
+          <div className="flex flex-col gap-2 glass-panel p-2 rounded-2xl border-glass-border">
             <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={zoomIn}>
-              <PlusIcon size={22} className="text-white"/>
+              <PlusIcon size={22} className="text-text-primary"/>
             </ActionButton>
-            <div className="h-[1px] w-full bg-white/10 mx-auto" style={{width: '60%'}}></div>
+            <div className="h-[1px] w-full bg-glass-border mx-auto" style={{width: '60%'}}></div>
             <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={zoomOut}>
-              <MinusIcon size={22} className="text-white"/>
+              <MinusIcon size={22} className="text-text-primary"/>
             </ActionButton>
           </div>
         </div>
@@ -260,11 +262,12 @@ export default function MapPage() {
       </Map>
 
       <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-xl pointer-events-none">
-        <GlassPanel className="py-3 px-6 rounded-2xl bg-black/40 border-white/5 flex items-center justify-between">
+        <GlassPanel
+          className="py-3 px-6 rounded-2xl bg-glass-obsidian border-glass-border flex items-center justify-between shadow-glass">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-sunset animate-pulse shadow-sunset"></div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-300">
-              Cộng đồng <span className="text-white">Trực tuyến</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+              Cộng đồng <span className="text-text-primary">Trực tuyến</span>
             </span>
           </div>
           <div className="flex -space-x-3">

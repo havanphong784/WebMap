@@ -40,7 +40,7 @@ export default function ClickedMarker({point, setPoint}) {
       <Marker longitude={point.lng} latitude={point.lat} anchor="center">
         <div className="relative flex items-center justify-center">
           <div className="absolute w-10 h-10 bg-cyan-glow/20 rounded-full animate-ping"></div>
-          <div className="w-4 h-4 bg-cyan-glow rounded-full shadow-neon border-2 border-white z-10"></div>
+          <div className="w-4 h-4 bg-cyan-glow rounded-full shadow-neon border-2 border-text-primary z-10"></div>
 
           <AnimatePresence>
             {!isFormOpen && (
@@ -51,26 +51,26 @@ export default function ClickedMarker({point, setPoint}) {
                 className="absolute bottom-8 left-1/2 z-200"
               >
                 <GlassPanel
-                  className="w-64 p-5 border-white/20 bg-black/95 backdrop-blur-3xl shadow-2xl rounded-2xl overflow-hidden ring-1 ring-white/10">
+                  className="w-64 p-5 border-glass-border-bright bg-glass-obsidian backdrop-blur-3xl shadow-glass rounded-2xl overflow-hidden ring-1 ring-glass-border">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2">
                       <div className="p-1.5 rounded-xl bg-cyan-glow/10 text-cyan-glow">
                         <PinIcon size={14}/>
                       </div>
-                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Tọa độ mới</span>
+                      <span className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Tọa độ mới</span>
                     </div>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setPoint(null);
                       }}
-                      className="text-zinc-500 hover:text-white transition-colors p-1"
+                      className="text-text-muted hover:text-text-primary transition-colors p-1"
                     >
                       <CloseIcon size={16}/>
                     </button>
                   </div>
 
-                  <p className="text-[12px] font-bold text-white mb-5 leading-tight line-clamp-2">
+                  <p className="text-[12px] font-bold text-text-primary mb-5 leading-tight line-clamp-2">
                     {point.address.display_name || "Chưa xác định địa chỉ"}
                   </p>
 
@@ -85,7 +85,7 @@ export default function ClickedMarker({point, setPoint}) {
                     <button
                       onClick={handleGetDirections}
                       disabled={routeLoading}
-                      className="w-full flex items-center justify-center gap-2 glass-panel border-white/10 bg-white/5 py-2.5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all text-[10px] font-bold uppercase tracking-widest"
+                      className="w-full flex items-center justify-center gap-2 glass-panel border-glass-border bg-glass-white py-2.5 text-text-secondary hover:text-text-primary hover:bg-white/10 transition-all text-[10px] font-bold uppercase tracking-widest"
                     >
                       {routeLoading ? (
                         <SpinnerIcon size={14} className="animate-spin text-cyan-glow"/>
@@ -95,7 +95,7 @@ export default function ClickedMarker({point, setPoint}) {
                   </div>
                 </GlassPanel>
                 <div
-                  className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-black/95 border-b border-r border-white/10 rotate-45"></div>
+                  className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-glass-obsidian border-b border-r border-glass-border rotate-45"></div>
               </motion.div>
             )}
           </AnimatePresence>

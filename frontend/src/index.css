@@ -2,17 +2,38 @@
 @import "tailwindcss";
 
 @theme {
-    --color-obsidian: #0A0A0B;
-    --color-cyan-glow: #00F5FF;
-    --color-sunset: #FF5C00;
-    --color-glass-white: rgba(255, 255, 255, 0.05);
-    --color-glass-obsidian: rgba(10, 10, 11, 0.7);
-
+    /* Base Colors - New Navy Palette */
+    --color-map-bg: #021024;
+    --color-obsidian: #021024;
+    --color-obsidian-light: #052659;
+    --color-slate: #5483B3;
+    
+    /* Brand Accents */
+    --color-cyan-glow: #C1E8FF;
+    --color-sky-glow: #7DA0CA;
+    --color-sunset: #FF4B2B;
+    --color-emerald: #10B981;
+    
+    /* Text Hierarchy */
+    --color-text-primary: #FFFFFF;
+    --color-text-secondary: #7DA0CA; /* Use sky blue for secondary text */
+    --color-text-muted: #5483B3;     
+    --color-text-dim: #052659;       
+    
+    /* Glass & Borders */
+    --color-glass-white: rgba(193, 232, 255, 0.08); /* Tinted with Light Blue */
+    --color-glass-obsidian: rgba(2, 16, 36, 0.85);
+    --color-glass-border: rgba(125, 160, 202, 0.2);
+    --color-glass-border-bright: rgba(193, 232, 255, 0.3);
+    
+    /* Shadows */
+    --shadow-neon: 0 20px 40px rgba(193, 232, 255, 0.15);
+    --shadow-sunset: 0 20px 40px rgba(255, 75, 43, 0.15);
+    --shadow-glass: 0 40px 80px rgba(0, 0, 0, 0.6);
+    
+    /* Fonts */
     --font-plus: "Plus Jakarta Sans", sans-serif;
     --font-inter: "Inter", sans-serif;
-
-    --shadow-neon: 0 0 15px rgba(0, 245, 255, 0.4);
-    --shadow-sunset: 0 0 15px rgba(255, 92, 0, 0.4);
 }
 
 @layer base {
@@ -27,7 +48,7 @@
     /* Global Scrollbar Reset */
     * {
         scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        scrollbar-color: var(--color-glass-border-bright) transparent;
     }
 
     *::-webkit-scrollbar {
@@ -40,14 +61,15 @@
     }
 
     *::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--color-glass-border-bright);
         border-radius: 20px;
         border: 2px solid transparent;
         background-clip: content-box;
     }
 
     *::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.2);
+        background: var(--color-cyan-glow);
+        opacity: 0.5;
         background-clip: content-box;
     }
 }
@@ -55,14 +77,14 @@
 @utility glass-panel {
     background-color: var(--color-glass-obsidian);
     backdrop-filter: blur(40px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-glass-border);
     border-radius: 1.5rem;
 }
 
 @utility glass-card {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--color-glass-white);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-glass-border);
     border-radius: 1rem;
     transition: all 0.3s ease;
 }

@@ -5,8 +5,8 @@ const ActionButton = ({ children, variant = 'primary', loading = false, classNam
   const baseClasses = "flex items-center justify-center gap-2 font-bold transition-all duration-300 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100";
   const variants = {
     primary: "bg-cyan-glow text-obsidian shadow-neon rounded-full py-2.5 px-5 hover:scale-105",
-    glass: "glass-panel py-2.5 px-5 hover:bg-white/10",
-    icon: "glass-panel p-2.5 rounded-full hover:bg-white/10",
+    glass: "glass-panel py-2.5 px-5 hover:bg-glass-white",
+    icon: "glass-panel p-2.5 rounded-full hover:bg-glass-white",
   };
 
   return (

@@ -96,18 +96,18 @@ export default function LocationFormModal({point, onClose}) {
         className="w-full max-w-lg h-full max-h-[85vh] overflow-hidden flex flex-col"
       >
         <GlassPanel
-          className="w-full h-full flex flex-col border-white/10 bg-obsidian/90 shadow-2xl overflow-hidden p-0 rounded-3xl">
+          className="w-full h-full flex flex-col border-glass-border bg-glass-obsidian shadow-glass overflow-hidden p-0 rounded-3xl">
           <div
-            className="px-8 py-5 border-b border-white/5 flex justify-between items-center shrink-0 bg-obsidian/50 backdrop-blur-3xl z-10">
+            className="px-8 py-5 border-b border-glass-border flex justify-between items-center shrink-0 bg-glass-obsidian backdrop-blur-3xl z-10">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-cyan-glow/10 text-cyan-glow">
                 <PinIcon size={20}/>
               </div>
-              <h3 className="font-plus font-bold text-lg text-white uppercase tracking-wider">Đánh giá địa điểm</h3>
+              <h3 className="font-plus font-bold text-lg text-text-primary uppercase tracking-wider">Đánh giá địa điểm</h3>
             </div>
             <button
               onClick={onClose}
-              className="text-zinc-500 hover:text-white p-2 glass-panel !rounded-full border-white/5 transition-all"
+              className="text-text-muted hover:text-text-primary p-2 glass-panel !rounded-full border-glass-border transition-all"
             >
               <CloseIcon size={20}/>
             </button>
@@ -116,21 +116,21 @@ export default function LocationFormModal({point, onClose}) {
           <form onSubmit={handleSave} className="flex-1 overflow-y-auto no-scrollbar p-8 space-y-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Tên địa
+                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-2">Tên địa
                   điểm</label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-white/5 border border-white/5 text-white px-5 py-3.5 rounded-xl outline-none focus:border-cyan-glow/30 transition-all font-medium"
+                  className="w-full bg-glass-white border border-glass-border text-text-primary px-5 py-3.5 rounded-xl outline-none focus:border-cyan-glow/30 transition-all font-medium"
                 />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Địa
                   chỉ</label>
                 <div
-                  className="w-full bg-white/5 border border-white/5 text-zinc-400 px-5 py-3.5 rounded-xl text-xs leading-relaxed italic">
+                  className="w-full bg-glass-white border border-glass-border text-text-secondary px-5 py-3.5 rounded-xl text-xs leading-relaxed italic">
                   {address}
                 </div>
               </div>
@@ -138,28 +138,28 @@ export default function LocationFormModal({point, onClose}) {
 
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Danh
+                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-2">Danh
                   mục</label>
                 <div className="relative">
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-white/5 border border-white/5 text-white px-4 py-3.5 rounded-xl outline-none focus:border-cyan-glow/30 cursor-pointer font-medium appearance-none"
+                    className="w-full bg-glass-white border border-glass-border text-text-primary px-4 py-3.5 rounded-xl outline-none focus:border-cyan-glow/30 cursor-pointer font-medium appearance-none"
                   >
                     {categories.map(cat => (
                       <option key={cat.value} value={cat.value} className="bg-obsidian">{cat.label}</option>
                     ))}
                   </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
                     <PinIcon size={14}/>
                   </div>
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Xếp
+                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-2">Xếp
                   hạng</label>
                 <div
-                  className="flex items-center justify-center gap-2 bg-white/5 border border-white/5 px-4 py-3.5 rounded-xl">
+                  className="flex items-center justify-center gap-2 bg-glass-white border border-glass-border px-4 py-3.5 rounded-xl">
                   {[1, 2, 3, 4, 5].map(star => (
                     <button
                       key={star}
@@ -175,21 +175,21 @@ export default function LocationFormModal({point, onClose}) {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Cảm
+              <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-2">Cảm
                 nhận</label>
               <textarea
                 placeholder="Nơi này có gì đặc biệt..."
                 value={review}
                 onChange={(e) => setReview(e.target.value)}
-                className="w-full bg-white/5 border border-white/5 text-white px-5 py-4 rounded-xl h-32 resize-none outline-none focus:border-cyan-glow/30 transition-all font-medium custom-scrollbar"
+                className="w-full bg-glass-white border border-glass-border text-text-primary px-5 py-4 rounded-xl h-32 resize-none outline-none focus:border-cyan-glow/30 transition-all font-medium custom-scrollbar"
               />
             </div>
 
-            <div className="flex gap-4 p-1.5 bg-white/5 rounded-2xl border border-white/5">
+            <div className="flex gap-4 p-1.5 bg-glass-white rounded-2xl border border-glass-border">
               <button
                 type="button"
                 onClick={() => setIsPublic(true)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl transition-all duration-500 ${isPublic ? 'bg-cyan-glow/10 text-cyan-glow shadow-neon' : 'text-zinc-500 hover:text-zinc-300'}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl transition-all duration-500 ${isPublic ? 'bg-cyan-glow/10 text-cyan-glow shadow-neon' : 'text-text-muted hover:text-text-secondary'}`}
               >
                 <PublicIcon size={16}/>
                 <span className="text-xs font-bold uppercase tracking-wider">Công khai</span>
@@ -205,7 +205,7 @@ export default function LocationFormModal({point, onClose}) {
             </div>
 
             <div className="space-y-3">
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Hình ảnh</label>
+              <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Hình ảnh</label>
               {previewUrl ? (
                 <div className="relative group overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
                   <img src={previewUrl} className="w-full h-48 object-cover" alt="preview"/>
@@ -225,12 +225,12 @@ export default function LocationFormModal({point, onClose}) {
                 </div>
               ) : (
                 <label
-                  className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-white/5 rounded-2xl cursor-pointer bg-white/2 hover:bg-white/5 hover:border-cyan-glow/30 transition-all group">
-                  <div className="p-5 rounded-full bg-white/5 group-hover:scale-110 transition-transform mb-3">
-                    <PhotoIcon size={24} className="text-zinc-500 group-hover:text-cyan-glow transition-colors"/>
+                  className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-glass-border rounded-2xl cursor-pointer bg-glass-white hover:bg-white/5 hover:border-cyan-glow/30 transition-all group">
+                  <div className="p-5 rounded-full bg-glass-white group-hover:scale-110 transition-transform mb-3">
+                    <PhotoIcon size={24} className="text-text-muted group-hover:text-cyan-glow transition-colors"/>
                   </div>
                   <span
-                    className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Chọn ảnh từ thiết bị</span>
+                    className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Chọn ảnh từ thiết bị</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageChange}/>
                 </label>
               )}
@@ -240,7 +240,7 @@ export default function LocationFormModal({point, onClose}) {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-4 glass-panel border-white/5 bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all font-bold uppercase tracking-widest text-xs rounded-xl"
+                className="flex-1 py-4 glass-panel border-glass-border bg-glass-white text-text-secondary hover:text-text-primary hover:bg-white/10 transition-all font-bold uppercase tracking-widest text-xs rounded-xl"
               >
                 Hủy
               </button>
