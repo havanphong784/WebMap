@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import {motion} from "framer-motion";
 
 const styleVetor = [
   {
@@ -38,7 +38,7 @@ export default function MapStyleSwitcher({currentStyleUrl, onStyleChange, isStan
       initial={{opacity: 0, scale: 0.9, x: 20}}
       animate={{opacity: 1, scale: 1, x: 0}}
       exit={{opacity: 0, scale: 0.9, x: 20}}
-      className="flex flex-col gap-2 glass-panel p-3 border-white/10 shadow-2xl min-w-37.5 bg-obsidian/80 backdrop-blur-3xl"
+      className="flex flex-col gap-2 glass-panel p-3 border-white/10 shadow-2xl w-48 bg-obsidian/80 backdrop-blur-3xl"
     >
       <div className="flex items-center gap-2 mb-2 px-2">
         <div className="w-1.5 h-1.5 rounded-full bg-cyan-glow shadow-neon"></div>
@@ -47,7 +47,7 @@ export default function MapStyleSwitcher({currentStyleUrl, onStyleChange, isStan
         </h3>
       </div>
 
-      <div className="space-y-1">
+      <div className="flex flex-col gap-2">
         {styleVetor.map((style) => {
           const isActive = currentStyleUrl === style.url;
 

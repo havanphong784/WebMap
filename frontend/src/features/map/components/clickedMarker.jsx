@@ -1,21 +1,15 @@
-import { useState } from "react";
-import { Marker } from "react-map-gl/maplibre";
+import {useState} from "react";
+import {Marker} from "react-map-gl/maplibre";
 import LocationFormModal from "./locationFormModal.jsx";
-import { useLocationStore } from "../store/useLocationsStore.jsx";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  PlusIcon,
-  RouteIcon,
-  CloseIcon,
-  PinIcon,
-  SpinnerIcon
-} from "../../../shared/components/common/icons.jsx";
+import {useLocationStore} from "../store/useLocationsStore.jsx";
+import {AnimatePresence, motion} from "framer-motion";
+import {CloseIcon, PinIcon, PlusIcon, RouteIcon, SpinnerIcon} from "../../../shared/components/common/icons.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 
-export default function ClickedMarker({ point, setPoint }) {
+export default function ClickedMarker({point, setPoint}) {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const { fetchRoute, routeLoading, setRouteLoading } = useLocationStore();
+  const {fetchRoute, routeLoading, setRouteLoading} = useLocationStore();
 
   if (!point) return null;
 
@@ -37,7 +31,7 @@ export default function ClickedMarker({ point, setPoint }) {
         console.error("Lỗi định vị:", error);
         alert("Không thể lấy vị trí của bạn.");
       },
-      { timeout: 10000 }
+      {timeout: 10000}
     );
   };
 
@@ -51,16 +45,17 @@ export default function ClickedMarker({ point, setPoint }) {
           <AnimatePresence>
             {!isFormOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
-                animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
-                exit={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
-                className="absolute bottom-8 left-1/2 z-[200]"
+                initial={{opacity: 0, y: 10, scale: 0.9, x: "-50%"}}
+                animate={{opacity: 1, y: 0, scale: 1, x: "-50%"}}
+                exit={{opacity: 0, y: 10, scale: 0.9, x: "-50%"}}
+                className="absolute bottom-8 left-1/2 z-200"
               >
-                <GlassPanel className="w-64 p-5 border-white/20 bg-black/95 backdrop-blur-3xl shadow-2xl rounded-2xl overflow-hidden ring-1 ring-white/10">
+                <GlassPanel
+                  className="w-64 p-5 border-white/20 bg-black/95 backdrop-blur-3xl shadow-2xl rounded-2xl overflow-hidden ring-1 ring-white/10">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2">
                       <div className="p-1.5 rounded-xl bg-cyan-glow/10 text-cyan-glow">
-                        <PinIcon size={14} />
+                        <PinIcon size={14}/>
                       </div>
                       <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Tọa độ mới</span>
                     </div>
@@ -71,7 +66,7 @@ export default function ClickedMarker({ point, setPoint }) {
                       }}
                       className="text-zinc-500 hover:text-white transition-colors p-1"
                     >
-                      <CloseIcon size={16} />
+                      <CloseIcon size={16}/>
                     </button>
                   </div>
 
@@ -84,7 +79,7 @@ export default function ClickedMarker({ point, setPoint }) {
                       onClick={() => setIsFormOpen(true)}
                       className="w-full !py-2.5 gap-2 text-[10px] uppercase tracking-widest shadow-none"
                     >
-                      <PlusIcon size={14} /> Thêm địa điểm
+                      <PlusIcon size={14}/> Thêm địa điểm
                     </ActionButton>
 
                     <button
@@ -93,13 +88,14 @@ export default function ClickedMarker({ point, setPoint }) {
                       className="w-full flex items-center justify-center gap-2 glass-panel border-white/10 bg-white/5 py-2.5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all text-[10px] font-bold uppercase tracking-widest"
                     >
                       {routeLoading ? (
-                        <SpinnerIcon size={14} className="animate-spin text-cyan-glow" />
-                      ) : <RouteIcon size={14} className="text-cyan-glow" />}
+                        <SpinnerIcon size={14} className="animate-spin text-cyan-glow"/>
+                      ) : <RouteIcon size={14} className="text-cyan-glow"/>}
                       Chỉ đường
                     </button>
                   </div>
                 </GlassPanel>
-                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-black/95 border-b border-r border-white/10 rotate-45"></div>
+                <div
+                  className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-black/95 border-b border-r border-white/10 rotate-45"></div>
               </motion.div>
             )}
           </AnimatePresence>

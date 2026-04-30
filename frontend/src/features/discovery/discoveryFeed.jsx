@@ -1,19 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../auth/context/authContext.jsx";
+import {useCallback, useEffect, useState} from "react";
+import {motion} from "framer-motion";
+import {useNavigate} from "react-router-dom";
+import {useAuthStore} from "../auth/context/authContext.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
-import { apiClient } from "../../shared/api/apiClient.js";
+import {apiClient} from "../../shared/api/apiClient.js";
 import {
-  SearchIcon,
-  TrendingIcon,
-  FilterIcon,
-  PinIcon,
-  LikeIcon,
   CommentIcon,
+  FilterIcon,
+  LikeIcon,
+  PinIcon,
   PlusIcon,
-  SpinnerIcon
+  SearchIcon,
+  SpinnerIcon,
+  TrendingIcon
 } from "../../shared/components/common/icons.jsx";
 
 const DiscoveryFeed = () => {
@@ -40,7 +40,6 @@ const DiscoveryFeed = () => {
   }, [user]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTrending();
   }, [fetchTrending]);
 
@@ -114,7 +113,7 @@ const DiscoveryFeed = () => {
                 animate={{opacity: 1, y: 0}}
                 transition={{delay: i * 0.05}}
                 className="break-inside-avoid relative group cursor-pointer glass-panel rounded-3xl border-white/5 overflow-hidden hover:border-cyan-glow/30 transition-all duration-500"
-                onClick={() => navigate("/", {state: {focusLocation: post}})}
+                onClick={() => navigate("/")}
               >
                 <img
                   src={post.image_url || `https://picsum.photos/400/600?random=${post.id}`}
@@ -150,7 +149,8 @@ const DiscoveryFeed = () => {
         ) : (
           <div className="text-center py-40 glass-panel border-white/5 bg-white/2">
             <FilterIcon size={48} className="text-zinc-800 mx-auto mb-4 opacity-20"/>
-            <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-sm">Không tìm thấy địa điểm phù hợp</p>
+            <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-sm">Không tìm thấy địa điểm
+              phù hợp</p>
           </div>
         )}
       </div>
