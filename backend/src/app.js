@@ -8,7 +8,7 @@ import likeRoutes from "./routes/likeRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 
 const app = express();
-const PORT = process.env.DATABASE_URL || process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors({
   origin: true,
