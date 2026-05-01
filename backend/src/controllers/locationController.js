@@ -1,5 +1,6 @@
 import {
   createLocation,
+  deleteLocation,
   listLocations,
   listTrendingLocations,
   listUserLocations
@@ -55,3 +56,14 @@ export const getTrendingLocations = async (req, res) => {
   }
 };
 
+export const deleteLocationEntry = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.body;
+    const deleted = await deleteLocation({ locationId: id, userId: user_id });
+    res.status(200).json({ success: true, data: deleted });
+  } catch (error) {
+    console.error("Lỗi xóa địa điểm:", error);
+    res.status(403).json({ success: false, message: error.message || "Lỗi Server" });
+  }
+};

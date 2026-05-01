@@ -81,3 +81,13 @@ export const listTrendingLocations = async ({ userId }) => {
   return result.rows;
 };
 
+export const deleteLocation = async ({ locationId, userId }) => {
+  const result = await pool.query(
+    "DELETE FROM locations WHERE id = $1 AND user_id = $2 RETURNING *",
+    [locationId, userId]
+  );
+  if (result.rows.length === 0) {
+    throw new Error("Không tìm thấy địa điểm hoặc bạn không có quyền xóa");
+  }
+  return result.rows[0];
+};
