@@ -3,7 +3,7 @@ CREATE TABLE likes
 (
     id          SERIAL PRIMARY KEY,
     user_id     VARCHAR(128) NOT NULL REFERENCES users (firebase_uid) ON DELETE CASCADE,
-    location_id INT          NOT NULL REFERENCES locations (id) ON DELETE CASCADE,
+    location_id INT          NOT NUL    L REFERENCES locations (id) ON DELETE CASCADE,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     -- Ràng buộc: Một người chỉ được like một địa điểm 1 lần
     UNIQUE (user_id, location_id)
