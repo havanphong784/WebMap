@@ -71,6 +71,37 @@ export default function MapPage() {
     return () => clearTimeout(timer);
   }, [routerLocation.state, isMapReady, flyToLocation]);
 
+  // Xử lý share link: /?lat=21.028&lng=105.804&locationId=42
+  useEffect(() => {
+    if (!isMapReady) return;
+    const params = new URLSearchParams(routerLocation.search);
+    const lat = parseFloat(params.get('lat'));
+    const lng = parseFloat(params.get('lng'));
+    const locationId = params.get('locationId');
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+    const timer = setTimeout(async () => {
+      flyToLocation(lng, lat, 17);
+
+      if (locationId) {
+        // Tìm location trong store hoặc dùng data từ URL
+        const found = locations.find(l => String(l.id) === locationId);
+        if (found) {
+          setActiveLocation(found);
+          setInfoClicked(null);
+          return;
+        }
+      }
+
+      // Fallback: đặt marker và lấy địa chỉ
+      setInfoClicked({lng, lat, address: null});
+      const diachi = await getAddress(lat, lng);
+      setInfoClicked({lng, lat, address: diachi});
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [isMapReady, routerLocation.search, flyToLocation, locations]);
+
   useEffect(() => {
     const coordinates = routeData?.coordinates;
     if (!mapRef.current || !coordinates?.length) return;
@@ -101,14 +132,14 @@ export default function MapPage() {
     setRouteData(null);
     const {lng, lat} = e.lngLat;
     flyToLocation(lng, lat, 15);
-    setInfoClicked({lng, lat, address: "Đang tìm địa chỉ..."});
+    setInfoClicked({lng, lat, address: null});
     const diachi = await getAddress(lat, lng);
     setInfoClicked({lng, lat, address: diachi});
   }
 
   const handleSearchSelect = async (lng, lat, addressName) => {
     flyToLocation(lng, lat, 15);
-    setInfoClicked({lng, lat, address: addressName});
+    setInfoClicked({lng, lat, address: {display_name: addressName}});
     const diachi = await getAddress(lat, lng);
     setInfoClicked({lng, lat, address: diachi});
   };

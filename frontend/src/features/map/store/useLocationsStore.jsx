@@ -106,6 +106,20 @@ export const useLocationStore = create((set) => ({
     } catch (err) {
       console.error(err);
     }
+  },
+
+  removeLocation: async (locationId, userId) => {
+    try {
+      const result = await apiClient.delete(`/locations/${locationId}`, {user_id: userId});
+      if (result.success) {
+        set((state) => ({
+          locations: state.locations.filter(loc => loc.id !== locationId)
+        }));
+      }
+      return result;
+    } catch (err) {
+      console.error(err);
+    }
   }
 }));
 

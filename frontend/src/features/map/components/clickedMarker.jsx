@@ -71,7 +71,9 @@ export default function ClickedMarker({point, setPoint}) {
                   </div>
 
                   <p className="text-[12px] font-bold text-text-primary mb-5 leading-tight line-clamp-2">
-                    {point.address.display_name || "Chưa xác định địa chỉ"}
+                    {!point.address
+                      ? <span className="text-text-muted italic animate-pulse">Đang xác định địa chỉ...</span>
+                      : (point.address?.display_name || "Không xác định được địa chỉ")}
                   </p>
 
                   <div className="flex flex-col gap-2.5">

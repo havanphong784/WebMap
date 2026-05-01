@@ -1,4 +1,4 @@
-import {motion} from "framer-motion";
+import {motion, AnimatePresence} from "framer-motion";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {useLocationStore} from "../store/useLocationsStore.jsx";
 import {useAuthStore} from "../../auth/context/authContext.jsx";
@@ -24,7 +24,35 @@ export default function LocationSidebar({location, onClose}) {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [toast, setToast] = useState(null);
   const scrollRef = useRef(null);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/?lat=${location.lat}&lng=${location.lng}&locationId=${location.id}`;
+    const shareData = {
+      title: location.name,
+      text: `Khám phá địa điểm "${location.name}" trên Aether Geo!`,
+      url: shareUrl,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('✓ Đã sao chép link!');
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('✓ Đã sao chép link!');
+      }
+    }
+  };
 
   const fetchComments = useCallback(async () => {
     if (!location?.id) return;
@@ -106,6 +134,7 @@ export default function LocationSidebar({location, onClose}) {
                 <motion.button
                   whileHover={{scale: 1.1, y: -2}}
                   whileTap={{scale: 0.9}}
+                  onClick={handleShare}
                   className="p-2.5 glass-panel !rounded-xl border-glass-border-bright bg-obsidian/60 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-obsidian/80 transition-colors"
                 >
                   <ShareIcon size={14}/>
@@ -323,6 +352,19 @@ export default function LocationSidebar({location, onClose}) {
           </div>
         </div>
       </GlassPanel>
+
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{opacity: 0, y: 20}}
+            animate={{opacity: 1, y: 0}}
+            exit={{opacity: 0, y: 20}}
+            className="absolute bottom-28 left-1/2 -translate-x-1/2 bg-cyan-glow text-obsidian px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest shadow-neon z-50 whitespace-nowrap"
+          >
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
