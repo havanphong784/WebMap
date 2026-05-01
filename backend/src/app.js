@@ -8,10 +8,10 @@ import likeRoutes from "./routes/likeRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.DATABASE_URL || process.env.PORT;
 
-app.use(cors({ 
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+app.use(cors({
+  origin: true,
   credentials: true
 }));
 app.use(express.json());
@@ -21,7 +21,7 @@ app.use("/api/likes", likeRoutes);
 app.use("/api/comments", commentRoutes);
 
 app.get("/health", (req, res) => {
-  res.json({ message: "Server Backend đang chạy !" });
+  res.json({message: "Server Backend đang chạy !"});
 });
 
 app.listen(PORT, () => {
