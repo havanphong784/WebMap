@@ -9,6 +9,7 @@ import {
   CloseIcon,
   CommentIcon,
   DateIcon,
+  HashIcon,
   LikeIcon,
   MoreIcon,
   PinIcon,
@@ -16,6 +17,7 @@ import {
   SendIcon,
   ShareIcon,
   SpinnerIcon,
+  TagIcon,
 } from "../../../shared/components/common/icons.jsx";
 import {parseDBDate} from "../../../shared/utils/dateUtils.js";
 
@@ -34,7 +36,7 @@ export default function LocationSidebar({location, onClose}) {
 
   const showToast = (msg) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 2500);
+    setTimeout(() => setToast(null), 1600);
   };
 
   const handleShare = async () => {
@@ -161,7 +163,7 @@ export default function LocationSidebar({location, onClose}) {
             initial={{y: 10, opacity: 0}}
             animate={{y: 0, opacity: 1}}
             transition={{delay: 0.4}}
-            className="flex items-center gap-2 mb-3"
+            className="flex items-center gap-2 mb-3 flex-wrap"
           >
             <div
               className="px-3 py-1 rounded-lg glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[8px] font-black uppercase tracking-[0.2em]">
@@ -180,6 +182,26 @@ export default function LocationSidebar({location, onClose}) {
           >
             {displayLocation.name}
           </motion.h2>
+
+          {displayLocation.tags?.length > 0 && (
+            <motion.div
+              initial={{y: 8, opacity: 0}}
+              animate={{y: 0, opacity: 1}}
+              transition={{delay: 0.6}}
+              className="flex items-center gap-2 mt-3 flex-wrap"
+            >
+              <TagIcon size={11} className="text-text-dim shrink-0"/>
+              {displayLocation.tags.map(tag => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/[0.04] border border-white/10 text-text-muted hover:bg-cyan-glow/5 hover:border-cyan-glow/20 hover:text-cyan-glow transition-all duration-300 text-[10px] font-bold cursor-default"
+                >
+                  <HashIcon size={8}/>
+                  {tag}
+                </span>
+              ))}
+            </motion.div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-7 pt-2 space-y-7" ref={scrollRef}>

@@ -43,7 +43,7 @@ export default function MapPage() {
   const [userLocation, setUserLocation] = useState(null); // [lng, lat]
   const [accuracy, setAccuracy] = useState(0);
 
-  const flyToLocation = useCallback((lng, lat, zoom = 16, duration = 2500) => {
+  const flyToLocation = useCallback((lng, lat, zoom = 16, duration = 1600) => {
     if (!mapRef.current) return;
 
     mapRef.current.flyTo({

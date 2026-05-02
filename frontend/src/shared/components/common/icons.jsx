@@ -32,7 +32,9 @@ import {
   Zap,
   Share2,
   MoreVertical,
-  ChevronRight
+  ChevronRight,
+  Tag,
+  Hash
 } from 'lucide-react';
 
 export {
@@ -69,6 +71,8 @@ export {
   Zap as PowerIcon,
   Share2 as ShareIcon,
   MoreVertical as MoreIcon,
-  ChevronRight as ArrowIcon
+  ChevronRight as ArrowIcon,
+  Tag as TagIcon,
+  Hash as HashIcon
 };
 

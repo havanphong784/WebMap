@@ -4,7 +4,8 @@ import {
   listLocations,
   listTrendingLocations,
   listUserLocations,
-  getLocationDetail
+  getLocationDetail,
+  listLocationsByTag
 } from "../services/locationService.js";
 
 export const getLocations = async (req, res) => {
@@ -26,7 +27,11 @@ export const getLocations = async (req, res) => {
 
 export const createLocationEntry = async (req, res) => {
   try {
-    const saved = await createLocation(req.body);
+    const { tags, ...rest } = req.body;
+    const normalizedTags = Array.isArray(tags)
+      ? tags.map(t => t.trim().toLowerCase()).filter(Boolean)
+      : [];
+    const saved = await createLocation({ ...rest, tags: normalizedTags });
     res.status(201).json({ success: true, data: saved });
   } catch (error) {
     console.error("Lỗi khi lưu địa điểm:", error);
@@ -80,6 +85,18 @@ export const getLocationById = async (req, res) => {
     res.status(200).json({ success: true, data });
   } catch (error) {
     console.error("Lỗi lấy chi tiết địa điểm:", error);
+    res.status(500).json({ success: false, message: "Lỗi Server" });
+  }
+};
+
+export const getLocationsByTag = async (req, res) => {
+  try {
+    const { tag } = req.params;
+    const { user_id } = req.query;
+    const data = await listLocationsByTag({ tag, userId: user_id });
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Lỗi lọc địa điểm theo tag:", error);
     res.status(500).json({ success: false, message: "Lỗi Server" });
   }
 };

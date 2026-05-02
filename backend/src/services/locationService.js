@@ -27,12 +27,13 @@ export const createLocation = async ({
   lat,
   lng,
   image_url,
-  is_public
+  is_public,
+  tags
 }) => {
   const query = `
     INSERT INTO locations
-    (user_id, name, address, category, review_text, rating, lat, lng, image_url, is_public)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *;
+    (user_id, name, address, category, review_text, rating, lat, lng, image_url, is_public, tags)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *;
   `;
 
   const values = [
@@ -45,7 +46,8 @@ export const createLocation = async ({
     lat,
     lng,
     image_url || null,
-    is_public !== undefined ? is_public : true
+    is_public !== undefined ? is_public : true,
+    tags && tags.length > 0 ? tags : []
   ];
 
   const result = await pool.query(query, values);
@@ -103,4 +105,19 @@ export const getLocationDetail = async ({ locationId, userId }) => {
   `;
   const result = await pool.query(query, [locationId, userId || "guest"]);
   return result.rows[0];
+};
+
+export const listLocationsByTag = async ({ tag, userId }) => {
+  const query = `
+    SELECT l.*,
+           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
+           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
+           EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
+    FROM locations l
+    WHERE $1 = ANY(l.tags)
+      AND (l.is_public = true OR l.user_id = $2)
+    ORDER BY l.created_at DESC LIMIT 100;
+  `;
+  const result = await pool.query(query, [tag, userId || "guest"]);
+  return result.rows;
 };

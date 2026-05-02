@@ -159,7 +159,6 @@ export const useLocationStore = create((set) => ({
     try {
       const result = await apiClient.get(`/locations/${locationId}?user_id=${userId || ""}`);
       if (result.success) {
-        // Cập nhật hoặc thêm vào danh sách locations hiện có
         set((state) => {
           const exists = state.locations.find(l => l.id === result.data.id);
           if (exists) {

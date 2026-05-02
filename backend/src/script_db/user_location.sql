@@ -35,9 +35,15 @@ CREATE TABLE locations
     rating      INT          DEFAULT 5 CHECK (rating >= 1 AND rating <= 5),
     image_url   TEXT,
 
+    -- Tags (mảng nhãn)
+    tags        TEXT[]       DEFAULT '{}',
+
     -- Hệ thống
     created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 
-ALTER TABLE locations ADD COLUMN is_public BOOLEAN DEFAULT true;
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT true;
+
+-- GIN index để tìm kiếm tags hiệu quả
+CREATE INDEX IF NOT EXISTS idx_locations_tags ON locations USING GIN (tags);

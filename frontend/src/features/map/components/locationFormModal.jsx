@@ -15,11 +15,19 @@ import {
   PublicIcon,
   SendIcon,
   SpinnerIcon,
-  StarIcon
+  StarIcon,
+  TagIcon,
+  HashIcon
 } from "../../../shared/components/common/icons.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
-import {motion} from "framer-motion";
+import {motion, AnimatePresence} from "framer-motion";
+
+const SUGGESTED_TAGS = [
+  "view đẹp", "cà phê", "ăn ngon", "check-in", "yên tĩnh",
+  "giá rẻ", "ban đêm", "gia đình", "hẹn hò", "phong cảnh",
+  "đồ uống", "wifi", "ngoài trời", "lịch sử", "mua sắm"
+];
 
 export default function LocationFormModal({point, onClose}) {
   const addLocation = useLocationStore((state) => state.addLocation);
@@ -37,6 +45,31 @@ export default function LocationFormModal({point, onClose}) {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Tags state
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
+
+  const handleAddTag = (tagValue) => {
+    const cleaned = tagValue.trim().toLowerCase().replace(/^#+/, "");
+    if (!cleaned || tags.includes(cleaned) || tags.length >= 8) return;
+    setTags(prev => [...prev, cleaned]);
+    setTagInput("");
+  };
+
+  const handleTagInputKeyDown = (e) => {
+    if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+      e.preventDefault();
+      handleAddTag(tagInput);
+    }
+    if (e.key === "Backspace" && !tagInput && tags.length > 0) {
+      setTags(prev => prev.slice(0, -1));
+    }
+  };
+
+  const removeTag = (tagToRemove) => {
+    setTags(prev => prev.filter(t => t !== tagToRemove));
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -68,7 +101,8 @@ export default function LocationFormModal({point, onClose}) {
         lat: point.lat,
         lng: point.lng,
         image_url: finalImageUrl,
-        is_public: isPublic
+        is_public: isPublic,
+        tags
       });
 
       onClose();
@@ -93,7 +127,7 @@ export default function LocationFormModal({point, onClose}) {
       <motion.div
         initial={{opacity: 0, scale: 0.9, y: 20}}
         animate={{opacity: 1, scale: 1, y: 0}}
-        className="w-full max-w-lg h-full max-h-[85vh] overflow-hidden flex flex-col"
+        className="w-full max-w-lg h-full max-h-[90vh] overflow-hidden flex flex-col"
       >
         <GlassPanel
           className="w-full h-full flex flex-col border-glass-border bg-glass-obsidian shadow-glass overflow-hidden p-0 rounded-3xl">
@@ -184,6 +218,66 @@ export default function LocationFormModal({point, onClose}) {
                 className="w-full bg-glass-white border border-glass-border text-text-primary px-5 py-4 rounded-xl h-32 resize-none outline-none focus:border-cyan-glow/30 transition-all font-medium custom-scrollbar"
               />
             </div>
+
+            {/* ── TAGS ─────────────────────────────────────────────── */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">
+                <TagIcon size={12} className="text-cyan-glow"/>
+                Tags ({tags.length}/8)
+              </label>
+
+              {/* Input box + chips */}
+              <div className="min-h-[52px] flex flex-wrap gap-2 items-center bg-glass-white border border-glass-border rounded-xl px-4 py-3 focus-within:border-cyan-glow/30 transition-all">
+                <AnimatePresence>
+                  {tags.map(tag => (
+                    <motion.span
+                      key={tag}
+                      initial={{opacity: 0, scale: 0.7}}
+                      animate={{opacity: 1, scale: 1}}
+                      exit={{opacity: 0, scale: 0.7}}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-glow/10 border border-cyan-glow/25 text-cyan-glow text-[11px] font-bold"
+                    >
+                      <HashIcon size={9}/>
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(tag)}
+                        className="ml-0.5 text-cyan-glow/50 hover:text-cyan-glow transition-colors"
+                      >
+                        <CloseIcon size={10}/>
+                      </button>
+                    </motion.span>
+                  ))}
+                </AnimatePresence>
+                {tags.length < 8 && (
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleTagInputKeyDown}
+                    onBlur={() => tagInput.trim() && handleAddTag(tagInput)}
+                    placeholder={tags.length === 0 ? "Nhập tag, Enter để thêm..." : ""}
+                    className="flex-1 min-w-[120px] bg-transparent outline-none text-[12px] text-text-primary placeholder-text-dim font-medium"
+                  />
+                )}
+              </div>
+
+              {/* Gợi ý tags */}
+              <div className="flex flex-wrap gap-2">
+                {SUGGESTED_TAGS.filter(s => !tags.includes(s)).slice(0, 8).map(suggestion => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => handleAddTag(suggestion)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/[0.03] border border-glass-border text-text-muted hover:bg-cyan-glow/5 hover:border-cyan-glow/20 hover:text-cyan-glow transition-all text-[10px] font-bold"
+                  >
+                    <HashIcon size={8}/>
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* ─────────────────────────────────────────────────────── */}
 
             <div className="flex gap-4 p-1.5 bg-glass-white rounded-2xl border border-glass-border">
               <button
