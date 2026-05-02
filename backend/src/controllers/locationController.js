@@ -3,7 +3,8 @@ import {
   deleteLocation,
   listLocations,
   listTrendingLocations,
-  listUserLocations
+  listUserLocations,
+  getLocationDetail
 } from "../services/locationService.js";
 
 export const getLocations = async (req, res) => {
@@ -65,5 +66,20 @@ export const deleteLocationEntry = async (req, res) => {
   } catch (error) {
     console.error("Lỗi xóa địa điểm:", error);
     res.status(403).json({ success: false, message: error.message || "Lỗi Server" });
+  }
+};
+
+export const getLocationById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.query;
+    const data = await getLocationDetail({ locationId: id, userId: user_id });
+    if (!data) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy địa điểm" });
+    }
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Lỗi lấy chi tiết địa điểm:", error);
+    res.status(500).json({ success: false, message: "Lỗi Server" });
   }
 };

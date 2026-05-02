@@ -17,10 +17,16 @@ import {
   ShareIcon,
   SpinnerIcon,
 } from "../../../shared/components/common/icons.jsx";
+import {parseDBDate} from "../../../shared/utils/dateUtils.js";
 
 export default function LocationSidebar({location, onClose}) {
   const {user} = useAuthStore();
+  const locations = useLocationStore(state => state.locations);
   const {fetchRoute, routeLoading, toggleLike, postComment} = useLocationStore();
+  
+  // Luôn lấy dữ liệu mới nhất từ store dựa trên ID
+  const displayLocation = locations.find(l => l.id === location?.id) || location;
+  
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -112,9 +118,9 @@ export default function LocationSidebar({location, onClose}) {
               className="w-full h-full"
             >
               <img
-                src={location.image_url || `https://picsum.photos/1200/900?random=${location.id}`}
+                src={displayLocation.image_url || `https://picsum.photos/1200/900?random=${displayLocation.id}`}
                 className="w-full h-full object-cover transition-all duration-700 group-hover/img:scale-110"
-                alt={location.name}
+                alt={displayLocation.name}
               />
             </motion.div>
 
@@ -160,11 +166,11 @@ export default function LocationSidebar({location, onClose}) {
           >
             <div
               className="px-3 py-1 rounded-lg glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[8px] font-black uppercase tracking-[0.2em]">
-              {location.category}
+              {displayLocation.category}
             </div>
             <div
               className="px-3 py-1 rounded-lg glass-panel border-glass-border bg-glass-white text-text-secondary text-[8px] font-black uppercase tracking-[0.2em]">
-              {location.is_public ? 'Công khai' : 'Riêng tư'}
+              {displayLocation.is_public ? 'Công khai' : 'Riêng tư'}
             </div>
           </motion.div>
           <motion.h2
@@ -173,7 +179,7 @@ export default function LocationSidebar({location, onClose}) {
             transition={{delay: 0.5}}
             className="text-2xl font-plus font-black tracking-tight text-text-primary leading-tight"
           >
-            {location.name}
+            {displayLocation.name}
           </motion.h2>
         </div>
 
@@ -188,7 +194,7 @@ export default function LocationSidebar({location, onClose}) {
                 <div className="flex-1">
                   <h4 className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] mb-0.5">Vị trí</h4>
                   <p
-                    className="text-[13px] text-zinc-100 font-semibold leading-relaxed tracking-tight break-words">{location.address}</p>
+                    className="text-[13px] text-zinc-100 font-semibold leading-relaxed tracking-tight break-words">{displayLocation.address}</p>
                 </div>
               </div>
 
@@ -201,7 +207,7 @@ export default function LocationSidebar({location, onClose}) {
                   <h4 className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] mb-0.5">Ngày khám
                     phá</h4>
                   <p className="text-[13px] text-zinc-100 font-semibold tracking-tight">
-                    {new Date(location.created_at).toLocaleDateString('vi-VN', {
+                    {parseDBDate(displayLocation.created_at).toLocaleDateString('vi-VN', {
                       day: '2-digit',
                       month: 'long',
                       year: 'numeric'
@@ -215,12 +221,12 @@ export default function LocationSidebar({location, onClose}) {
               <div className="flex-1 flex flex-col gap-0.5 border-r border-glass-border">
                 <span className="text-[8px] font-black text-text-muted uppercase tracking-widest">Vĩ độ</span>
                 <span
-                  className="text-[14px] font-mono text-cyan-glow font-bold">{Number(location.lat).toFixed(6)}°</span>
+                  className="text-[14px] font-mono text-cyan-glow font-bold">{Number(displayLocation.lat).toFixed(6)}°</span>
               </div>
               <div className="flex-1 flex flex-col gap-0.5 pl-4">
                 <span className="text-[8px] font-black text-text-muted uppercase tracking-widest">Kinh độ</span>
                 <span
-                  className="text-[14px] font-mono text-cyan-glow font-bold">{Number(location.lng).toFixed(6)}°</span>
+                  className="text-[14px] font-mono text-cyan-glow font-bold">{Number(displayLocation.lng).toFixed(6)}°</span>
               </div>
             </div>
 
@@ -234,7 +240,7 @@ export default function LocationSidebar({location, onClose}) {
                 <div
                   className="p-4 border border-glass-border bg-white/[0.01] rounded-xl group-hover:bg-white/[0.03] transition-all duration-500">
                   <p className="text-text-secondary text-[13px] leading-relaxed italic font-medium">
-                    "{location.review_text || "Chưa có review."}"
+                    "{displayLocation.review_text || "Chưa có review."}"
                   </p>
                 </div>
               </div>
@@ -245,7 +251,7 @@ export default function LocationSidebar({location, onClose}) {
             <div className="flex items-center justify-between">
               <h4 className="text-[10px] font-black text-text-primary uppercase tracking-[0.35em] flex items-center gap-3">
                 <div className="w-1.5 h-4 bg-gradient-to-b from-sunset to-sunset/20 rounded-full shadow-sunset"></div>
-                Thảo luận ({location.comments_count || 0})
+                Thảo luận ({displayLocation.comments_count || 0})
               </h4>
             </div>
 
@@ -300,7 +306,9 @@ export default function LocationSidebar({location, onClose}) {
                         <span
                           className="text-[12px] font-black text-text-primary tracking-tight group-hover:text-cyan-glow transition-colors">{c.name}</span>
                         <span
-                          className="text-[8px] text-text-muted font-black uppercase tracking-widest">{new Date(c.created_at).toLocaleDateString()}</span>
+                          className="text-[8px] text-text-muted font-black uppercase tracking-widest">
+                          {parseDBDate(c.created_at).toLocaleDateString('vi-VN')}
+                        </span>
                       </div>
                       <div
                         className="bg-white/[0.02] backdrop-blur-xl rounded-xl rounded-tl-none p-3.5 border border-glass-border text-[12px] text-text-secondary leading-relaxed group-hover:bg-white/[0.04] transition-all duration-300">
@@ -343,11 +351,11 @@ export default function LocationSidebar({location, onClose}) {
             <motion.button
               whileHover={{scale: 1.05, y: -2}}
               whileTap={{scale: 0.95}}
-              onClick={() => toggleLike(location.id, user?.uid)}
-              className={`flex-1 flex items-center justify-center rounded-xl glass-panel border-glass-border transition-all duration-500 ${location.is_liked ? 'bg-sunset/10 text-sunset border-sunset/20 shadow-sunset' : 'text-text-muted hover:text-text-primary hover:bg-glass-white'}`}
+              onClick={() => toggleLike(displayLocation.id, user?.uid)}
+              className={`flex-1 flex items-center justify-center rounded-xl glass-panel border-glass-border transition-all duration-500 ${displayLocation.is_liked ? 'bg-sunset/10 text-sunset border-sunset/20 shadow-sunset' : 'text-text-muted hover:text-text-primary hover:bg-glass-white'}`}
             >
-              <LikeIcon size={20} fill={location.is_liked ? "currentColor" : "none"}
-                        className={location.is_liked ? "drop-shadow-[0_0_8px_rgba(255,75,43,0.3)]" : ""}/>
+              <LikeIcon size={20} fill={displayLocation.is_liked ? "currentColor" : "none"}
+                        className={displayLocation.is_liked ? "drop-shadow-[0_0_8px_rgba(255,75,43,0.3)]" : ""}/>
             </motion.button>
           </div>
         </div>

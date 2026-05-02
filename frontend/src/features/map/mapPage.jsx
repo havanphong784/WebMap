@@ -38,6 +38,7 @@ export default function MapPage() {
   const {user} = useAuthStore();
   const [currentZoom, setCurrentZoom] = useState(13);
   const [activeLocation, setActiveLocation] = useState(null);
+  const {fetchLocationDetail} = useLocationStore();
   const [isLocating, setIsLocating] = useState(false);
   const [userLocation, setUserLocation] = useState(null); // [lng, lat]
   const [accuracy, setAccuracy] = useState(0);
@@ -64,14 +65,24 @@ export default function MapPage() {
 
     if (Number.isNaN(lng) || Number.isNaN(lat)) return;
 
+    // Fetch chi tiết nếu chưa có trong store hoặc chỉ có data tối thiểu
+    const fetchDetail = async () => {
+      const detail = await fetchLocationDetail(focusLocation.id, user?.uid);
+      if (detail) {
+        setActiveLocation(detail);
+      } else {
+        setActiveLocation(focusLocation);
+      }
+    };
+
     const timer = setTimeout(() => {
-      setActiveLocation(focusLocation);
+      fetchDetail();
       setInfoClicked(null);
       flyToLocation(lng, lat, 17);
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [routerLocation.state, isMapReady, flyToLocation]);
+  }, [routerLocation.state, isMapReady, flyToLocation, fetchLocationDetail, user?.uid]);
 
   // Xử lý share link: /?lat=21.028&lng=105.804&locationId=42
   useEffect(() => {

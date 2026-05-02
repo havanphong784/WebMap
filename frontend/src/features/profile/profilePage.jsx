@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
 import {useAuthStore} from "../auth/context/authContext.jsx";
+import {useLocationStore} from "../map/store/useLocationsStore.jsx";
 import {apiClient} from "../../shared/api/apiClient.js";
 import {motion} from "framer-motion";
 import {
@@ -19,10 +20,10 @@ export default function ProfilePage() {
   const {uid: uidParam} = useParams();
   const navigate = useNavigate();
   const {user: currentUser, logout} = useAuthStore();
+  const {userLocations, fetchUserLocations, removeLocation, isLoading: locationsLoading} = useLocationStore();
   const uid = uidParam || currentUser?.uid;
 
   const [profileUser, setProfileUser] = useState(null);
-  const [userLocations, setUserLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -36,18 +37,15 @@ export default function ProfilePage() {
     if (!uid) return;
     setLoading(true);
     try {
-      const [userData, locData] = await Promise.all([
-        apiClient.get(`/auth/${uid}`),
-        apiClient.get(`/locations/user/${uid}?current_user_id=${currentUser?.uid || ""}`)
-      ]);
+      const userData = await apiClient.get(`/auth/${uid}`);
       if (userData.success) setProfileUser(userData.user);
-      if (locData.success) setUserLocations(locData.data);
+      await fetchUserLocations(uid, currentUser?.uid);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [currentUser, uid]);
+  }, [currentUser?.uid, uid, fetchUserLocations]);
 
   useEffect(() => {
     fetchProfileData();
@@ -58,10 +56,7 @@ export default function ProfilePage() {
     if (!window.confirm('Bạn có chắc muốn xóa địa điểm này?')) return;
     setDeletingId(locId);
     try {
-      const result = await apiClient.delete(`/locations/${locId}`, {user_id: currentUser.uid});
-      if (result.success) {
-        setUserLocations(prev => prev.filter(l => l.id !== locId));
-      }
+      await removeLocation(locId, currentUser.uid);
     } catch (err) {
       console.error(err);
     } finally {

@@ -1,6 +1,6 @@
 import pool from "../config/db.js";
 
-export const toggleLike = async ({ userId, locationId }) => {
+export const toggleLike = async ({userId, locationId}) => {
   const check = await pool.query(
     "SELECT * FROM likes WHERE user_id = $1 AND location_id = $2",
     [userId, locationId]
@@ -11,13 +11,33 @@ export const toggleLike = async ({ userId, locationId }) => {
       "DELETE FROM likes WHERE user_id = $1 AND location_id = $2",
       [userId, locationId]
     );
-    return { action: "unliked" };
+    return {action: "unliked"};
   }
 
   await pool.query(
     "INSERT INTO likes (user_id, location_id) VALUES ($1, $2)",
     [userId, locationId]
   );
-  return { action: "liked" };
+
+  try {
+    const locInfo = await pool.query("SELECT user_id FROM locations WHERE id = $1", [locationId]);
+    if (locInfo.rows.length > 0) {
+      const ownerId = locInfo.rows[0].user_id;
+      if (ownerId !== userId) {
+        const {createNotification} = await import("./notificationService.js");
+        await createNotification({
+          recipientId: ownerId,
+          senderId: userId,
+          type: 'like',
+          message: 'đã thích địa điểm của bạn',
+          locationId: locationId
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Lỗi tạo thông báo like:", err);
+  }
+
+  return {action: "liked"};
 };
 

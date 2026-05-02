@@ -2,9 +2,9 @@ import {useCallback, useEffect, useState} from "react";
 import {motion, AnimatePresence} from "framer-motion";
 import {useNavigate} from "react-router-dom";
 import {useAuthStore} from "../auth/context/authContext.jsx";
+import {useLocationStore} from "../map/store/useLocationsStore.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
-import {apiClient} from "../../shared/api/apiClient.js";
 import {
   CommentIcon,
   FilterIcon,
@@ -19,58 +19,27 @@ import {
 const DiscoveryFeed = () => {
   const navigate = useNavigate();
   const {user} = useAuthStore();
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {trendingLocations, fetchTrending, toggleLike, isLoading} = useLocationStore();
+  
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [likedPosts, setLikedPosts] = useState({});
 
   const categories = ['All', 'Urban', 'Nature', 'Abandoned', 'Hidden Gems', 'Night Life'];
 
-  const fetchTrending = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await apiClient.get(`/locations/trending?user_id=${user?.uid || "guest"}`);
-      if (result.success) {
-        setPosts(result.data);
-        const initialLikes = {};
-        result.data.forEach(p => {
-          initialLikes[p.id] = p.is_liked;
-        });
-        setLikedPosts(initialLikes);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
   useEffect(() => {
-    fetchTrending();
-  }, [fetchTrending]);
+    fetchTrending(user?.uid);
+  }, [fetchTrending, user?.uid]);
 
-  const handleToggleLike = async (e, post) => {
+  const handleToggleLike = (e, post) => {
     e.stopPropagation();
     if (!user) {
       navigate('/login');
       return;
     }
-    const wasLiked = likedPosts[post.id] ?? post.is_liked;
-    setLikedPosts(prev => ({...prev, [post.id]: !wasLiked}));
-    setPosts(prev => prev.map(p =>
-      p.id === post.id
-        ? {...p, likes_count: wasLiked ? Number(p.likes_count) - 1 : Number(p.likes_count) + 1}
-        : p
-    ));
-    try {
-      await apiClient.post(`/likes/${post.id}/like`, {user_id: user.uid});
-    } catch (err) {
-      setLikedPosts(prev => ({...prev, [post.id]: wasLiked}));
-    }
+    toggleLike(post.id, user.uid);
   };
 
-  const filteredPosts = posts.filter(p => {
+  const filteredPosts = trendingLocations.filter(p => {
     const matchCategory = activeCategory === 'All' || p.category?.toLowerCase() === activeCategory.toLowerCase();
     const matchSearch = !searchQuery || p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.address?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchCategory && matchSearch;
@@ -137,7 +106,7 @@ const DiscoveryFeed = () => {
       </div>
 
       <div className="max-w-4xl mx-auto">
-        {loading ? (
+        {isLoading ? (
           <div className="columns-1 sm:columns-2 gap-6 space-y-6">
             {[...Array(6)].map((_, i) => (
               <div
@@ -153,7 +122,6 @@ const DiscoveryFeed = () => {
           <div className="columns-1 sm:columns-2 gap-6 space-y-6">
             <AnimatePresence>
               {filteredPosts.map((post, i) => {
-                const isLiked = likedPosts[post.id] ?? post.is_liked;
                 return (
                   <motion.div
                     key={post.id}
@@ -186,13 +154,13 @@ const DiscoveryFeed = () => {
                           <motion.button
                             whileTap={{scale: 0.8}}
                             onClick={(e) => handleToggleLike(e, post)}
-                            className={`flex items-center gap-1.5 glass-panel py-1.5 px-3 border transition-all duration-300 ${isLiked ? 'border-sunset/30 bg-sunset/10' : 'border-glass-border bg-glass-white'}`}
+                            className={`flex items-center gap-1.5 glass-panel py-1.5 px-3 border transition-all duration-300 ${post.is_liked ? 'border-sunset/30 bg-sunset/10' : 'border-glass-border bg-glass-white'}`}
                           >
                             <LikeIcon
                               size={12}
-                              className={isLiked ? "text-sunset fill-sunset drop-shadow-[0_0_4px_rgba(255,75,43,0.5)]" : "text-text-secondary"}
+                              className={post.is_liked ? "text-sunset fill-sunset drop-shadow-[0_0_4px_rgba(255,75,43,0.5)]" : "text-text-secondary"}
                             />
-                            <span className={`text-[10px] font-bold ${isLiked ? 'text-sunset' : 'text-text-primary'}`}>
+                            <span className={`text-[10px] font-bold ${post.is_liked ? 'text-sunset' : 'text-text-primary'}`}>
                               {post.likes_count || 0}
                             </span>
                           </motion.button>

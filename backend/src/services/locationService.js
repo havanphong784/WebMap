@@ -91,3 +91,16 @@ export const deleteLocation = async ({ locationId, userId }) => {
   }
   return result.rows[0];
 };
+
+export const getLocationDetail = async ({ locationId, userId }) => {
+  const query = `
+    SELECT l.*,
+           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
+           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
+           EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
+    FROM locations l
+    WHERE l.id = $1;
+  `;
+  const result = await pool.query(query, [locationId, userId || "guest"]);
+  return result.rows[0];
+};

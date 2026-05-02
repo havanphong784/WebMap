@@ -3,11 +3,39 @@ import {apiClient} from "../../../shared/api/apiClient.js";
 
 export const useLocationStore = create((set) => ({
   locations: [],
+  trendingLocations: [],
+  userLocations: [],
   routeData: null,
   routeLoading: false,
   isLoading: false,
 
   setRouteData: (state) => (set({routeData: state})),
+
+  fetchTrending: async (userId) => {
+    set({isLoading: true});
+    try {
+      const result = await apiClient.get(`/locations/trending?user_id=${userId || "guest"}`);
+      if (result.success) {
+        set({trendingLocations: result.data, isLoading: false});
+      }
+    } catch (error) {
+      console.error(error);
+      set({isLoading: false});
+    }
+  },
+
+  fetchUserLocations: async (targetUid, currentUserId) => {
+    set({isLoading: true});
+    try {
+      const result = await apiClient.get(`/locations/user/${targetUid}?current_user_id=${currentUserId || ""}`);
+      if (result.success) {
+        set({userLocations: result.data, isLoading: false});
+      }
+    } catch (error) {
+      console.error(error);
+      set({isLoading: false});
+    }
+  },
 
   fetchLocations: async (userId, bounds) => {
     if (!bounds) return;
@@ -72,16 +100,19 @@ export const useLocationStore = create((set) => ({
       const result = await apiClient.post(`/likes/${locationId}/like`, {user_id: userId});
 
       if (result.success) {
+        const updateLoc = (list) => list.map(loc =>
+          loc.id === locationId
+            ? {
+              ...loc,
+              is_liked: result.action === 'liked',
+              likes_count: result.action === 'liked' ? Number(loc.likes_count || 0) + 1 : Number(loc.likes_count || 0) - 1
+            }
+            : loc
+        );
+
         set((state) => ({
-          locations: state.locations.map(loc =>
-            loc.id === locationId
-              ? {
-                ...loc,
-                is_liked: result.action === 'liked',
-                likes_count: result.action === 'liked' ? Number(loc.likes_count || 0) + 1 : Number(loc.likes_count || 0) - 1
-              }
-              : loc
-          )
+          locations: updateLoc(state.locations),
+          trendingLocations: updateLoc(state.trendingLocations)
         }));
       }
     } catch (err) {
@@ -113,13 +144,40 @@ export const useLocationStore = create((set) => ({
       const result = await apiClient.delete(`/locations/${locationId}`, {user_id: userId});
       if (result.success) {
         set((state) => ({
-          locations: state.locations.filter(loc => loc.id !== locationId)
+          locations: state.locations.filter(loc => loc.id !== locationId),
+          trendingLocations: state.trendingLocations.filter(loc => loc.id !== locationId),
+          userLocations: state.userLocations.filter(loc => loc.id !== locationId)
         }));
       }
       return result;
     } catch (err) {
       console.error(err);
     }
+  },
+
+  fetchLocationDetail: async (locationId, userId) => {
+    try {
+      const result = await apiClient.get(`/locations/${locationId}?user_id=${userId || ""}`);
+      if (result.success) {
+        // Cập nhật hoặc thêm vào danh sách locations hiện có
+        set((state) => {
+          const exists = state.locations.find(l => l.id === result.data.id);
+          if (exists) {
+            return {
+              locations: state.locations.map(l => l.id === result.data.id ? result.data : l)
+            };
+          } else {
+            return {
+              locations: [result.data, ...state.locations]
+            };
+          }
+        });
+        return result.data;
+      }
+    } catch (error) {
+      console.error("Lỗi fetch chi tiết địa điểm:", error);
+    }
+    return null;
   }
 }));
 
