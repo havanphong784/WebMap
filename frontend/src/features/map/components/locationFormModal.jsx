@@ -1,8 +1,9 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import { useAuthStore } from "../../auth/context/authContext.jsx";
 import { useLocationStore } from "../store/useLocationsStore.jsx";
 import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
 import { storage } from "../../../config/firebase.js";
+import { getAddress } from "../utils/geocoding.js";
 import {
   CafeIcon,
   CloseIcon,
@@ -37,7 +38,7 @@ export default function LocationFormModal({point, onClose}) {
   const rawAddress = point.address || {};
   const defaultName = rawAddress.amenity || rawAddress.shop || rawAddress.tourism || rawAddress.display_name?.split(',')[0] || "";
   const [name, setName] = useState(defaultName);
-  const [address] = useState(rawAddress.display_name || "");
+  const [address, setAddress] = useState(rawAddress.display_name || "");
   const [category, setCategory] = useState("other");
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState("");
@@ -45,6 +46,36 @@ export default function LocationFormModal({point, onClose}) {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    if (point.imageFile) {
+      setImageFile(point.imageFile);
+      setPreviewUrl(URL.createObjectURL(point.imageFile));
+    }
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [point.imageFile]);
+
+  useEffect(() => {
+    const updateAddress = async () => {
+      if (point.address?.display_name) {
+        setAddress(point.address.display_name);
+        const newDefaultName = point.address.amenity || point.address.shop || point.address.tourism || point.address.display_name?.split(',')[0] || "";
+        if (!name) setName(newDefaultName);
+      } else if (point.lat && point.lng) {
+        const fetchedAddress = await getAddress(point.lat, point.lng);
+        if (fetchedAddress?.display_name) {
+          setAddress(fetchedAddress.display_name);
+          const newDefaultName = fetchedAddress.amenity || fetchedAddress.shop || fetchedAddress.tourism || fetchedAddress.display_name?.split(',')[0] || "";
+          if (!name) setName(newDefaultName);
+        }
+      }
+    };
+    updateAddress();
+  }, [point.address, point.lat, point.lng]);
 
   // Tags state
   const [tags, setTags] = useState([]);
@@ -161,12 +192,12 @@ export default function LocationFormModal({point, onClose}) {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Địa
-                  chỉ</label>
-                <div
-                  className="w-full bg-glass-white border border-glass-border text-text-secondary px-5 py-3.5 rounded-xl text-xs leading-relaxed italic">
-                  {address}
-                </div>
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2">Địa chỉ</label>
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full bg-glass-white border border-glass-border text-text-secondary px-5 py-3.5 rounded-xl text-xs leading-relaxed italic outline-none focus:border-cyan-glow/30 transition-all resize-none h-20 custom-scrollbar"
+                />
               </div>
             </div>
 

@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {Marker} from "react-map-gl/maplibre";
 import LocationFormModal from "./locationFormModal.jsx";
 import {useLocationStore} from "../store/useLocationsStore.jsx";
@@ -10,6 +10,12 @@ import ActionButton from "../../../shared/components/common/actionButton.jsx";
 export default function ClickedMarker({point, setPoint}) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const {fetchRoute, routeLoading, setRouteLoading} = useLocationStore();
+
+  useEffect(() => {
+    if (point?.autoOpenForm) {
+      setIsFormOpen(true);
+    }
+  }, [point]);
 
   if (!point) return null;
 

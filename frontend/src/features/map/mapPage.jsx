@@ -15,10 +15,11 @@ import LocationCard from "./components/locationCard.jsx";
 import LocationSidebar from "./components/locationSidebar.jsx";
 import RouteLayer from "./components/routeLayer.jsx";
 import {AnimatePresence, motion} from 'framer-motion';
-import {LocateIcon, MinusIcon, PlusIcon, SpinnerIcon, StyleIcon} from "../../shared/components/common/icons.jsx";
+import {LocateIcon, MinusIcon, PhotoIcon, PlusIcon, SpinnerIcon, StyleIcon} from "../../shared/components/common/icons.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
 import colorfull from "./style/colorful";
+import {extractGPS} from "./utils/exifUtils.js";
 
 
 export default function MapPage() {
@@ -40,8 +41,10 @@ export default function MapPage() {
   const [activeLocation, setActiveLocation] = useState(null);
   const {fetchLocationDetail} = useLocationStore();
   const [isLocating, setIsLocating] = useState(false);
+  const [isExtractingPhoto, setIsExtractingPhoto] = useState(false);
   const [userLocation, setUserLocation] = useState(null); // [lng, lat]
   const [accuracy, setAccuracy] = useState(0);
+  const fileInputRef = useRef(null);
 
   const flyToLocation = useCallback((lng, lat, zoom = 16, duration = 1600) => {
     if (!mapRef.current) return;
@@ -195,6 +198,30 @@ export default function MapPage() {
     );
   };
 
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsExtractingPhoto(true);
+    try {
+      const gps = await extractGPS(file);
+      if (gps) {
+        flyToLocation(gps.lng, gps.lat, 17);
+        setInfoClicked({lng: gps.lng, lat: gps.lat, address: null, imageFile: file, autoOpenForm: true});
+        const diachi = await getAddress(gps.lat, gps.lng);
+        setInfoClicked({lng: gps.lng, lat: gps.lat, address: diachi, imageFile: file, autoOpenForm: true});
+      } else {
+        alert("Ảnh này không chứa thông tin vị trí (GPS metadata).");
+      }
+    } catch (error) {
+      console.error("Lỗi khi xử lý ảnh:", error);
+      alert("Không thể trích xuất vị trí từ ảnh.");
+    } finally {
+      setIsExtractingPhoto(false);
+      e.target.value = ""; // Reset input
+    }
+  };
+
   useEffect(() => {
     let watchId;
     if ("geolocation" in navigator) {
@@ -288,6 +315,23 @@ export default function MapPage() {
             {isLocating ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin"/> :
               <LocateIcon size={22} className="text-cyan-glow"/>}
           </ActionButton>
+
+          <ActionButton
+            variant="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isExtractingPhoto}
+          >
+            {isExtractingPhoto ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin"/> :
+              <PhotoIcon size={22} className="text-cyan-glow"/>}
+          </ActionButton>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handlePhotoUpload}
+          />
 
           <div className="flex flex-col gap-2 glass-panel p-2 rounded-2xl border-glass-border">
             <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={zoomIn}>
