@@ -1,5 +1,5 @@
 import {useLocation, useNavigate} from 'react-router-dom';
-import Map from 'react-map-gl/maplibre';
+import Map, {Marker} from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import ClickedMarker from "./components/clickedMarker.jsx";
@@ -39,6 +39,8 @@ export default function MapPage() {
   const [currentZoom, setCurrentZoom] = useState(13);
   const [activeLocation, setActiveLocation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [userLocation, setUserLocation] = useState(null); // [lng, lat]
+  const [accuracy, setAccuracy] = useState(0);
 
   const flyToLocation = useCallback((lng, lat, zoom = 16, duration = 2500) => {
     if (!mapRef.current) return;
@@ -165,19 +167,44 @@ export default function MapPage() {
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        mapRef.current.flyTo({
-          center: [pos.coords.longitude, pos.coords.latitude],
+        const {longitude, latitude, accuracy} = pos.coords;
+        setUserLocation([longitude, latitude]);
+        setAccuracy(accuracy);
+
+        mapRef.current?.flyTo({
+          center: [longitude, latitude],
           zoom: 16,
-          duration: 2000
+          duration: 2000,
+          pitch: 45
         });
         setIsLocating(false);
       },
-      () => {
+      (err) => {
         setIsLocating(false);
-        alert("Không thể truy cập vị trí của bạn.");
-      }
+        console.error("Lỗi lấy vị trí:", err);
+        alert("Không thể truy cập vị trí của bạn. Vui lòng cho phép quyền truy cập vị trí.");
+      },
+      {enableHighAccuracy: true}
     );
   };
+
+  // Tự động cập nhật vị trí nếu đã bật
+  useEffect(() => {
+    let watchId;
+    if ("geolocation" in navigator) {
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          setUserLocation([pos.coords.longitude, pos.coords.latitude]);
+          setAccuracy(pos.coords.accuracy);
+        },
+        null,
+        {enableHighAccuracy: true}
+      );
+    }
+    return () => {
+      if (watchId) navigator.geolocation.clearWatch(watchId);
+    };
+  }, []);
 
   const zoomIn = () => {
     if (mapRef.current) {
@@ -271,6 +298,20 @@ export default function MapPage() {
         <SearchBox onSelectLocation={handleSearchSelect}/>
         <ClusterLocations/>
         <RouteLayer/>
+
+        {userLocation && (
+          <Marker longitude={userLocation[0]} latitude={userLocation[1]} anchor="center">
+            <div className="relative flex items-center justify-center">
+              <div className="absolute w-12 h-12 bg-cyan-glow/30 rounded-full animate-ping"></div>
+              <div className="absolute w-24 h-24 bg-cyan-glow/10 rounded-full animate-pulse"></div>
+
+              <div
+                className="relative w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,243,255,1)]">
+                <div className="w-3 h-3 bg-cyan-glow rounded-full"></div>
+              </div>
+            </div>
+          </Marker>
+        )}
 
         {currentZoom >= 13 && locations.map(loc => (
           <LocationCard

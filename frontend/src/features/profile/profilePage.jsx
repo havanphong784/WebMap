@@ -21,7 +21,6 @@ export default function ProfilePage() {
   const {user: currentUser, logout} = useAuthStore();
   const uid = uidParam || currentUser?.uid;
 
-  // ✅ TẤT CẢ hooks phải ở đây — trước mọi early return
   const [profileUser, setProfileUser] = useState(null);
   const [userLocations, setUserLocations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -139,7 +138,8 @@ export default function ProfilePage() {
                 alt="profile"
               />
             </div>
-            <div className="absolute bottom-1 right-1 bg-cyan-glow text-obsidian px-3 py-1 rounded-full text-[10px] font-bold shadow-neon border-2 border-obsidian">
+            <div
+              className="absolute bottom-1 right-1 bg-cyan-glow text-obsidian px-3 py-1 rounded-full text-[10px] font-bold shadow-neon border-2 border-obsidian">
               EXP
             </div>
           </motion.div>
@@ -152,7 +152,8 @@ export default function ProfilePage() {
           >
             <h1 className="text-4xl font-plus font-black tracking-tight">{profileUser?.name || 'Explorer'}</h1>
             <p className="text-zinc-500 font-medium mt-1">{profileUser?.email}</p>
-            <div className="inline-block mt-3 px-4 py-1.5 rounded-full glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[10px] font-bold uppercase tracking-widest shadow-neon">
+            <div
+              className="inline-block mt-3 px-4 py-1.5 rounded-full glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[10px] font-bold uppercase tracking-widest shadow-neon">
               Elite Explorer
             </div>
           </motion.div>
@@ -166,7 +167,8 @@ export default function ProfilePage() {
               animate={{opacity: 1, y: 0}}
               transition={{delay: 0.3 + (i * 0.1)}}
             >
-              <GlassPanel className="py-4 px-2 text-center border-white/5 bg-white/5 hover:bg-white/10 transition-colors">
+              <GlassPanel
+                className="py-4 px-2 text-center border-white/5 bg-white/5 hover:bg-white/10 transition-colors">
                 <stat.icon size={18} className={`${stat.color || 'text-cyan-glow'} mx-auto mb-2`}/>
                 <div className="text-2xl font-plus font-black tracking-tighter">{stat.value}</div>
                 <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">{stat.label}</div>
@@ -201,9 +203,11 @@ export default function ProfilePage() {
                     className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
                     alt={loc.name}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-60"></div>
+                  <div
+                    className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-60"></div>
 
-                  <div className="absolute top-4 right-4 glass-panel px-3 py-1.5 rounded-full text-[10px] font-bold border-white/10 flex items-center gap-2 shadow-xl bg-black/40">
+                  <div
+                    className="absolute top-4 right-4 glass-panel px-3 py-1.5 rounded-full text-[10px] font-bold border-white/10 flex items-center gap-2 shadow-xl bg-black/40">
                     <LikeIcon size={14} className={loc.is_liked ? "text-sunset fill-sunset" : "text-zinc-500"}/>
                     <span className={loc.is_liked ? "text-white" : "text-zinc-400"}>{loc.likes_count || 0}</span>
                   </div>
@@ -223,7 +227,8 @@ export default function ProfilePage() {
                       <PinIcon size={12} className="shadow-neon"/>
                       <span className="text-[10px] font-bold uppercase tracking-widest truncate">{loc.address}</span>
                     </div>
-                    <h3 className="text-lg font-plus font-bold text-white group-hover:text-cyan-glow transition-colors line-clamp-1">
+                    <h3
+                      className="text-lg font-plus font-bold text-white group-hover:text-cyan-glow transition-colors line-clamp-1">
                       {loc.name}
                     </h3>
                   </div>
@@ -235,7 +240,8 @@ export default function ProfilePage() {
           {userLocations.length === 0 && (
             <div className="text-center py-20 glass-panel border-white/5 bg-white/2">
               <PhotoIcon size={48} className="text-zinc-800 mx-auto mb-4 opacity-20"/>
-              <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-sm">Chưa có bài viết nào được đăng</p>
+              <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-sm">Chưa có bài viết nào
+                được đăng</p>
             </div>
           )}
         </div>
