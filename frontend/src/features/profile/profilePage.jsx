@@ -64,7 +64,6 @@ export default function ProfilePage() {
     }
   };
 
-  // ✅ Early returns sau tất cả hooks
   if (loading) return (
     <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center space-y-6">
       <SpinnerIcon size={48} className="animate-spin text-cyan-glow"/>

@@ -65,7 +65,6 @@ export default function MapPage() {
 
     if (Number.isNaN(lng) || Number.isNaN(lat)) return;
 
-    // Fetch chi tiết nếu chưa có trong store hoặc chỉ có data tối thiểu
     const fetchDetail = async () => {
       const detail = await fetchLocationDetail(focusLocation.id, user?.uid);
       if (detail) {
@@ -84,7 +83,6 @@ export default function MapPage() {
     return () => clearTimeout(timer);
   }, [routerLocation.state, isMapReady, flyToLocation, fetchLocationDetail, user?.uid]);
 
-  // Xử lý share link: /?lat=21.028&lng=105.804&locationId=42
   useEffect(() => {
     if (!isMapReady) return;
     const params = new URLSearchParams(routerLocation.search);
@@ -97,7 +95,6 @@ export default function MapPage() {
       flyToLocation(lng, lat, 17);
 
       if (locationId) {
-        // Tìm location trong store hoặc dùng data từ URL
         const found = locations.find(l => String(l.id) === locationId);
         if (found) {
           setActiveLocation(found);
@@ -106,7 +103,6 @@ export default function MapPage() {
         }
       }
 
-      // Fallback: đặt marker và lấy địa chỉ
       setInfoClicked({lng, lat, address: null});
       const diachi = await getAddress(lat, lng);
       setInfoClicked({lng, lat, address: diachi});
@@ -199,7 +195,6 @@ export default function MapPage() {
     );
   };
 
-  // Tự động cập nhật vị trí nếu đã bật
   useEffect(() => {
     let watchId;
     if ("geolocation" in navigator) {
@@ -244,8 +239,8 @@ export default function MapPage() {
            antialias={true}
            attributionControl={false}
            initialViewState={{
-             longitude: 105.804817,
-             latitude: 21.028511,
+             longitude: 108.249476,
+             latitude: 15.972143,
              zoom: 13,
              pitch: 45,
              bearing: 0

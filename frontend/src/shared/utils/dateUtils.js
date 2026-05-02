@@ -5,12 +5,11 @@
 export const parseDBDate = (dateStr) => {
   if (!dateStr) return new Date();
   if (dateStr instanceof Date) return dateStr;
-  
-  // Nếu chuỗi không có thông tin múi giờ, coi nó là UTC (Z)
+
   const normalized = dateStr.includes('Z') || dateStr.includes('+')
     ? dateStr
     : `${dateStr.replace(' ', 'T')}Z`;
-    
+
   return new Date(normalized);
 };
 

@@ -1,4 +1,4 @@
-import {motion, AnimatePresence} from "framer-motion";
+import {AnimatePresence, motion} from "framer-motion";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {useLocationStore} from "../store/useLocationsStore.jsx";
 import {useAuthStore} from "../../auth/context/authContext.jsx";
@@ -23,10 +23,9 @@ export default function LocationSidebar({location, onClose}) {
   const {user} = useAuthStore();
   const locations = useLocationStore(state => state.locations);
   const {fetchRoute, routeLoading, toggleLike, postComment} = useLocationStore();
-  
-  // Luôn lấy dữ liệu mới nhất từ store dựa trên ID
+
   const displayLocation = locations.find(l => l.id === location?.id) || location;
-  
+
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -231,7 +230,8 @@ export default function LocationSidebar({location, onClose}) {
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-[9px] font-black text-text-primary uppercase tracking-[0.3em] flex items-center gap-3">
+              <h4
+                className="text-[9px] font-black text-text-primary uppercase tracking-[0.3em] flex items-center gap-3">
                 <div
                   className="w-1 h-3.5 bg-gradient-to-b from-cyan-glow to-cyan-glow/20 rounded-full shadow-neon"></div>
                 Riview
@@ -249,7 +249,8 @@ export default function LocationSidebar({location, onClose}) {
 
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h4 className="text-[10px] font-black text-text-primary uppercase tracking-[0.35em] flex items-center gap-3">
+              <h4
+                className="text-[10px] font-black text-text-primary uppercase tracking-[0.35em] flex items-center gap-3">
                 <div className="w-1.5 h-4 bg-gradient-to-b from-sunset to-sunset/20 rounded-full shadow-sunset"></div>
                 Thảo luận ({displayLocation.comments_count || 0})
               </h4>
@@ -327,7 +328,8 @@ export default function LocationSidebar({location, onClose}) {
           </div>
         </div>
 
-        <div className="p-5 border-t border-glass-border-bright bg-glass-obsidian backdrop-blur-3xl space-y-5 shrink-0 relative">
+        <div
+          className="p-5 border-t border-glass-border-bright bg-glass-obsidian backdrop-blur-3xl space-y-5 shrink-0 relative">
           <div
             className="absolute inset-x-0 -top-6 h-6 bg-linear-to-t from-obsidian/80 to-transparent pointer-events-none"></div>
 
