@@ -6,6 +6,7 @@ import {AnimatePresence, motion} from "framer-motion";
 import {CloseIcon, PinIcon, PlusIcon, RouteIcon, SpinnerIcon} from "../../../shared/components/common/icons.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
+import Skeleton from "../../../shared/components/common/skeleton.jsx";
 
 export default function ClickedMarker({point, setPoint}) {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -78,7 +79,8 @@ export default function ClickedMarker({point, setPoint}) {
 
                   <p className="text-[12px] font-bold text-text-primary mb-5 leading-tight line-clamp-2">
                     {!point.address
-                      ? <span className="text-text-muted italic animate-pulse">Đang xác định địa chỉ...</span>
+                      ? <div><Skeleton className="text-text-muted h-4 italic animate-pulse mb-1"/>
+                        <Skeleton className="text-text-muted italic animate-pulse"/></div>
                       : (point.address?.display_name || "Không xác định được địa chỉ")}
                   </p>
 

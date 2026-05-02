@@ -1,7 +1,7 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "../../auth/context/authContext.jsx";
 import { useLocationStore } from "../store/useLocationsStore.jsx";
-import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { storage } from "../../../config/firebase.js";
 import { getAddress } from "../utils/geocoding.js";
 import {
@@ -22,7 +22,7 @@ import {
 } from "../../../shared/components/common/icons.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
-import {motion, AnimatePresence} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const SUGGESTED_TAGS = [
   "view đẹp", "cà phê", "ăn ngon", "check-in", "yên tĩnh",
@@ -30,10 +30,10 @@ const SUGGESTED_TAGS = [
   "đồ uống", "wifi", "ngoài trời", "lịch sử", "mua sắm"
 ];
 
-export default function LocationFormModal({point, onClose}) {
+export default function LocationFormModal({ point, onClose }) {
   const addLocation = useLocationStore((state) => state.addLocation);
   const isLoading = useLocationStore((state) => state.isLoading);
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
 
   const rawAddress = point.address || {};
   const defaultName = rawAddress.amenity || rawAddress.shop || rawAddress.tourism || rawAddress.display_name?.split(',')[0] || "";
@@ -77,7 +77,6 @@ export default function LocationFormModal({point, onClose}) {
     updateAddress();
   }, [point.address, point.lat, point.lng]);
 
-  // Tags state
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
 
@@ -146,18 +145,18 @@ export default function LocationFormModal({point, onClose}) {
   };
 
   const categories = [
-    {value: "restaurant", label: "Nhà hàng", icon: FoodIcon},
-    {value: "cafe", label: "Quán Cafe", icon: CafeIcon},
-    {value: "hotel", label: "Khách sạn", icon: HotelIcon},
-    {value: "entertainment", label: "Giải trí", icon: EventIcon},
-    {value: "other", label: "Khác", icon: PinIcon},
+    { value: "restaurant", label: "Nhà hàng", icon: FoodIcon },
+    { value: "cafe", label: "Quán Cafe", icon: CafeIcon },
+    { value: "hotel", label: "Khách sạn", icon: HotelIcon },
+    { value: "entertainment", label: "Giải trí", icon: EventIcon },
+    { value: "other", label: "Khác", icon: PinIcon },
   ];
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[2000] flex items-center justify-center p-4">
       <motion.div
-        initial={{opacity: 0, scale: 0.9, y: 20}}
-        animate={{opacity: 1, scale: 1, y: 0}}
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         className="w-full max-w-lg h-full max-h-[90vh] overflow-hidden flex flex-col"
       >
         <GlassPanel
@@ -166,7 +165,7 @@ export default function LocationFormModal({point, onClose}) {
             className="px-8 py-5 border-b border-glass-border flex justify-between items-center shrink-0 bg-glass-obsidian backdrop-blur-3xl z-10">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-cyan-glow/10 text-cyan-glow">
-                <PinIcon size={20}/>
+                <PinIcon size={20} />
               </div>
               <h3 className="font-plus font-bold text-lg text-text-primary uppercase tracking-wider">Đánh giá địa điểm</h3>
             </div>
@@ -174,7 +173,7 @@ export default function LocationFormModal({point, onClose}) {
               onClick={onClose}
               className="text-text-muted hover:text-text-primary p-2 glass-panel !rounded-full border-glass-border transition-all"
             >
-              <CloseIcon size={20}/>
+              <CloseIcon size={20} />
             </button>
           </div>
 
@@ -216,7 +215,7 @@ export default function LocationFormModal({point, onClose}) {
                     ))}
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
-                    <PinIcon size={14}/>
+                    <PinIcon size={14} />
                   </div>
                 </div>
               </div>
@@ -232,7 +231,7 @@ export default function LocationFormModal({point, onClose}) {
                       onClick={() => setRating(star)}
                       className={`transition-all duration-300 ${star <= rating ? 'text-amber-400 scale-110' : 'text-white/10 hover:text-white/30'}`}
                     >
-                      <StarIcon size={18} fill={star <= rating ? "currentColor" : "none"}/>
+                      <StarIcon size={18} fill={star <= rating ? "currentColor" : "none"} />
                     </button>
                   ))}
                 </div>
@@ -253,7 +252,7 @@ export default function LocationFormModal({point, onClose}) {
             {/* ── TAGS ─────────────────────────────────────────────── */}
             <div className="space-y-3">
               <label className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">
-                <TagIcon size={12} className="text-cyan-glow"/>
+                <TagIcon size={12} className="text-cyan-glow" />
                 Tags ({tags.length}/8)
               </label>
 
@@ -263,19 +262,19 @@ export default function LocationFormModal({point, onClose}) {
                   {tags.map(tag => (
                     <motion.span
                       key={tag}
-                      initial={{opacity: 0, scale: 0.7}}
-                      animate={{opacity: 1, scale: 1}}
-                      exit={{opacity: 0, scale: 0.7}}
+                      initial={{ opacity: 0, scale: 0.7 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.7 }}
                       className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-glow/10 border border-cyan-glow/25 text-cyan-glow text-[11px] font-bold"
                     >
-                      <HashIcon size={9}/>
+                      <HashIcon size={9} />
                       {tag}
                       <button
                         type="button"
                         onClick={() => removeTag(tag)}
                         className="ml-0.5 text-cyan-glow/50 hover:text-cyan-glow transition-colors"
                       >
-                        <CloseIcon size={10}/>
+                        <CloseIcon size={10} />
                       </button>
                     </motion.span>
                   ))}
@@ -302,7 +301,7 @@ export default function LocationFormModal({point, onClose}) {
                     onClick={() => handleAddTag(suggestion)}
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/[0.03] border border-glass-border text-text-muted hover:bg-cyan-glow/5 hover:border-cyan-glow/20 hover:text-cyan-glow transition-all text-[10px] font-bold"
                   >
-                    <HashIcon size={8}/>
+                    <HashIcon size={8} />
                     {suggestion}
                   </button>
                 ))}
@@ -316,7 +315,7 @@ export default function LocationFormModal({point, onClose}) {
                 onClick={() => setIsPublic(true)}
                 className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl transition-all duration-500 ${isPublic ? 'bg-cyan-glow/10 text-cyan-glow shadow-neon' : 'text-text-muted hover:text-text-secondary'}`}
               >
-                <PublicIcon size={16}/>
+                <PublicIcon size={16} />
                 <span className="text-xs font-bold uppercase tracking-wider">Công khai</span>
               </button>
               <button
@@ -324,7 +323,7 @@ export default function LocationFormModal({point, onClose}) {
                 onClick={() => setIsPublic(false)}
                 className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl transition-all duration-500 ${!isPublic ? 'bg-zinc-500/10 text-zinc-300' : 'text-zinc-500 hover:text-zinc-300'}`}
               >
-                <PrivateIcon size={16}/>
+                <PrivateIcon size={16} />
                 <span className="text-xs font-bold uppercase tracking-wider">Riêng tư</span>
               </button>
             </div>
@@ -333,7 +332,7 @@ export default function LocationFormModal({point, onClose}) {
               <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Hình ảnh</label>
               {previewUrl ? (
                 <div className="relative group overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
-                  <img src={previewUrl} className="w-full h-48 object-cover" alt="preview"/>
+                  <img src={previewUrl} className="w-full h-48 object-cover" alt="preview" />
                   <div
                     className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button
@@ -344,7 +343,7 @@ export default function LocationFormModal({point, onClose}) {
                       }}
                       className="bg-red-500 text-white p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
                     >
-                      <CloseIcon size={20}/>
+                      <CloseIcon size={20} />
                     </button>
                   </div>
                 </div>
@@ -352,11 +351,11 @@ export default function LocationFormModal({point, onClose}) {
                 <label
                   className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-glass-border rounded-2xl cursor-pointer bg-glass-white hover:bg-white/5 hover:border-cyan-glow/30 transition-all group">
                   <div className="p-5 rounded-full bg-glass-white group-hover:scale-110 transition-transform mb-3">
-                    <PhotoIcon size={24} className="text-text-muted group-hover:text-cyan-glow transition-colors"/>
+                    <PhotoIcon size={24} className="text-text-muted group-hover:text-cyan-glow transition-colors" />
                   </div>
                   <span
                     className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Chọn ảnh từ thiết bị</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange}/>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                 </label>
               )}
             </div>
@@ -375,8 +374,8 @@ export default function LocationFormModal({point, onClose}) {
                 className="flex-1 !py-4 gap-2 rounded-xl"
               >
                 {isLoading || isUploading ? (
-                  <SpinnerIcon size={18} className="animate-spin"/>
-                ) : <SendIcon size={18}/>}
+                  <SpinnerIcon size={18} className="animate-spin" />
+                ) : <SendIcon size={18} />}
                 <span className="uppercase tracking-widest text-xs">Đăng Review</span>
               </ActionButton>
             </div>

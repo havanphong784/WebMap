@@ -7,6 +7,7 @@ import ActionButton from "../../shared/components/common/actionButton.jsx";
 import {useNotificationStore} from "./store/useNotificationStore.jsx";
 import {useEffect} from "react";
 import {formatFullTime} from "../../shared/utils/dateUtils.js";
+import Skeleton from "../../shared/components/common/skeleton.jsx";
 
 const typeConfig = {
   like: {
@@ -78,7 +79,21 @@ export default function NotificationsPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-6 pt-6 space-y-3">
-        {notifications.map((notif, i) => {
+        {loading ? (
+          [...Array(6)].map((_, i) => (
+            <div key={i} className="p-5 flex items-start gap-4 glass-panel border-glass-border">
+              <Skeleton circle width="3.5rem" height="3.5rem" className="shrink-0" />
+              <div className="flex-1 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Skeleton width="4rem" height="0.75rem" />
+                  <Skeleton width="6rem" height="0.75rem" />
+                </div>
+                <Skeleton width="80%" height="1.25rem" />
+                <Skeleton width="40%" height="1.5rem" className="rounded-lg" />
+              </div>
+            </div>
+          ))
+        ) : notifications.map((notif, i) => {
           const config = typeConfig[notif.type] || typeConfig.like;
           const Icon = config.icon;
           return (

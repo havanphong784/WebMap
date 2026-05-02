@@ -1,25 +1,25 @@
-import {useLocation, useNavigate} from 'react-router-dom';
-import Map, {Marker} from 'react-map-gl/maplibre';
+import { useLocation, useNavigate } from 'react-router-dom';
+import Map, { Marker } from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import ClickedMarker from "./components/clickedMarker.jsx";
-import {useCallback, useEffect, useRef, useState} from "react";
-import {getAddress} from "./utils/geocoding.js";
-import {debounce} from "./utils/performance.js";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getAddress } from "./utils/geocoding.js";
+import { debounce } from "./utils/performance.js";
 import MapStyleSwitcher from "./components/mapStyleSwitcher.jsx";
 import SearchBox from "./components/searchBox.jsx";
-import {useLocationStore} from "./store/useLocationsStore.jsx";
-import {useAuthStore} from "../auth/context/authContext.jsx";
+import { useLocationStore } from "./store/useLocationsStore.jsx";
+import { useAuthStore } from "../auth/context/authContext.jsx";
 import ClusterLocations from "./components/clusterLocations.jsx";
 import LocationCard from "./components/locationCard.jsx";
 import LocationSidebar from "./components/locationSidebar.jsx";
 import RouteLayer from "./components/routeLayer.jsx";
-import {AnimatePresence, motion} from 'framer-motion';
-import {LocateIcon, MinusIcon, PhotoIcon, PlusIcon, SpinnerIcon, StyleIcon} from "../../shared/components/common/icons.jsx";
+import { AnimatePresence, motion } from 'framer-motion';
+import { LocateIcon, MinusIcon, PhotoIcon, PlusIcon, SpinnerIcon, StyleIcon } from "../../shared/components/common/icons.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
 import colorfull from "./style/colorful";
-import {extractGPS} from "./utils/exifUtils.js";
+import { extractGPS } from "./utils/exifUtils.js";
 
 
 export default function MapPage() {
@@ -36,10 +36,10 @@ export default function MapPage() {
   const locations = useLocationStore(state => state.locations);
   const routeData = useLocationStore(state => state.routeData);
   const setRouteData = useLocationStore(state => state.setRouteData);
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
   const [currentZoom, setCurrentZoom] = useState(13);
   const [activeLocation, setActiveLocation] = useState(null);
-  const {fetchLocationDetail} = useLocationStore();
+  const { fetchLocationDetail } = useLocationStore();
   const [isLocating, setIsLocating] = useState(false);
   const [isExtractingPhoto, setIsExtractingPhoto] = useState(false);
   const [userLocation, setUserLocation] = useState(null); // [lng, lat]
@@ -106,9 +106,9 @@ export default function MapPage() {
         }
       }
 
-      setInfoClicked({lng, lat, address: null});
+      setInfoClicked({ lng, lat, address: null });
       const diachi = await getAddress(lat, lng);
-      setInfoClicked({lng, lat, address: diachi});
+      setInfoClicked({ lng, lat, address: diachi });
     }, 300);
 
     return () => clearTimeout(timer);
@@ -126,13 +126,13 @@ export default function MapPage() {
 
     if (activeLocation === null) {
       map.fitBounds(bounds, {
-        padding: {top: 100, bottom: 200, left: 100, right: 100},
+        padding: { top: 100, bottom: 200, left: 100, right: 100 },
         duration: 1200,
         essential: true,
       });
     } else {
       map.fitBounds(bounds, {
-        padding: {top: 100, bottom: 200, left: 400, right: 100},
+        padding: { top: 100, bottom: 200, left: 400, right: 100 },
         duration: 1200,
         essential: true,
       });
@@ -142,18 +142,18 @@ export default function MapPage() {
   const handleClick = async (e) => {
     setActiveLocation(null);
     setRouteData(null);
-    const {lng, lat} = e.lngLat;
+    const { lng, lat } = e.lngLat;
     flyToLocation(lng, lat, 15);
-    setInfoClicked({lng, lat, address: null});
+    setInfoClicked({ lng, lat, address: null });
     const diachi = await getAddress(lat, lng);
-    setInfoClicked({lng, lat, address: diachi});
+    setInfoClicked({ lng, lat, address: diachi });
   }
 
   const handleSearchSelect = async (lng, lat, addressName) => {
     flyToLocation(lng, lat, 15);
-    setInfoClicked({lng, lat, address: {display_name: addressName}});
+    setInfoClicked({ lng, lat, address: { display_name: addressName } });
     const diachi = await getAddress(lat, lng);
-    setInfoClicked({lng, lat, address: diachi});
+    setInfoClicked({ lng, lat, address: diachi });
   };
 
   const debouncedFetch = useRef(
@@ -177,7 +177,7 @@ export default function MapPage() {
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const {longitude, latitude, accuracy} = pos.coords;
+        const { longitude, latitude, accuracy } = pos.coords;
         setUserLocation([longitude, latitude]);
         setAccuracy(accuracy);
 
@@ -194,7 +194,7 @@ export default function MapPage() {
         console.error("Lỗi lấy vị trí:", err);
         alert("Không thể truy cập vị trí của bạn. Vui lòng cho phép quyền truy cập vị trí.");
       },
-      {enableHighAccuracy: true}
+      { enableHighAccuracy: true }
     );
   };
 
@@ -207,9 +207,9 @@ export default function MapPage() {
       const gps = await extractGPS(file);
       if (gps) {
         flyToLocation(gps.lng, gps.lat, 17);
-        setInfoClicked({lng: gps.lng, lat: gps.lat, address: null, imageFile: file, autoOpenForm: true});
+        setInfoClicked({ lng: gps.lng, lat: gps.lat, address: null, imageFile: file, autoOpenForm: true });
         const diachi = await getAddress(gps.lat, gps.lng);
-        setInfoClicked({lng: gps.lng, lat: gps.lat, address: diachi, imageFile: file, autoOpenForm: true});
+        setInfoClicked({ lng: gps.lng, lat: gps.lat, address: diachi, imageFile: file, autoOpenForm: true });
       } else {
         alert("Ảnh này không chứa thông tin vị trí (GPS metadata).");
       }
@@ -218,7 +218,7 @@ export default function MapPage() {
       alert("Không thể trích xuất vị trí từ ảnh.");
     } finally {
       setIsExtractingPhoto(false);
-      e.target.value = ""; // Reset input
+      e.target.value = "";
     }
   };
 
@@ -231,7 +231,7 @@ export default function MapPage() {
           setAccuracy(pos.coords.accuracy);
         },
         null,
-        {enableHighAccuracy: true}
+        { enableHighAccuracy: true }
       );
     }
     return () => {
@@ -256,29 +256,29 @@ export default function MapPage() {
   return (
     <div className="h-screen w-full relative overflow-hidden bg-map-bg text-white">
       <Map ref={mapRef}
-           mapStyle={activeStyle}
-           onLoad={() => {
-             setIsMapReady(true);
-             handleMapChange();
-           }}
-           onMoveEnd={handleMapChange}
-           mapLib={maplibregl}
-           antialias={true}
-           attributionControl={false}
-           initialViewState={{
-             longitude: 108.249476,
-             latitude: 15.972143,
-             zoom: 13,
-             pitch: 45,
-             bearing: 0
-           }}
-           style={{width: '100%', height: '100%'}}
-           onClick={handleClick}
+        mapStyle={activeStyle}
+        onLoad={() => {
+          setIsMapReady(true);
+          handleMapChange();
+        }}
+        onMoveEnd={handleMapChange}
+        mapLib={maplibregl}
+        antialias={true}
+        attributionControl={false}
+        initialViewState={{
+          longitude: 108.249476,
+          latitude: 15.972143,
+          zoom: 13,
+          pitch: 45,
+          bearing: 0
+        }}
+        style={{ width: '100%', height: '100%' }}
+        onClick={handleClick}
       >
         <div className="absolute top-6 right-6 z-100">
           <motion.div
-            whileHover={{scale: 1.05}}
-            whileTap={{scale: 0.95}}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => {
               if (user?.uid) navigate(`/profile/${user.uid}`);
               else navigate('/login');
@@ -304,7 +304,7 @@ export default function MapPage() {
             onClick={() => setShowStyleSwitcher(!showStyleSwitcher)}
             className={showStyleSwitcher ? "bg-cyan-glow/20 border-cyan-glow" : ""}
           >
-            <StyleIcon size={22} className={showStyleSwitcher ? "text-cyan-glow" : "text-text-primary"}/>
+            <StyleIcon size={22} className={showStyleSwitcher ? "text-cyan-glow" : "text-text-primary"} />
           </ActionButton>
 
           <ActionButton
@@ -312,8 +312,8 @@ export default function MapPage() {
             onClick={handleLocateUser}
             disabled={isLocating}
           >
-            {isLocating ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin"/> :
-              <LocateIcon size={22} className="text-cyan-glow"/>}
+            {isLocating ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin" /> :
+              <LocateIcon size={22} className="text-cyan-glow" />}
           </ActionButton>
 
           <ActionButton
@@ -321,8 +321,8 @@ export default function MapPage() {
             onClick={() => fileInputRef.current?.click()}
             disabled={isExtractingPhoto}
           >
-            {isExtractingPhoto ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin"/> :
-              <PhotoIcon size={22} className="text-cyan-glow"/>}
+            {isExtractingPhoto ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin" /> :
+              <PhotoIcon size={22} className="text-cyan-glow" />}
           </ActionButton>
 
           <input
@@ -335,19 +335,19 @@ export default function MapPage() {
 
           <div className="flex flex-col gap-2 glass-panel p-2 rounded-2xl border-glass-border">
             <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={zoomIn}>
-              <PlusIcon size={22} className="text-text-primary"/>
+              <PlusIcon size={22} className="text-text-primary" />
             </ActionButton>
-            <div className="h-px w-full bg-glass-border mx-auto" style={{width: '60%'}}></div>
+            <div className="h-px w-full bg-glass-border mx-auto" style={{ width: '60%' }}></div>
             <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={zoomOut}>
-              <MinusIcon size={22} className="text-text-primary"/>
+              <MinusIcon size={22} className="text-text-primary" />
             </ActionButton>
           </div>
         </div>
 
-        <ClickedMarker point={infoClicked} setPoint={setInfoClicked}/>
-        <SearchBox onSelectLocation={handleSearchSelect}/>
-        <ClusterLocations/>
-        <RouteLayer/>
+        <ClickedMarker point={infoClicked} setPoint={setInfoClicked} />
+        <SearchBox onSelectLocation={handleSearchSelect} />
+        <ClusterLocations />
+        <RouteLayer />
 
         {userLocation && (
           <Marker longitude={userLocation[0]} latitude={userLocation[1]} anchor="center">
@@ -403,7 +403,7 @@ export default function MapPage() {
           <div className="flex -space-x-3">
             {[1, 2, 3].map(i => (
               <img key={i} src={`https://picsum.photos/50/50?random=${i + 10}`}
-                   className="w-7 h-7 rounded-full border-2 border-obsidian shadow-lg" alt="u"/>
+                className="w-7 h-7 rounded-full border-2 border-obsidian shadow-lg" alt="u" />
             ))}
           </div>
         </GlassPanel>

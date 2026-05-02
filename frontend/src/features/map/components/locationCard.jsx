@@ -3,9 +3,11 @@ import {memo, useState} from "react";
 import {motion} from "framer-motion";
 import { StarIcon } from "../../../shared/components/common/icons.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
+import Skeleton from "../../../shared/components/common/skeleton.jsx";
 
 const LocationCard = memo(({location, onClick}) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <Marker
@@ -38,13 +40,17 @@ const LocationCard = memo(({location, onClick}) => {
             className="p-2 w-48 border-white/20 bg-black/80 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden ring-1 ring-white/5">
             {location.image_url && (
               <div className="overflow-hidden rounded-xl p-0 mb-2 border border-white/5 aspect-video relative group">
+                {!imageLoaded && (
+                  <Skeleton width="100%" height="100%" className="rounded-xl" />
+                )}
                 <img
                   src={location.image_url}
                   alt={location.name}
                   loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  onLoad={() => setImageLoaded(true)}
+                  className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div className={`absolute inset-0 bg-gradient-to-t from-black/60 to-transparent transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}></div>
               </div>
             )}
 

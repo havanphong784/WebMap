@@ -20,6 +20,7 @@ import {
   TagIcon,
 } from "../../../shared/components/common/icons.jsx";
 import {parseDBDate} from "../../../shared/utils/dateUtils.js";
+import Skeleton from "../../../shared/components/common/skeleton.jsx";
 
 export default function LocationSidebar({location, onClose}) {
   const {user} = useAuthStore();
@@ -304,9 +305,19 @@ export default function LocationSidebar({location, onClose}) {
 
             <div className="space-y-6 pb-2">
               {loadingComments ? (
-                <div className="flex flex-col items-center justify-center py-8 gap-3">
-                  <SpinnerIcon size={24} className="animate-spin text-cyan-glow"/>
-                  <p className="text-[8px] font-black text-text-muted uppercase tracking-[0.4em]">Đang tải...</p>
+                <div className="space-y-6">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex gap-3">
+                      <Skeleton circle width="2.5rem" height="2.5rem" className="shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="flex justify-between">
+                          <Skeleton width="40%" height="1rem" />
+                          <Skeleton width="20%" height="0.75rem" />
+                        </div>
+                        <Skeleton width="100%" height="3rem" className="rounded-xl rounded-tl-none" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : comments.length > 0 ? (
                 comments.map((c, i) => (

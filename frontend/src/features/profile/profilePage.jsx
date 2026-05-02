@@ -15,6 +15,7 @@ import {
 } from "../../shared/components/common/icons.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
+import Skeleton from "../../shared/components/common/skeleton.jsx";
 
 export default function ProfilePage() {
   const {uid: uidParam} = useParams();
@@ -64,14 +65,17 @@ export default function ProfilePage() {
     }
   };
 
+  // Removed the full screen loading spinner to use inline skeletons
+  /*
   if (loading) return (
     <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center space-y-6">
       <SpinnerIcon size={48} className="animate-spin text-cyan-glow"/>
       <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-xs">Đang tải hồ sơ...</p>
     </div>
   );
+  */
 
-  if (!profileUser) return (
+  if (!loading && !profileUser) return (
     <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center space-y-6">
       <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-sm">Không tìm thấy người dùng</p>
       <ActionButton variant="glass" onClick={() => navigate('/')}>Về trang chủ</ActionButton>
@@ -142,19 +146,37 @@ export default function ProfilePage() {
             initial={{opacity: 0}}
             animate={{opacity: 1}}
             transition={{delay: 0.2}}
-            className="text-center mt-6"
+            className="text-center mt-6 w-full max-w-sm"
           >
-            <h1 className="text-4xl font-plus font-black tracking-tight">{profileUser?.name || 'Explorer'}</h1>
-            <p className="text-zinc-500 font-medium mt-1">{profileUser?.email}</p>
-            <div
-              className="inline-block mt-3 px-4 py-1.5 rounded-full glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[10px] font-bold uppercase tracking-widest shadow-neon">
-              Elite Explorer
-            </div>
+            {loading ? (
+              <div className="flex flex-col items-center gap-3">
+                <Skeleton width="12rem" height="2.5rem" />
+                <Skeleton width="10rem" height="1rem" />
+                <Skeleton width="8rem" height="1.5rem" className="rounded-full mt-2" />
+              </div>
+            ) : (
+              <>
+                <h1 className="text-4xl font-plus font-black tracking-tight">{profileUser?.name || 'Explorer'}</h1>
+                <p className="text-zinc-500 font-medium mt-1">{profileUser?.email}</p>
+                <div
+                  className="inline-block mt-3 px-4 py-1.5 rounded-full glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[10px] font-bold uppercase tracking-widest shadow-neon">
+                  Elite Explorer
+                </div>
+              </>
+            )}
           </motion.div>
         </div>
 
         <div className="grid grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto">
-          {stats.map((stat, i) => (
+          {loading ? (
+            [...Array(3)].map((_, i) => (
+              <GlassPanel key={i} className="py-4 px-2 flex flex-col items-center gap-2 border-white/5 bg-white/5">
+                <Skeleton circle width="1.25rem" height="1.25rem" />
+                <Skeleton width="2rem" height="1.5rem" />
+                <Skeleton width="3rem" height="0.5rem" />
+              </GlassPanel>
+            ))
+          ) : stats.map((stat, i) => (
             <motion.div
               key={stat.label}
               initial={{opacity: 0, y: 20}}
@@ -181,7 +203,13 @@ export default function ProfilePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {userLocations.map((loc, i) => (
+            {loading ? (
+              [...Array(3)].map((_, i) => (
+                <div key={i} className="glass-panel rounded-3xl border-white/5 overflow-hidden p-0 space-y-0 h-64">
+                   <Skeleton width="100%" height="100%" />
+                </div>
+              ))
+            ) : userLocations.map((loc, i) => (
               <motion.div
                 key={loc.id}
                 initial={{opacity: 0, scale: 0.9}}
