@@ -37,9 +37,9 @@ const LocationCard = memo(({location, onClick}) => {
           transition={{type: "spring", stiffness: 300, damping: 20}}
         >
           <GlassPanel
-            className="p-2 w-48 border-white/20 bg-black/80 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden ring-1 ring-white/5">
+            className="p-2 w-48 border-glass-border bg-white/90 backdrop-blur-xl shadow-glass rounded-2xl overflow-hidden ring-1 ring-glass-border">
             {location.image_url && (
-              <div className="overflow-hidden rounded-xl p-0 mb-2 border border-white/5 aspect-video relative group">
+              <div className="overflow-hidden rounded-xl p-0 mb-2 border border-glass-border aspect-video relative group">
                 {!imageLoaded && (
                   <Skeleton width="100%" height="100%" className="rounded-xl" />
                 )}
@@ -55,7 +55,7 @@ const LocationCard = memo(({location, onClick}) => {
             )}
 
             <div className="px-1.5 py-1">
-              <h4 className="text-[11px] font-bold text-white leading-tight truncate uppercase tracking-wider mb-1"
+              <h4 className="text-[11px] font-bold text-text-primary leading-tight truncate uppercase tracking-wider mb-1"
                   title={location.name}>
                 {location.name}
               </h4>

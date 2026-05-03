@@ -41,7 +41,7 @@ const DiscoveryCard = ({ post, index, navigate, onLike }) => {
           className={`w-full rounded-3xl grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ${imageLoaded ? 'opacity-100 block' : 'opacity-0 absolute inset-0'}`}
         />
         <div
-          className={`absolute inset-0 bg-gradient-to-t from-obsidian/90 via-obsidian/20 to-transparent transition-opacity ${imageLoaded ? 'opacity-80 group-hover:opacity-100' : 'opacity-0'}`}>
+          className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity ${imageLoaded ? 'opacity-80 group-hover:opacity-100' : 'opacity-0'}`}>
         </div>
 
         <div className="absolute bottom-4 left-4 right-4">
@@ -124,7 +124,7 @@ const DiscoveryFeed = () => {
     <div className="min-h-screen bg-map-bg pt-6 pb-32 px-6 overflow-y-auto no-scrollbar">
       <div className="flex items-center gap-4 mb-8 max-w-4xl mx-auto">
         <GlassPanel
-          className="flex-1 flex items-center gap-3 py-3 px-5 rounded-full border-glass-border bg-glass-white shadow-glass">
+          className="flex-1 flex items-center gap-3 py-3 px-5 rounded-full border-glass-border bg-white shadow-floating">
           <SearchIcon size={20} className="text-text-secondary shrink-0" />
           <input
             type="text"
@@ -171,7 +171,7 @@ const DiscoveryFeed = () => {
             className={`
               whitespace-nowrap px-6 py-2.5 rounded-full border text-xs font-bold tracking-widest uppercase transition-all duration-300
               ${activeCategory === cat
-                ? 'bg-cyan-glow text-obsidian border-cyan-glow shadow-neon'
+                ? 'bg-cyan-glow text-white border-cyan-glow shadow-neon'
                 : 'glass-panel border-glass-border text-text-secondary hover:text-text-primary hover:border-glass-border-bright'}
             `}
           >

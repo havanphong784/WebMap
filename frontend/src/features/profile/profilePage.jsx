@@ -66,8 +66,8 @@ export default function ProfilePage() {
 
 
   if (!loading && !profileUser) return (
-    <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center space-y-6">
-      <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-sm">Không tìm thấy người dùng</p>
+    <div className="min-h-screen bg-map-bg flex flex-col items-center justify-center space-y-6">
+      <p className="text-text-muted font-plus font-bold uppercase tracking-widest text-sm">Không tìm thấy người dùng</p>
       <ActionButton variant="glass" onClick={() => navigate('/')}>Về trang chủ</ActionButton>
     </div>
   );
@@ -80,7 +80,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-obsidian text-white pb-32">
+    <div className="min-h-screen bg-map-bg text-text-primary pb-32">
       <div className="relative h-64 w-full overflow-hidden">
         <motion.img
           initial={{scale: 1.2}}
@@ -89,7 +89,7 @@ export default function ProfilePage() {
           className="w-full h-full object-cover grayscale-[0.3]"
           alt="cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-map-bg via-map-bg/40 to-transparent"></div>
         <div className="absolute top-6 left-6 z-50">
           <ActionButton variant="icon" onClick={() => navigate(-1)} className="rotate-180">
             <ArrowIcon size={24}/>
@@ -119,7 +119,7 @@ export default function ProfilePage() {
             animate={{y: 0, opacity: 1}}
             className="relative"
           >
-            <div className="w-36 h-36 rounded-full border-4 border-obsidian p-1 bg-cyan-glow shadow-neon">
+            <div className="w-36 h-36 rounded-full border-4 border-map-bg p-1 bg-cyan-glow shadow-neon">
               <img
                 src={profileUser?.avatar_url || currentUser?.photoURL || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"}
                 className="w-full h-full rounded-full object-cover"
@@ -127,7 +127,7 @@ export default function ProfilePage() {
               />
             </div>
             <div
-              className="absolute bottom-1 right-1 bg-cyan-glow text-obsidian px-3 py-1 rounded-full text-[10px] font-bold shadow-neon border-2 border-obsidian">
+              className="absolute bottom-1 right-1 bg-cyan-glow text-white px-3 py-1 rounded-full text-[10px] font-bold shadow-neon border-2 border-map-bg">
               EXP
             </div>
           </motion.div>
@@ -146,8 +146,8 @@ export default function ProfilePage() {
               </div>
             ) : (
               <>
-                <h1 className="text-4xl font-plus font-black tracking-tight">{profileUser?.name || 'Explorer'}</h1>
-                <p className="text-zinc-500 font-medium mt-1">{profileUser?.email}</p>
+                <h1 className="text-4xl font-plus font-black tracking-tight text-text-primary">{profileUser?.name || 'Explorer'}</h1>
+                <p className="text-text-secondary font-medium mt-1">{profileUser?.email}</p>
                 <div
                   className="inline-block mt-3 px-4 py-1.5 rounded-full glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[10px] font-bold uppercase tracking-widest shadow-neon">
                   Elite Explorer
@@ -174,20 +174,20 @@ export default function ProfilePage() {
               transition={{delay: 0.3 + (i * 0.1)}}
             >
               <GlassPanel
-                className="py-4 px-2 text-center border-white/5 bg-white/5 hover:bg-white/10 transition-colors">
+                className="py-4 px-2 text-center border-glass-border bg-white/40 hover:bg-white/60 transition-colors shadow-sm">
                 <stat.icon size={18} className={`${stat.color || 'text-cyan-glow'} mx-auto mb-2`}/>
-                <div className="text-2xl font-plus font-black tracking-tighter">{stat.value}</div>
-                <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">{stat.label}</div>
+                <div className="text-2xl font-plus font-black tracking-tighter text-text-primary">{stat.value}</div>
+                <div className="text-[10px] uppercase tracking-widest text-text-muted font-bold">{stat.label}</div>
               </GlassPanel>
             </motion.div>
           ))}
         </div>
 
         <div className="mt-16 max-w-5xl mx-auto">
-          <div className="flex items-center gap-3 mb-8 border-b border-white/5 pb-4">
+          <div className="flex items-center gap-3 mb-8 border-b border-glass-border pb-4">
             <div className="w-1.5 h-6 bg-cyan-glow rounded-full shadow-neon"></div>
-            <h2 className="text-xl font-plus font-bold uppercase tracking-tight">Địa điểm đã chinh phục</h2>
-            <span className="ml-auto glass-panel px-3 py-1 text-[10px] font-mono text-zinc-500 border-white/10">
+            <h2 className="text-xl font-plus font-bold uppercase tracking-tight text-text-primary">Địa điểm đã chinh phục</h2>
+            <span className="ml-auto glass-panel px-3 py-1 text-[10px] font-mono text-text-muted border-glass-border">
               {userLocations.length} GHIM
             </span>
           </div>
@@ -207,7 +207,7 @@ export default function ProfilePage() {
                 viewport={{once: true}}
                 transition={{delay: (i % 3) * 0.1}}
                 onClick={() => navigate("/", {state: {focusLocation: loc}})}
-                className="group relative glass-panel rounded-3xl border-white/5 overflow-hidden hover:border-cyan-glow/30 transition-all duration-500 cursor-pointer shadow-2xl"
+                className="group relative glass-panel rounded-3xl border-glass-border overflow-hidden hover:border-cyan-glow/30 transition-all duration-500 cursor-pointer shadow-lg"
               >
                 <div className="aspect-[4/3] relative overflow-hidden">
                   <img
@@ -240,7 +240,7 @@ export default function ProfilePage() {
                       <span className="text-[10px] font-bold uppercase tracking-widest truncate">{loc.address}</span>
                     </div>
                     <h3
-                      className="text-lg font-plus font-bold text-white group-hover:text-cyan-glow transition-colors line-clamp-1">
+                      className="text-lg font-plus font-bold text-text-primary group-hover:text-cyan-glow transition-colors line-clamp-1">
                       {loc.name}
                     </h3>
                   </div>

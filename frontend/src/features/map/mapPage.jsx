@@ -284,7 +284,7 @@ export default function MapPage() {
   };
 
   return (
-    <div className="h-screen w-full relative overflow-hidden bg-map-bg text-white">
+    <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
       <Map ref={mapRef}
            mapStyle={activeStyle}
            onLoad={() => {
@@ -315,7 +315,7 @@ export default function MapPage() {
             }}
             className="flex items-center gap-2 glass-panel p-1.5 pr-4 border-glass-border cursor-pointer shadow-neon"
           >
-            <div className="w-9 h-9 rounded-full border-2 border-cyan-glow shadow-neon overflow-hidden bg-glass-white">
+            <div className="w-9 h-9 rounded-full border-2 border-cyan-glow shadow-neon overflow-hidden bg-white/50">
               <img
                 src={user?.photoURL || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"}
                 className="w-full h-full object-cover"
@@ -433,7 +433,7 @@ export default function MapPage() {
           <div className="flex -space-x-3">
             {[1, 2, 3].map(i => (
               <img key={i} src={`https://picsum.photos/50/50?random=${i + 10}`}
-                   className="w-7 h-7 rounded-full border-2 border-obsidian shadow-lg" alt="u"/>
+                   className="w-7 h-7 rounded-full border-2 border-map-bg shadow-lg" alt="u"/>
             ))}
           </div>
         </GlassPanel>

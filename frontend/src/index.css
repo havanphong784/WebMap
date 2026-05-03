@@ -1,48 +1,56 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Inter:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
 
 @theme {
-    /* Base Colors - New Navy Palette */
-    --color-map-bg: #021024;
-    --color-obsidian: #021024;
-    --color-obsidian-light: #052659;
-    --color-slate: #5483B3;
-    
+    /* Base Colors - Aether Geo-Light Palette */
+    --color-map-bg: #F4FBFA;
+    --color-obsidian: #E8EFEF;
+    --color-obsidian-light: #DDE4E3;
+    --color-slate: #8E9AAF;
+
     /* Brand Accents */
-    --color-cyan-glow: #C1E8FF;
-    --color-sky-glow: #7DA0CA;
-    --color-sunset: #FF4B2B;
+    --color-cyan-glow: #00CED1;
+    --color-sky-glow: #535F72;
+    --color-sunset: #D4A373;
     --color-emerald: #10B981;
-    
+
     /* Text Hierarchy */
-    --color-text-primary: #FFFFFF;
-    --color-text-secondary: #7DA0CA; /* Use sky blue for secondary text */
-    --color-text-muted: #5483B3;     
-    --color-text-dim: #052659;       
-    
+    --color-text-primary: #161D1D;
+    --color-text-secondary: #3B4949;
+    --color-text-muted: #6B7A7A;
+    --color-text-dim: #D4DBDB;
+
     /* Glass & Borders */
-    --color-glass-white: rgba(193, 232, 255, 0.08); /* Tinted with Light Blue */
-    --color-glass-obsidian: rgba(2, 16, 36, 0.85);
-    --color-glass-border: rgba(125, 160, 202, 0.2);
-    --color-glass-border-bright: rgba(193, 232, 255, 0.3);
-    
+    --color-glass-white: rgba(255, 255, 255, 0.7);
+    /* High opacity for light mode */
+    --color-glass-obsidian: rgba(242, 239, 233, 0.85);
+    --color-glass-border: rgba(107, 122, 122, 0.15);
+    --color-glass-border-bright: rgba(0, 206, 209, 0.25);
+
     /* Shadows */
-    --shadow-neon: 0 20px 40px rgba(193, 232, 255, 0.15);
-    --shadow-sunset: 0 20px 40px rgba(255, 75, 43, 0.15);
-    --shadow-glass: 0 40px 80px rgba(0, 0, 0, 0.6);
-    
+    --shadow-neon: 0 10px 40px rgba(0, 206, 209, 0.2);
+    --shadow-sunset: 0 10px 40px rgba(212, 163, 115, 0.2);
+    --shadow-glass: 0 30px 60px rgba(0, 0, 0, 0.12);
+    --shadow-floating: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
     /* Fonts */
-    --font-plus: "Plus Jakarta Sans", sans-serif;
-    --font-inter: "Inter", sans-serif;
+    --font-plus: "Space Grotesk", sans-serif;
+    --font-inter: "Roboto", sans-serif;
 }
 
 @layer base {
     body {
-        @apply bg-obsidian text-white font-inter antialiased overflow-x-hidden selection:bg-cyan-glow selection:text-obsidian custom-scrollbar;
+        @apply bg-map-bg text-text-primary font-inter antialiased overflow-x-hidden selection:bg-cyan-glow selection:text-white custom-scrollbar;
     }
 
-    h1, h2, h3, h4, h5, h6 {
-        @apply font-plus font-bold tracking-tight;
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-plus font-bold tracking-tight text-text-primary;
     }
 
     /* Global Scrollbar Reset */
@@ -79,6 +87,7 @@
     backdrop-filter: blur(40px);
     border: 1px solid var(--color-glass-border);
     border-radius: 1.5rem;
+    box-shadow: var(--shadow-glass);
 }
 
 @utility glass-card {
@@ -87,11 +96,12 @@
     border: 1px solid var(--color-glass-border);
     border-radius: 1rem;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 @utility btn-primary {
     background-color: var(--color-cyan-glow);
-    color: var(--color-obsidian);
+    color: white;
     font-weight: 700;
     padding: 0.75rem 1.5rem;
     border-radius: 9999px;
@@ -115,21 +125,26 @@
     }
 
     &::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.1);
         border-radius: 20px;
         border: 2px solid transparent;
         background-clip: content-box;
     }
 
     &::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(0, 0, 0, 0.2);
         background-clip: content-box;
     }
 }
 
 @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 @utility skeleton {
@@ -140,21 +155,23 @@
     border-radius: 0.5rem;
     min-height: 12px;
     display: block;
+
     &::after {
         content: "";
         position: absolute;
         inset: 0;
-        background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.15),
-            transparent
-        );
+        background: linear-gradient(90deg,
+                transparent,
+                rgba(255, 255, 255, 0.15),
+                transparent);
         animation: shimmer 1.5s infinite;
     }
 }
 
-.maplibregl-ctrl-attrib, .maplibregl-ctrl-logo, .mapboxgl-ctrl-attrib, .mapboxgl-ctrl-logo {
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-logo,
+.mapboxgl-ctrl-attrib,
+.mapboxgl-ctrl-logo {
     display: none !important;
 }
 
@@ -172,4 +189,4 @@
 .maplibregl-popup-tip,
 .mapboxgl-popup-tip {
     display: none !important;
-}
+}

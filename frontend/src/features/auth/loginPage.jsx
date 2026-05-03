@@ -30,7 +30,7 @@ export default function Login() {
   };
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-obsidian overflow-hidden relative">
+    <div className="h-screen w-full flex items-center justify-center bg-map-bg overflow-hidden relative">
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-glow/10 rounded-full blur-[120px] animate-pulse"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-sunset/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }}></div>
 
@@ -39,7 +39,7 @@ export default function Login() {
         animate={{ opacity: 1, y: 0 }}
         className="z-10 w-[90%] max-w-lg"
       >
-        <GlassPanel className="p-12 flex flex-col items-center text-center border-white/10 bg-black/40 shadow-2xl rounded-[40px]">
+        <GlassPanel className="p-12 flex flex-col items-center text-center border-glass-border bg-white/80 shadow-glass rounded-[40px]">
           <motion.div
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
@@ -48,7 +48,7 @@ export default function Login() {
             <MapIcon size={40} className="text-cyan-glow" />
           </motion.div>
 
-          <h1 className="text-5xl font-plus font-black tracking-tighter text-white mb-3">
+          <h1 className="text-5xl font-plus font-black tracking-tighter text-text-primary mb-3">
             AETHER <span className="text-cyan-glow shadow-neon">GEO</span>
           </h1>
           <p className="text-zinc-500 font-medium mb-12 max-w-xs uppercase tracking-[0.2em] text-[10px]">
@@ -56,18 +56,18 @@ export default function Login() {
           </p>
 
           <div className="w-full space-y-6 mb-12">
-            <div className="flex items-center gap-4 text-left glass-panel p-4 border-white/5 bg-white/2">
+            <div className="flex items-center gap-4 text-left glass-panel p-4 border-glass-border bg-white/40">
               <SecurityIcon size={20} className="text-cyan-glow shrink-0" />
               <div>
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Bảo mật cấp cao</h3>
-                <p className="text-[10px] text-zinc-500">Xác thực Firebase an toàn tuyệt đối</p>
+                <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">Bảo mật cấp cao</h3>
+                <p className="text-[10px] text-text-secondary">Xác thực Firebase an toàn tuyệt đối</p>
               </div>
             </div>
-            <div className="flex items-center gap-4 text-left glass-panel p-4 border-white/5 bg-white/2">
+            <div className="flex items-center gap-4 text-left glass-panel p-4 border-glass-border bg-white/40">
               <PublicIcon size={20} className="text-cyan-glow shrink-0" />
               <div>
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Mạng lưới toàn cầu</h3>
-                <p className="text-[10px] text-zinc-500">Khám phá hàng triệu tọa độ độc bản</p>
+                <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">Mạng lưới toàn cầu</h3>
+                <p className="text-[10px] text-text-secondary">Khám phá hàng triệu tọa độ độc bản</p>
               </div>
             </div>
           </div>
