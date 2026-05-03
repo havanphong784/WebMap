@@ -3,32 +3,31 @@
 @import "tailwindcss";
 
 @theme {
-    /* Base Colors - Aether Geo-Light Palette */
+    /* các màu chinhs */
     --color-map-bg: #F4FBFA;
     --color-obsidian: #E8EFEF;
     --color-obsidian-light: #DDE4E3;
     --color-slate: #8E9AAF;
 
-    /* Brand Accents */
+    /* các màuc phụ */
     --color-cyan-glow: #00CED1;
     --color-sky-glow: #535F72;
     --color-sunset: #D4A373;
     --color-emerald: #10B981;
 
-    /* Text Hierarchy */
+    /* màu chữ*/
     --color-text-primary: #161D1D;
     --color-text-secondary: #3B4949;
     --color-text-muted: #6B7A7A;
     --color-text-dim: #D4DBDB;
 
-    /* Glass & Borders */
+    /* màu kính*/
     --color-glass-white: rgba(255, 255, 255, 0.7);
-    /* High opacity for light mode */
     --color-glass-obsidian: rgba(242, 239, 233, 0.85);
     --color-glass-border: rgba(107, 122, 122, 0.15);
     --color-glass-border-bright: rgba(0, 206, 209, 0.25);
 
-    /* Shadows */
+    /* Bóng*/
     --shadow-neon: 0 10px 40px rgba(0, 206, 209, 0.2);
     --shadow-sunset: 0 10px 40px rgba(212, 163, 115, 0.2);
     --shadow-glass: 0 30px 60px rgba(0, 0, 0, 0.12);
