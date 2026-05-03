@@ -313,9 +313,9 @@ export default function MapPage() {
               if (user?.uid) navigate(`/profile/${user.uid}`);
               else navigate('/login');
             }}
-            className="flex items-center gap-2 glass-panel p-1.5 pr-4 border-glass-border cursor-pointer shadow-neon"
+            className="bg-obsidian flex items-center gap-2 glass-panel p-1.5 pr-4 border-glass-border cursor-pointer shadow-neon"
           >
-            <div className="w-9 h-9 rounded-full border-2 border-cyan-glow shadow-neon overflow-hidden bg-white/50">
+            <div className="w-9 h-9 rounded-full border-2 border-cyan-glow shadow-neon overflow-hidden ">
               <img
                 src={user?.photoURL || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"}
                 className="w-full h-full object-cover"
@@ -332,7 +332,7 @@ export default function MapPage() {
           <ActionButton
             variant="icon"
             onClick={() => setShowStyleSwitcher(!showStyleSwitcher)}
-            className={showStyleSwitcher ? "bg-cyan-glow/20 border-cyan-glow" : ""}
+            className={showStyleSwitcher ? "bg-cyan-glow/20 border-cyan-glow" : "bg-obsidian "}
           >
             <StyleIcon size={22} className={showStyleSwitcher ? "text-cyan-glow" : "text-text-primary"}/>
           </ActionButton>
@@ -341,6 +341,7 @@ export default function MapPage() {
             variant="icon"
             onClick={handleLocateUser}
             disabled={isLocating}
+            className="bg-obsidian"
           >
             {isLocating ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin"/> :
               <LocateIcon size={22} className="text-cyan-glow"/>}
@@ -350,6 +351,7 @@ export default function MapPage() {
             variant="icon"
             onClick={() => fileInputRef.current?.click()}
             disabled={isExtractingPhoto}
+            className="bg-obsidian"
           >
             {isExtractingPhoto ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin"/> :
               <PhotoIcon size={22} className="text-cyan-glow"/>}
@@ -363,7 +365,7 @@ export default function MapPage() {
             onChange={handlePhotoUpload}
           />
 
-          <div className="flex flex-col gap-2 glass-panel p-2 rounded-2xl border-glass-border">
+          <div className="flex flex-col bg-obsidian gap-2 glass-panel p-2 rounded-2xl border-glass-border">
             <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={zoomIn}>
               <PlusIcon size={22} className="text-text-primary"/>
             </ActionButton>
@@ -423,7 +425,7 @@ export default function MapPage() {
 
       <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-xl pointer-events-none">
         <GlassPanel
-          className="py-3 px-6 rounded-2xl bg-glass-obsidian border-glass-border flex items-center justify-between shadow-glass">
+          className="py-3 px-6 rounded-2xl bg-obsidian border-glass-border flex items-center justify-between shadow-glass">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-sunset animate-pulse shadow-sunset"></div>
             <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">

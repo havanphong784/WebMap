@@ -5,9 +5,11 @@
 @theme {
     /* các màu chinhs */
     --color-map-bg: #F4FBFA;
-    --color-obsidian: #E8EFEF;
+    --color-obsidian: #F7F9FB;
     --color-obsidian-light: #DDE4E3;
     --color-slate: #8E9AAF;
+
+
 
     /* các màuc phụ */
     --color-cyan-glow: #00CED1;
@@ -160,9 +162,9 @@
         position: absolute;
         inset: 0;
         background: linear-gradient(90deg,
-                transparent,
-                rgba(255, 255, 255, 0.15),
-                transparent);
+        transparent,
+        rgba(255, 255, 255, 0.15),
+        transparent);
         animation: shimmer 1.5s infinite;
     }
 }

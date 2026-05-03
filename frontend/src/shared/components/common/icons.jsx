@@ -34,7 +34,9 @@ import {
   MoreVertical,
   ChevronRight,
   Tag,
-  Hash
+  Hash,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export {
@@ -73,6 +75,8 @@ export {
   MoreVertical as MoreIcon,
   ChevronRight as ArrowIcon,
   Tag as TagIcon,
-  Hash as HashIcon
+  Hash as HashIcon,
+  Eye as EyeIcon,
+  EyeOff as EyeOffIcon
 };
 

@@ -1,4 +1,4 @@
-import {Layer, Source} from "react-map-gl/maplibre";
+import { Layer, Source } from "react-map-gl/maplibre";
 import { useLocationStore } from "../store/useLocationsStore.jsx";
 
 export default function RouteLayer() {
@@ -17,9 +17,9 @@ export default function RouteLayer() {
       <Layer
         id="route-layer"
         type="line"
-        layout={{"line-join": "round", "line-cap": "round"}}
+        layout={{ "line-join": "round", "line-cap": "round" }}
         paint={{
-          "line-color": "#00f2ff",
+          "line-color": "#3903feff",
           "line-width": 6,
           "line-opacity": 0.8,
           "line-blur": 1
