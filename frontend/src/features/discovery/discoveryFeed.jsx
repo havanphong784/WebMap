@@ -87,16 +87,24 @@ const DiscoveryCard = ({ post, index, navigate, onLike }) => {
 const DiscoveryFeed = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { trendingLocations, fetchTrending, toggleLike, isLoading } = useLocationStore();
-
+  const { trendingLocations, fetchTrending, toggleLike, isLoading, tags, fetchUniqueTags, fetchByTag } = useLocationStore();
+  
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const categories = ['All', 'Urban', 'Nature', 'Abandoned', 'Hidden Gems', 'Night Life'];
+  useEffect(() => {
+    fetchUniqueTags();
+  }, [fetchUniqueTags]);
 
   useEffect(() => {
-    fetchTrending(user?.uid);
-  }, [fetchTrending, user?.uid]);
+    if (activeCategory === 'All') {
+      fetchTrending(user?.uid);
+    } else {
+      fetchByTag(activeCategory, user?.uid);
+    }
+  }, [fetchTrending, fetchByTag, activeCategory, user?.uid]);
+
+  const categories = ['All', ...tags];
 
   const handleToggleLike = (e, post) => {
     e.stopPropagation();
@@ -108,9 +116,8 @@ const DiscoveryFeed = () => {
   };
 
   const filteredPosts = trendingLocations.filter(p => {
-    const matchCategory = activeCategory === 'All' || p.category?.toLowerCase() === activeCategory.toLowerCase();
     const matchSearch = !searchQuery || p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.address?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCategory && matchSearch;
+    return matchSearch;
   });
 
   return (

@@ -45,6 +45,7 @@ export default function MapPage() {
   const [userLocation, setUserLocation] = useState(null); // [lng, lat]
   const [accuracy, setAccuracy] = useState(0);
   const fileInputRef = useRef(null);
+  const clickThrottleRef = useRef(false);
 
   const flyToLocation = useCallback((lng, lat, zoom = 16, duration = 1600) => {
     if (!mapRef.current) return;
@@ -140,6 +141,12 @@ export default function MapPage() {
   }, [routeData, activeLocation]);
 
   const handleClick = async (e) => {
+    if (clickThrottleRef.current) return;
+    clickThrottleRef.current = true;
+    setTimeout(() => {
+      clickThrottleRef.current = false;
+    }, 2000); // Chặn click trong 2 giây
+
     setActiveLocation(null);
     setRouteData(null);
     const { lng, lat } = e.lngLat;

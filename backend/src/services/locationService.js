@@ -121,3 +121,14 @@ export const listLocationsByTag = async ({ tag, userId }) => {
   const result = await pool.query(query, [tag, userId || "guest"]);
   return result.rows;
 };
+
+export const listUniqueTags = async () => {
+  const query = `
+    SELECT DISTINCT unnest(tags) as tag 
+    FROM locations 
+    WHERE is_public = true 
+    ORDER BY tag ASC;
+  `;
+  const result = await pool.query(query);
+  return result.rows.map(r => r.tag);
+};

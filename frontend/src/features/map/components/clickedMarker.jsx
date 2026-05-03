@@ -77,12 +77,12 @@ export default function ClickedMarker({point, setPoint}) {
                     </button>
                   </div>
 
-                  <p className="text-[12px] font-bold text-text-primary mb-5 leading-tight line-clamp-2">
+                  <div className="text-[12px] font-bold text-text-primary mb-5 leading-tight line-clamp-2">
                     {!point.address
-                      ? <div><Skeleton className="text-text-muted h-4 italic animate-pulse mb-1"/>
-                        <Skeleton className="text-text-muted italic animate-pulse"/></div>
+                      ? <div className="space-y-1"><Skeleton className="text-text-muted h-4 italic animate-pulse" />
+                        <Skeleton className="text-text-muted italic animate-pulse" /></div>
                       : (point.address?.display_name || "Không xác định được địa chỉ")}
-                  </p>
+                  </div>
 
                   <div className="flex flex-col gap-2.5">
                     <ActionButton
