@@ -3,10 +3,13 @@ import pool from "../config/db.js";
 export const listLocations = async ({ userId, minLng, maxLng, minLat, maxLat }) => {
   const query = `
     SELECT l.*,
+           u.name AS user_name,
+           u.avatar_url AS user_avatar,
            (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
            (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $5) AS is_liked
     FROM locations l
+    LEFT JOIN users u ON l.user_id = u.firebase_uid
     WHERE (l.lat BETWEEN $1 AND $2)
       AND (l.lng BETWEEN $3 AND $4)
       AND (l.is_public = true OR l.user_id = $5)
@@ -57,10 +60,13 @@ export const createLocation = async ({
 export const listUserLocations = async ({ uid, currentUserId }) => {
   const query = `
     SELECT l.*,
+           u.name AS user_name,
+           u.avatar_url AS user_avatar,
            (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
            (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
     FROM locations l
+    LEFT JOIN users u ON l.user_id = u.firebase_uid
     WHERE l.user_id = $1
     ORDER BY l.created_at DESC;
   `;
@@ -72,10 +78,13 @@ export const listUserLocations = async ({ uid, currentUserId }) => {
 export const listTrendingLocations = async ({ userId }) => {
   const query = `
     SELECT l.*,
+           u.name AS user_name,
+           u.avatar_url AS user_avatar,
            (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
            (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $1) AS is_liked
     FROM locations l
+    LEFT JOIN users u ON l.user_id = u.firebase_uid
     WHERE l.is_public = true
     ORDER BY likes_count DESC, l.created_at DESC LIMIT 20;
   `;
@@ -97,10 +106,13 @@ export const deleteLocation = async ({ locationId, userId }) => {
 export const getLocationDetail = async ({ locationId, userId }) => {
   const query = `
     SELECT l.*,
+           u.name AS user_name,
+           u.avatar_url AS user_avatar,
            (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
            (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
     FROM locations l
+    LEFT JOIN users u ON l.user_id = u.firebase_uid
     WHERE l.id = $1;
   `;
   const result = await pool.query(query, [locationId, userId || "guest"]);
@@ -110,10 +122,13 @@ export const getLocationDetail = async ({ locationId, userId }) => {
 export const listLocationsByTag = async ({ tag, userId }) => {
   const query = `
     SELECT l.*,
+           u.name AS user_name,
+           u.avatar_url AS user_avatar,
            (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
            (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
     FROM locations l
+    LEFT JOIN users u ON l.user_id = u.firebase_uid
     WHERE $1 = ANY(l.tags)
       AND (l.is_public = true OR l.user_id = $2)
     ORDER BY l.created_at DESC LIMIT 100;

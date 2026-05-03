@@ -175,6 +175,26 @@ export default function LocationSidebar({location, onClose}) {
               {displayLocation.is_public ? 'Công khai' : 'Riêng tư'}
             </div>
           </motion.div>
+          <motion.div
+            initial={{y: 10, opacity: 0}}
+            animate={{y: 0, opacity: 1}}
+            transition={{delay: 0.45}}
+            className="flex items-center gap-3 mb-4 p-2.5 glass-panel border-glass-border bg-white/20 rounded-2xl w-fit"
+          >
+            <div className="relative group/avatar">
+              <div className="absolute -inset-1 bg-gradient-to-tr from-cyan-glow to-sunset rounded-full blur-[4px] opacity-20 group-hover/avatar:opacity-40 transition-opacity"></div>
+              <img
+                src={displayLocation.user_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayLocation.user_id}`}
+                className="w-8 h-8 rounded-full border border-white/50 relative z-10 shadow-sm"
+                alt={displayLocation.user_name}
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] leading-none mb-1">Khám phá bởi</span>
+              <span className="text-[12px] font-bold text-text-primary leading-none">{displayLocation.user_name || 'Người dùng Aether'}</span>
+            </div>
+          </motion.div>
+
           <motion.h2
             initial={{y: 10, opacity: 0}}
             animate={{y: 0, opacity: 1}}

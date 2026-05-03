@@ -41,7 +41,18 @@ const DiscoveryCard = ({ post, index, navigate, onLike }) => {
           className={`w-full rounded-3xl grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ${imageLoaded ? 'opacity-100 block' : 'opacity-0 absolute inset-0'}`}
         />
         <div
-          className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity ${imageLoaded ? 'opacity-80 group-hover:opacity-100' : 'opacity-0'}`}>
+          className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 transition-opacity ${imageLoaded ? 'opacity-80 group-hover:opacity-100' : 'opacity-0'}`}>
+        </div>
+
+        <div className="absolute top-4 left-4 right-4 flex items-center gap-2 z-10">
+          <div className="w-8 h-8 rounded-full border border-white/30 p-0.5 glass-panel bg-white/20 backdrop-blur-md overflow-hidden">
+            <img
+              src={post.user_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user_id}`}
+              className="w-full h-full rounded-full object-cover"
+              alt={post.user_name}
+            />
+          </div>
+          <span className="text-[10px] font-bold text-white uppercase tracking-wider drop-shadow-md">{post.user_name || 'Aether User'}</span>
         </div>
 
         <div className="absolute bottom-4 left-4 right-4">
@@ -88,7 +99,7 @@ const DiscoveryFeed = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { trendingLocations, fetchTrending, toggleLike, isLoading, tags, fetchUniqueTags, fetchByTag } = useLocationStore();
-  
+
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -207,12 +218,12 @@ const DiscoveryFeed = () => {
           <div className="columns-1 sm:columns-2 gap-x-6">
             <AnimatePresence>
               {filteredPosts.map((post, i) => (
-                <DiscoveryCard 
-                  key={post.id} 
-                  post={post} 
-                  index={i} 
-                  navigate={navigate} 
-                  onLike={handleToggleLike} 
+                <DiscoveryCard
+                  key={post.id}
+                  post={post}
+                  index={i}
+                  navigate={navigate}
+                  onLike={handleToggleLike}
                 />
               ))}
             </AnimatePresence>
