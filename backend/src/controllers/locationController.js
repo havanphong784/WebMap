@@ -9,6 +9,9 @@ import {
   listUniqueTags
 } from "../services/locationService.js";
 
+const geocodingCache = new Map();
+const MAX_CACHE_SIZE = 1000;
+
 export const getLocations = async (req, res) => {
   try {
     const { user_id, minLng, maxLng, minLat, maxLat } = req.query;
@@ -119,14 +122,30 @@ export const reverseGeocode = async (req, res) => {
       return res.status(400).json({ success: false, message: "Thiếu tọa độ" });
     }
 
+    // Làm tròn tọa độ 5 chữ số thập phân để tăng tỉ lệ cache hit (~1m)
+    const cacheKey = `${parseFloat(lat).toFixed(5)},${parseFloat(lng).toFixed(5)}`;
+
+    if (geocodingCache.has(cacheKey)) {
+      // console.log("Cache hit for geocoding:", cacheKey);
+      return res.status(200).json(geocodingCache.get(cacheKey));
+    }
+
     const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
       headers: {
         'User-Agent': 'AetherMapApp/1.0 (contact: havanphong784@gmail.com)',
         'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8'
       }
     });
-    
+
     const data = await response.json();
+
+    // Lưu vào cache
+    if (geocodingCache.size >= MAX_CACHE_SIZE) {
+      const firstKey = geocodingCache.keys().next().value;
+      geocodingCache.delete(firstKey);
+    }
+    geocodingCache.set(cacheKey, data);
+
     res.status(200).json(data);
   } catch (error) {
     console.error("Lỗi proxy geocoding:", error);
@@ -143,7 +162,7 @@ export const getDirections = async (req, res) => {
 
     // OSRM Public Server - sử dụng overview=full để đường đi chính xác nhất
     const url = `https://router.project-osrm.org/route/v1/driving/${start};${end}?overview=full&geometries=geojson`;
-    
+
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'AetherMapApp/1.0 (contact: havanphong784@gmail.com)'

@@ -19,9 +19,10 @@ export default function RouteLayer() {
         type="line"
         layout={{"line-join": "round", "line-cap": "round"}}
         paint={{
-          "line-color": "#09a719",
-          "line-width": 5,
-          "line-opacity": 1
+          "line-color": "#00f2ff",
+          "line-width": 6,
+          "line-opacity": 0.8,
+          "line-blur": 1
         }}
       />
     </Source>

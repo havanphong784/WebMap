@@ -10,7 +10,6 @@ import {
   PhotoIcon,
   PinIcon,
   SecurityIcon,
-  SpinnerIcon,
   StarIcon
 } from "../../shared/components/common/icons.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
@@ -65,15 +64,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Removed the full screen loading spinner to use inline skeletons
-  /*
-  if (loading) return (
-    <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center space-y-6">
-      <SpinnerIcon size={48} className="animate-spin text-cyan-glow"/>
-      <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-xs">Đang tải hồ sơ...</p>
-    </div>
-  );
-  */
 
   if (!loading && !profileUser) return (
     <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center space-y-6">
@@ -150,9 +140,9 @@ export default function ProfilePage() {
           >
             {loading ? (
               <div className="flex flex-col items-center gap-3">
-                <Skeleton width="12rem" height="2.5rem" />
-                <Skeleton width="10rem" height="1rem" />
-                <Skeleton width="8rem" height="1.5rem" className="rounded-full mt-2" />
+                <Skeleton width="12rem" height="2.5rem"/>
+                <Skeleton width="10rem" height="1rem"/>
+                <Skeleton width="8rem" height="1.5rem" className="rounded-full mt-2"/>
               </div>
             ) : (
               <>
@@ -171,9 +161,9 @@ export default function ProfilePage() {
           {loading ? (
             [...Array(3)].map((_, i) => (
               <GlassPanel key={i} className="py-4 px-2 flex flex-col items-center gap-2 border-white/5 bg-white/5">
-                <Skeleton circle width="1.25rem" height="1.25rem" />
-                <Skeleton width="2rem" height="1.5rem" />
-                <Skeleton width="3rem" height="0.5rem" />
+                <Skeleton circle width="1.25rem" height="1.25rem"/>
+                <Skeleton width="2rem" height="1.5rem"/>
+                <Skeleton width="3rem" height="0.5rem"/>
               </GlassPanel>
             ))
           ) : stats.map((stat, i) => (
@@ -206,7 +196,7 @@ export default function ProfilePage() {
             {loading ? (
               [...Array(3)].map((_, i) => (
                 <div key={i} className="glass-panel rounded-3xl border-white/5 overflow-hidden p-0 space-y-0 h-64">
-                   <Skeleton width="100%" height="100%" />
+                  <Skeleton width="100%" height="100%"/>
                 </div>
               ))
             ) : userLocations.map((loc, i) => (
