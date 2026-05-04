@@ -103,6 +103,14 @@ export default function LocationFormModal({point, onClose}) {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert("Vui lòng chọn tệp hình ảnh!");
+      e.target.value = "";
+      return;
+    }
+
     if (file) setPreviewUrl(URL.createObjectURL(file));
     setImageFile(file);
   };
@@ -359,8 +367,8 @@ export default function LocationFormModal({point, onClose}) {
                     <PhotoIcon size={24} className="text-text-muted group-hover:text-cyan-glow transition-colors"/>
                   </div>
                   <span
-                    className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Chọn ảnh từ thiết bị</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange}/>
+                    className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Chọn ảnh từ thiết bị (hoặc chọn "Tệp" để giữ tọa độ)</span>
+                  <input type="file" accept="*" className="hidden" onChange={handleImageChange}/>
                 </label>
               )}
             </div>

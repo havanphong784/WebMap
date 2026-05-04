@@ -66,7 +66,6 @@ export default function MapPage() {
   const {fetchLocationDetail} = useLocationStore();
   const [isLocating, setIsLocating] = useState(false);
   const [isExtractingPhoto, setIsExtractingPhoto] = useState(false);
-  const [accuracy, setAccuracy] = useState(0);
   const fileInputRef = useRef(null);
   const clickThrottleRef = useRef(false);
 
@@ -232,6 +231,11 @@ export default function MapPage() {
     const file = e.target.files[0];
     if (!file) return;
 
+    if (!file.type.startsWith('image/')) {
+      alert("Vui lòng chọn tệp hình ảnh!");
+      return;
+    }
+
     setIsExtractingPhoto(true);
     try {
       const gps = await extractGPS(file);
@@ -361,7 +365,7 @@ export default function MapPage() {
             type="file"
             ref={fileInputRef}
             className="hidden"
-            accept="image/*"
+            accept="*"
             onChange={handlePhotoUpload}
           />
 
