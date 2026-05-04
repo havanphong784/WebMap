@@ -28,8 +28,8 @@ const BottomNav = () => {
   ];
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000] w-[80%] max-w-lg">
-      <nav className="glass-panel py-1.5 px-6 flex justify-between items-center shadow-2xl border-white/5 bg-obsidian/85 backdrop-blur-3xl rounded-xl">
+    <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[1000] w-[95%] sm:w-[80%] max-w-lg">
+      <nav className="glass-panel py-1 sm:py-1.5 px-4 sm:px-6 flex justify-between items-center shadow-2xl border-white/5 bg-obsidian/85 backdrop-blur-3xl rounded-2xl sm:rounded-xl">
         {navItems.map((item) => (
           <NavLink
             key={item.label}

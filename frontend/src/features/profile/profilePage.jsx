@@ -97,7 +97,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="px-6 -mt-20 relative z-10">
+      <div className="px-4 sm:px-6 -mt-16 sm:-mt-20 relative z-10">
         <div className="flex flex-col items-center">
           <motion.div
             initial={{y: 20, opacity: 0}}
@@ -150,7 +150,7 @@ export default function ProfilePage() {
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-8 sm:mt-10 max-w-2xl mx-auto">
           {loading ? (
             [...Array(3)].map((_, i) => (
               <GlassPanel key={i} className="py-4 px-2 flex flex-col items-center gap-2 border-white/5 bg-white/5">
@@ -167,10 +167,10 @@ export default function ProfilePage() {
               transition={{delay: 0.3 + (i * 0.1)}}
             >
               <GlassPanel
-                className="py-4 px-2 text-center border-glass-border bg-white/40 hover:bg-white/60 transition-colors shadow-sm">
-                <stat.icon size={18} className={`${stat.color || 'text-cyan-glow'} mx-auto mb-2`}/>
-                <div className="text-2xl font-jakarta font-black tracking-tighter text-text-primary">{stat.value}</div>
-                <div className="text-[10px] uppercase tracking-widest text-text-muted font-bold">{stat.label}</div>
+                className="py-3 sm:py-4 px-1 sm:px-2 text-center border-glass-border bg-white/40 hover:bg-white/60 transition-colors shadow-sm">
+                <stat.icon size={16} className={`${stat.color || 'text-cyan-glow'} mx-auto mb-1.5 sm:mb-2`}/>
+                <div className="text-lg sm:text-2xl font-jakarta font-black tracking-tighter text-text-primary">{stat.value}</div>
+                <div className="text-[8px] sm:text-[10px] uppercase tracking-widest text-text-muted font-bold">{stat.label}</div>
               </GlassPanel>
             </motion.div>
           ))}

@@ -297,7 +297,7 @@ export default function MapPage() {
         style={{ width: '100%', height: '100%' }}
         onClick={handleClick}
       >
-        <div className="absolute top-6 right-6 z-100">
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-100">
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -305,12 +305,12 @@ export default function MapPage() {
               if (user?.uid) navigate(`/profile/${user.uid}`);
               else navigate('/login');
             }}
-            className="flex items-center gap-3 glass-panel p-1 pr-5 border-glass-border cursor-pointer shadow-floating bg-obsidian/80 backdrop-blur-xl rounded-full group"
+            className="flex items-center gap-2 sm:gap-3 glass-panel p-1 pr-3 sm:pr-5 border-glass-border cursor-pointer shadow-floating bg-obsidian/80 backdrop-blur-xl rounded-full group"
           >
             {user ? (
               <>
-                <UserBadge user={user} size={42} />
-                <div className="flex flex-col">
+                <UserBadge user={user} size={38} />
+                <div className="hidden sm:flex flex-col">
                   <span className="text-text-primary text-[11px] font-black tracking-widest uppercase leading-tight">
                     {user.displayName || 'Hồ sơ'}
                   </span>
@@ -334,7 +334,7 @@ export default function MapPage() {
           </motion.div>
         </div>
 
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 z-100 flex flex-col gap-4">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 sm:right-6 z-100 flex flex-col gap-3 sm:gap-4">
           <ActionButton
             variant="icon"
             onClick={() => setShowStyleSwitcher(!showStyleSwitcher)}
@@ -429,19 +429,19 @@ export default function MapPage() {
         </AnimatePresence>
       </Map>
 
-      <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-xl pointer-events-none">
+      <div className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 z-10 w-[95%] sm:w-[90%] max-w-xl pointer-events-none px-2">
         <GlassPanel
-          className="py-3 px-6 rounded-2xl bg-obsidian border-glass-border flex items-center justify-between shadow-glass">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-sunset animate-pulse shadow-sunset"></div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+          className="py-2.5 sm:py-3 px-4 sm:px-6 rounded-2xl bg-obsidian border-glass-border flex items-center justify-between shadow-glass">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-sunset animate-pulse shadow-sunset"></div>
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-text-secondary">
               Cộng đồng <span className="text-text-primary">Trực tuyến</span>
             </span>
           </div>
-          <div className="flex -space-x-3">
+          <div className="flex -space-x-2 sm:-space-x-3">
             {[1, 2, 3].map(i => (
               <img key={i} src={`https://picsum.photos/50/50?random=${i + 10}`}
-                className="w-7 h-7 rounded-full border-2 border-map-bg shadow-lg" alt="u" />
+                className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-map-bg shadow-lg" alt="u" />
             ))}
           </div>
         </GlassPanel>

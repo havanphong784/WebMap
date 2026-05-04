@@ -149,11 +149,11 @@ const DiscoveryFeed = () => {
   });
 
   return (
-    <div className="min-h-screen bg-map-bg pt-6 pb-32 px-6 overflow-y-auto no-scrollbar">
-      <div className="flex items-center gap-4 mb-8 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-map-bg pt-4 sm:pt-6 pb-32 px-4 sm:px-6 overflow-y-auto no-scrollbar">
+      <div className="flex items-center gap-2 sm:gap-4 mb-6 sm:mb-8 max-w-4xl mx-auto">
         <GlassPanel
-          className="flex-1 flex items-center gap-3 py-3 px-5 rounded-full border-glass-border bg-white shadow-floating">
-          <SearchIcon size={20} className="text-text-secondary shrink-0"/>
+          className="flex-1 flex items-center gap-2 sm:gap-3 py-2.5 sm:py-3 px-4 sm:px-5 rounded-full border-glass-border bg-white shadow-floating">
+          <SearchIcon size={18} className="text-text-secondary shrink-0"/>
           <input
             type="text"
             value={searchQuery}
@@ -184,10 +184,10 @@ const DiscoveryFeed = () => {
         </motion.div>
       </div>
 
-      <div className="max-w-4xl mx-auto mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <TrendingIcon size={24} className="text-cyan-glow animate-pulse"/>
-          <h1 className="text-3xl font-jakarta font-black tracking-tight text-text-primary uppercase">Khám phá</h1>
+      <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+          <TrendingIcon size={20} className="text-cyan-glow animate-pulse sm:size-24"/>
+          <h1 className="text-2xl sm:text-3xl font-jakarta font-black tracking-tight text-text-primary uppercase">Khám phá</h1>
         </div>
         <p className="text-text-secondary text-sm font-medium">
           Những địa điểm được cộng đồng Aether săn đón nhất.

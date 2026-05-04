@@ -1,8 +1,8 @@
-import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocationStore } from "../store/useLocationsStore.jsx";
-import { useAuthStore } from "../../auth/context/authContext.jsx";
-import { apiClient } from "../../../shared/api/apiClient.js";
+import {AnimatePresence, motion} from "framer-motion";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {useLocationStore} from "../store/useLocationsStore.jsx";
+import {useAuthStore} from "../../auth/context/authContext.jsx";
+import {apiClient} from "../../../shared/api/apiClient.js";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import {
@@ -11,21 +11,20 @@ import {
   DateIcon,
   HashIcon,
   LikeIcon,
-  MoreIcon,
   PinIcon,
   RouteIcon,
   SendIcon,
   ShareIcon,
   TagIcon,
 } from "../../../shared/components/common/icons.jsx";
-import { parseDBDate } from "../../../shared/utils/dateUtils.js";
+import {parseDBDate} from "../../../shared/utils/dateUtils.js";
 import Skeleton from "../../../shared/components/common/skeleton.jsx";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
 
-export default function LocationSidebar({ location, onClose }) {
-  const { user } = useAuthStore();
+export default function LocationSidebar({location, onClose}) {
+  const {user} = useAuthStore();
   const locations = useLocationStore(state => state.locations);
-  const { fetchRoute, routeLoading, toggleLike, postComment } = useLocationStore();
+  const {fetchRoute, routeLoading, toggleLike, postComment} = useLocationStore();
 
   const displayLocation = locations.find(l => l.id === location?.id) || location;
 
@@ -107,14 +106,18 @@ export default function LocationSidebar({ location, onClose }) {
 
   return (
     <motion.div
-      initial={{ x: "-100%", opacity: 0, scale: 0.95 }}
-      animate={{ x: 0, opacity: 1, scale: 1 }}
-      exit={{ x: "-100%", opacity: 0, scale: 0.95 }}
-      transition={{ type: "spring", damping: 25, stiffness: 120 }}
-      className="fixed inset-y-0 left-0 z-[2000] w-full sm:w-[520px] p-4 sm:p-5 pointer-events-none"
+      initial={{x: window.innerWidth < 640 ? 0 : "-100%", y: window.innerWidth < 640 ? "100%" : 0, opacity: 0}}
+      animate={{x: 0, y: 0, opacity: 1}}
+      exit={{x: window.innerWidth < 640 ? 0 : "-100%", y: window.innerWidth < 640 ? "100%" : 0, opacity: 0}}
+      transition={{type: "spring", damping: 25, stiffness: 120}}
+      className="fixed inset-x-0 bottom-0 sm:inset-y-0 sm:left-0 z-[2000] w-full sm:w-[520px] p-2 sm:p-5 pointer-events-none"
     >
       <GlassPanel
-        className="h-full flex flex-col border-glass-border bg-white/95 backdrop-blur-[80px] shadow-floating overflow-hidden pointer-events-auto rounded-[2.8rem] ring-1 ring-glass-border relative group/sidebar">
+        className="h-[85vh] sm:h-full flex flex-col border-glass-border bg-white/95 backdrop-blur-[80px] shadow-floating overflow-hidden pointer-events-auto rounded-t-[2.5rem] sm:rounded-[2.8rem] ring-1 ring-glass-border relative group/sidebar">
+
+        {/* Mobile Drag Handle */}
+        <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mt-4 sm:hidden shrink-0"/>
+
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none"></div>
 
@@ -125,9 +128,9 @@ export default function LocationSidebar({ location, onClose }) {
           <div
             className="relative h-56 rounded-[1.8rem] overflow-hidden shadow-lg border border-black/5 group/img">
             <motion.div
-              initial={{ scale: 1.1 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 1.5, ease: "easeOut" }}
+              initial={{scale: 1.1}}
+              animate={{scale: 1}}
+              transition={{duration: 1.5, ease: "easeOut"}}
               className="w-full h-full"
             >
               <img
@@ -142,21 +145,21 @@ export default function LocationSidebar({ location, onClose }) {
 
             <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-10">
               <motion.button
-                whileHover={{ scale: 1.1, rotate: 90 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{scale: 1.1, rotate: 90}}
+                whileTap={{scale: 0.9}}
                 onClick={onClose}
                 className="p-2 glass-panel !rounded-lg border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
               >
-                <CloseIcon size={14} />
+                <CloseIcon size={14}/>
               </motion.button>
               <div className="flex gap-2">
                 <motion.button
-                  whileHover={{ scale: 1.1, y: -2 }}
-                  whileTap={{ scale: 0.9 }}
+                  whileHover={{scale: 1.1, y: -2}}
+                  whileTap={{scale: 0.9}}
                   onClick={handleShare}
                   className="p-2 glass-panel !rounded-lg border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
                 >
-                  <ShareIcon size={12} />
+                  <ShareIcon size={12}/>
                 </motion.button>
               </div>
             </div>
@@ -166,17 +169,17 @@ export default function LocationSidebar({ location, onClose }) {
         <div className="px-6 pb-2 relative z-10">
           <div className="flex items-center justify-between mb-4">
             <motion.div
-              initial={{ x: -10, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
+              initial={{x: -10, opacity: 0}}
+              animate={{x: 0, opacity: 1}}
               className="flex items-center gap-3"
             >
-              <UserBadge user={locationOwner} size={36} />
+              <UserBadge user={locationOwner} size={36}/>
               <div className="flex flex-col">
                 <span className="text-[13px] font-jakarta font-bold text-text-primary leading-none">
                   {displayLocation.user_name || 'Explorer'}
                 </span>
                 <span className={`text-[8px] font-bold uppercase tracking-widest mt-1 ${
-                   level >= 50 ? 'text-sunset' : level >= 10 ? 'text-cyan-glow' : 'text-text-muted'
+                  level >= 50 ? 'text-sunset' : level >= 10 ? 'text-cyan-glow' : 'text-text-muted'
                 }`}>
                   Lvl.{level} {level >= 25 ? 'Pathfinder' : 'Scout'}
                 </span>
@@ -184,22 +187,24 @@ export default function LocationSidebar({ location, onClose }) {
             </motion.div>
 
             <motion.div
-              initial={{ x: 10, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
+              initial={{x: 10, opacity: 0}}
+              animate={{x: 0, opacity: 1}}
               className="flex gap-1.5"
             >
-              <div className="px-2 py-0.5 rounded-md glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[7px] font-black uppercase tracking-wider">
+              <div
+                className="px-2 py-0.5 rounded-md glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[7px] font-black uppercase tracking-wider">
                 {displayLocation.category}
               </div>
-              <div className="px-2 py-0.5 rounded-md glass-panel border-glass-border bg-glass-white text-text-muted text-[7px] font-black uppercase tracking-wider">
+              <div
+                className="px-2 py-0.5 rounded-md glass-panel border-glass-border bg-glass-white text-text-muted text-[7px] font-black uppercase tracking-wider">
                 {displayLocation.is_public ? 'Public' : 'Private'}
               </div>
             </motion.div>
           </div>
 
           <motion.h2
-            initial={{ y: 5, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+            initial={{y: 5, opacity: 0}}
+            animate={{y: 0, opacity: 1}}
             className="text-xl font-jakarta font-black tracking-tight text-text-primary leading-tight mb-2"
           >
             {displayLocation.name}
@@ -207,18 +212,18 @@ export default function LocationSidebar({ location, onClose }) {
 
           {displayLocation.tags?.length > 0 && (
             <motion.div
-              initial={{ y: 8, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6 }}
+              initial={{y: 8, opacity: 0}}
+              animate={{y: 0, opacity: 1}}
+              transition={{delay: 0.6}}
               className="flex items-center gap-2 mt-3 flex-wrap"
             >
-              <TagIcon size={11} className="text-text-dim shrink-0" />
+              <TagIcon size={11} className="text-text-dim shrink-0"/>
               {displayLocation.tags.map(tag => (
                 <span
                   key={tag}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/[0.04] border border-glass-border text-text-muted hover:bg-cyan-glow/5 hover:border-cyan-glow/20 hover:text-cyan-glow transition-all duration-300 text-[10px] font-bold cursor-default"
                 >
-                  <HashIcon size={8} />
+                  <HashIcon size={8}/>
                   {tag}
                 </span>
               ))}
@@ -229,13 +234,14 @@ export default function LocationSidebar({ location, onClose }) {
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-0 space-y-5" ref={scrollRef}>
           {/* Review Section - Compact */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{opacity: 0}}
+            animate={{opacity: 1}}
             className="relative group/review"
           >
-            <div className="relative p-4 glass-panel border-glass-border bg-white/30 rounded-[1.2rem] hover:bg-white/50 transition-all duration-300">
+            <div
+              className="relative p-4 glass-panel border-glass-border bg-white/30 rounded-[1.2rem] hover:bg-white/50 transition-all duration-300">
               <div className="absolute top-0 right-0 p-2 opacity-[0.05]">
-                <CommentIcon size={40} className="text-text-primary" />
+                <CommentIcon size={40} className="text-text-primary"/>
               </div>
               <p className="text-text-primary text-[13px] leading-relaxed font-medium italic relative z-10">
                 "{displayLocation.review_text || "Chưa có review chi tiết."}"
@@ -244,16 +250,19 @@ export default function LocationSidebar({ location, onClose }) {
           </motion.div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex gap-3 items-start p-3 glass-panel border-glass-border bg-white/10 rounded-xl group hover:bg-white/20 transition-colors">
-              <PinIcon size={14} className="text-cyan-glow shrink-0 mt-0.5" />
+            <div
+              className="flex gap-3 items-start p-3 glass-panel border-glass-border bg-white/10 rounded-xl group hover:bg-white/20 transition-colors">
+              <PinIcon size={14} className="text-cyan-glow shrink-0 mt-0.5"/>
               <div className="min-w-0">
                 <h4 className="text-[7px] font-black text-text-muted uppercase tracking-wider mb-0.5">Địa chỉ</h4>
-                <p className="text-[11px] text-text-primary font-bold leading-tight truncate">{displayLocation.address}</p>
+                <p
+                  className="text-[11px] text-text-primary font-bold leading-tight truncate">{displayLocation.address}</p>
               </div>
             </div>
 
-            <div className="flex gap-3 items-start p-3 glass-panel border-glass-border bg-white/10 rounded-xl group hover:bg-white/20 transition-colors">
-              <DateIcon size={14} className="text-sunset shrink-0 mt-0.5" />
+            <div
+              className="flex gap-3 items-start p-3 glass-panel border-glass-border bg-white/10 rounded-xl group hover:bg-white/20 transition-colors">
+              <DateIcon size={14} className="text-sunset shrink-0 mt-0.5"/>
               <div className="min-w-0">
                 <h4 className="text-[7px] font-black text-text-muted uppercase tracking-wider mb-0.5">Ngày đăng</h4>
                 <p className="text-[11px] text-text-primary font-bold leading-tight">
@@ -287,8 +296,8 @@ export default function LocationSidebar({ location, onClose }) {
 
             {user && (
               <motion.form
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
+                initial={{y: 10, opacity: 0}}
+                animate={{y: 0, opacity: 1}}
                 onSubmit={handleSendComment}
                 className="flex gap-2"
               >
@@ -302,8 +311,8 @@ export default function LocationSidebar({ location, onClose }) {
                     className="bg-transparent border-none outline-none flex-1 text-[12px] text-text-primary placeholder-text-dim py-2.5 font-medium"
                   />
                   <button type="submit" disabled={!commentText.trim()}
-                    className="text-cyan-glow disabled:text-zinc-800 transition-all hover:scale-110 active:scale-90">
-                    <SendIcon size={18} className="drop-shadow-neon" />
+                          className="text-cyan-glow disabled:text-zinc-800 transition-all hover:scale-110 active:scale-90">
+                    <SendIcon size={18} className="drop-shadow-neon"/>
                   </button>
                 </div>
               </motion.form>
@@ -314,13 +323,13 @@ export default function LocationSidebar({ location, onClose }) {
                 <div className="space-y-6">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="flex gap-3">
-                      <Skeleton circle width="2.5rem" height="2.5rem" className="shrink-0" />
+                      <Skeleton circle width="2.5rem" height="2.5rem" className="shrink-0"/>
                       <div className="flex-1 space-y-2">
                         <div className="flex justify-between">
-                          <Skeleton width="40%" height="1rem" />
-                          <Skeleton width="20%" height="0.75rem" />
+                          <Skeleton width="40%" height="1rem"/>
+                          <Skeleton width="20%" height="0.75rem"/>
                         </div>
-                        <Skeleton width="100%" height="3rem" className="rounded-xl rounded-tl-none" />
+                        <Skeleton width="100%" height="3rem" className="rounded-xl rounded-tl-none"/>
                       </div>
                     </div>
                   ))}
@@ -329,11 +338,11 @@ export default function LocationSidebar({ location, onClose }) {
                 comments.map((c, i) => (
                   <motion.div
                     key={c.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    initial={{opacity: 0}}
+                    animate={{opacity: 1}}
                     className="flex gap-2.5 group"
                   >
-                    <UserBadge user={c} size={32} />
+                    <UserBadge user={c} size={32}/>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="text-[11px] font-bold text-text-primary truncate mr-2">{c.name}</span>
@@ -341,7 +350,8 @@ export default function LocationSidebar({ location, onClose }) {
                           {parseDBDate(c.created_at).toLocaleDateString('vi-VN')}
                         </span>
                       </div>
-                      <div className="bg-white/10 rounded-lg rounded-tl-none p-2.5 border border-glass-border text-[11px] text-text-secondary leading-relaxed">
+                      <div
+                        className="bg-white/10 rounded-lg rounded-tl-none p-2.5 border border-glass-border text-[11px] text-text-secondary leading-relaxed">
                         {c.content}
                       </div>
                     </div>
@@ -349,7 +359,7 @@ export default function LocationSidebar({ location, onClose }) {
                 ))
               ) : (
                 <div className="text-center py-12 bg-white/[0.01] rounded-2xl border border-glass-border border-dashed">
-                  <CommentIcon size={20} className="text-text-dim mx-auto mb-3" />
+                  <CommentIcon size={20} className="text-text-dim mx-auto mb-3"/>
                   <p className="text-text-muted text-[8px] font-black uppercase tracking-[0.4em]">Trống thảo luận</p>
                 </div>
               )}

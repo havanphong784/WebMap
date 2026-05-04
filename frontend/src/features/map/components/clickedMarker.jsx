@@ -50,7 +50,7 @@ export default function ClickedMarker({ point, setPoint }) {
 
   return (
     <>
-      <Marker longitude={point.lng} latitude={point.lat} anchor="center">
+      <Marker longitude={point.lng} latitude={point.lat} anchor="center" style={{ zIndex: 500 }}>
         <div className="relative flex items-center justify-center">
           <div className="absolute w-10 h-10 bg-cyan-glow/20 rounded-full animate-ping"></div>
           <div className="w-4 h-4 bg-cyan-glow rounded-full shadow-neon border-2 border-text-primary z-10"></div>
