@@ -67,7 +67,7 @@ export default function ProfilePage() {
 
   if (!loading && !profileUser) return (
     <div className="min-h-screen bg-map-bg flex flex-col items-center justify-center space-y-6">
-      <p className="text-text-muted font-plus font-bold uppercase tracking-widest text-sm">Không tìm thấy người dùng</p>
+      <p className="text-text-muted font-jakarta font-bold uppercase tracking-widest text-sm">Không tìm thấy người dùng</p>
       <ActionButton variant="glass" onClick={() => navigate('/')}>Về trang chủ</ActionButton>
     </div>
   );
@@ -126,7 +126,7 @@ export default function ProfilePage() {
             ) : (
               <>
                 <h1
-                  className="text-4xl font-plus font-black tracking-tight text-text-primary">{profileUser?.name || 'Explorer'}</h1>
+                  className="text-4xl font-jakarta font-black tracking-tight text-text-primary">{profileUser?.name || 'Explorer'}</h1>
                 <p className="text-text-secondary font-medium mt-1">{profileUser?.email}</p>
                 <div className="flex items-center justify-center gap-3 mt-4">
                   <div
@@ -169,7 +169,7 @@ export default function ProfilePage() {
               <GlassPanel
                 className="py-4 px-2 text-center border-glass-border bg-white/40 hover:bg-white/60 transition-colors shadow-sm">
                 <stat.icon size={18} className={`${stat.color || 'text-cyan-glow'} mx-auto mb-2`}/>
-                <div className="text-2xl font-plus font-black tracking-tighter text-text-primary">{stat.value}</div>
+                <div className="text-2xl font-jakarta font-black tracking-tighter text-text-primary">{stat.value}</div>
                 <div className="text-[10px] uppercase tracking-widest text-text-muted font-bold">{stat.label}</div>
               </GlassPanel>
             </motion.div>
@@ -179,7 +179,7 @@ export default function ProfilePage() {
         <div className="mt-16 max-w-5xl mx-auto">
           <div className="flex items-center gap-3 mb-8 border-b border-glass-border pb-4">
             <div className="w-1.5 h-6 bg-cyan-glow rounded-full shadow-neon"></div>
-            <h2 className="text-xl font-plus font-bold uppercase tracking-tight text-text-primary">Địa điểm đã chinh
+            <h2 className="text-xl font-jakarta font-bold uppercase tracking-tight text-text-primary">Địa điểm đã chinh
               phục</h2>
             <span className="ml-auto glass-panel px-3 py-1 text-[10px] font-mono text-text-muted border-glass-border">
               {userLocations.length} GHIM
@@ -234,7 +234,7 @@ export default function ProfilePage() {
                       <span className="text-[10px] font-bold uppercase tracking-widest truncate">{loc.address}</span>
                     </div>
                     <h3
-                      className="text-lg font-plus font-bold text-text-primary group-hover:text-cyan-glow transition-colors line-clamp-1">
+                      className="text-lg font-jakarta font-bold text-text-primary group-hover:text-cyan-glow transition-colors line-clamp-1">
                       {loc.name}
                     </h3>
                   </div>
@@ -246,7 +246,7 @@ export default function ProfilePage() {
           {userLocations.length === 0 && (
             <div className="text-center py-20 glass-panel border-white/5 bg-white/2">
               <PhotoIcon size={48} className="text-zinc-800 mx-auto mb-4 opacity-20"/>
-              <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-sm">Chưa có bài viết nào
+              <p className="text-zinc-500 font-jakarta font-bold uppercase tracking-widest text-sm">Chưa có bài viết nào
                 được đăng</p>
             </div>
           )}

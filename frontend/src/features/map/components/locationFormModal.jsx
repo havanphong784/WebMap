@@ -177,7 +177,7 @@ export default function LocationFormModal({point, onClose}) {
                 <PinIcon size={20}/>
               </div>
               <h3
-                className="font-plus font-bold text-lg text-text-primary uppercase tracking-wider">Đánh
+                className="font-jakarta font-bold text-lg text-text-primary uppercase tracking-wider">Đánh
                 giá địa điểm</h3>
             </div>
             <button

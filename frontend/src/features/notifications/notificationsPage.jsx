@@ -48,7 +48,7 @@ export default function NotificationsPage() {
     return (
       <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center gap-6">
         <MapIcon size={48} className="text-cyan-glow opacity-30"/>
-        <p className="text-zinc-500 font-plus font-bold uppercase tracking-widest text-sm text-center">
+        <p className="text-zinc-500 font-jakarta font-bold uppercase tracking-widest text-sm text-center">
           Đăng nhập để xem thông báo
         </p>
         <ActionButton onClick={() => navigate('/login')}>Đăng nhập ngay</ActionButton>
@@ -61,7 +61,7 @@ export default function NotificationsPage() {
       <div className="sticky top-0 z-10 bg-obsidian/90 backdrop-blur-xl border-b border-glass-border px-6 py-5">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-plus font-black tracking-tight text-text-primary uppercase italic">Thông báo</h1>
+            <h1 className="text-2xl font-jakarta font-black tracking-tight text-text-primary uppercase italic">Thông báo</h1>
             {unreadCount > 0 && (
               <p className="text-cyan-glow text-[10px] font-black mt-1 uppercase tracking-widest opacity-80">
                 {unreadCount} thông báo mới
@@ -164,7 +164,7 @@ export default function NotificationsPage() {
         {!loading && notifications.length === 0 && (
           <div className="text-center py-40 glass-panel border-glass-border rounded-3xl">
             <MapIcon size={48} className="text-text-dim mx-auto mb-4 opacity-20"/>
-            <p className="text-text-secondary font-plus font-bold uppercase tracking-widest text-sm">
+            <p className="text-text-secondary font-jakarta font-bold uppercase tracking-widest text-sm">
               Chưa có thông báo nào
             </p>
           </div>

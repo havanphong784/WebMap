@@ -121,9 +121,9 @@ export default function LocationSidebar({ location, onClose }) {
         <div
           className="absolute -top-40 -left-40 w-80 h-80 bg-cyan-glow/5 blur-[120px] rounded-full pointer-events-none animate-pulse"></div>
 
-        <div className="relative p-5 shrink-0">
+        <div className="relative p-4 shrink-0">
           <div
-            className="relative h-72 rounded-[2rem] overflow-hidden shadow-xl border border-black/5 group/img">
+            className="relative h-56 rounded-[1.8rem] overflow-hidden shadow-lg border border-black/5 group/img">
             <motion.div
               initial={{ scale: 1.1 }}
               animate={{ scale: 1 }}
@@ -138,90 +138,69 @@ export default function LocationSidebar({ location, onClose }) {
             </motion.div>
 
             <div
-              className="absolute inset-0 bg-obsidian/20 group-hover/img:bg-transparent transition-colors duration-500"></div>
+              className="absolute inset-0 bg-obsidian/10 group-hover/img:bg-transparent transition-colors duration-500"></div>
 
-            <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+            <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-10">
               <motion.button
                 whileHover={{ scale: 1.1, rotate: 90 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={onClose}
-                className="p-2.5 glass-panel !rounded-xl border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
+                className="p-2 glass-panel !rounded-lg border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
               >
-                <CloseIcon size={16} />
+                <CloseIcon size={14} />
               </motion.button>
               <div className="flex gap-2">
                 <motion.button
                   whileHover={{ scale: 1.1, y: -2 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleShare}
-                  className="p-2.5 glass-panel !rounded-xl border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
+                  className="p-2 glass-panel !rounded-lg border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
                 >
-                  <ShareIcon size={14} />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1, y: -2 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-2.5 glass-panel !rounded-xl border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
-                >
-                  <MoreIcon size={14} />
+                  <ShareIcon size={12} />
                 </motion.button>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="px-7 pb-2 relative z-10">
-          <motion.div
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="flex items-center gap-2 mb-3 flex-wrap"
-          >
-            <div
-              className="px-3 py-1 rounded-lg glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[8px] font-black uppercase tracking-[0.2em]">
-              {displayLocation.category}
-            </div>
-            <div
-              className="px-3 py-1 rounded-lg glass-panel border-glass-border bg-glass-white text-text-secondary text-[8px] font-black uppercase tracking-[0.2em]">
-              {displayLocation.is_public ? 'Công khai' : 'Riêng tư'}
-            </div>
-          </motion.div>
-          <motion.div
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.45 }}
-            className="flex items-center gap-4 mb-6 p-3 glass-panel border-glass-border bg-white/40 rounded-[1.5rem] w-full"
-          >
-            <UserBadge user={locationOwner} size={54} />
-            <div className="flex flex-col">
-              <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] mb-1">Khám phá bởi</span>
-              <span className="text-[16px] font-plus font-black text-text-primary leading-none">
-                {displayLocation.user_name || 'Người dùng Aether'}
-              </span>
-              <div className="flex items-center gap-1.5 mt-2">
-                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                  level >= 50 ? 'bg-sunset' : 
-                  level >= 25 ? 'bg-purple-500' : 
-                  level >= 10 ? 'bg-cyan-glow' : 'bg-zinc-400'
-                }`} />
-                <span className={`text-[9px] font-bold uppercase tracking-widest ${
-                   level >= 50 ? 'text-sunset' : 
-                   level >= 25 ? 'text-purple-500' : 
-                   level >= 10 ? 'text-cyan-glow' : 'text-text-secondary'
+        <div className="px-6 pb-2 relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <motion.div
+              initial={{ x: -10, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="flex items-center gap-3"
+            >
+              <UserBadge user={locationOwner} size={36} />
+              <div className="flex flex-col">
+                <span className="text-[13px] font-jakarta font-bold text-text-primary leading-none">
+                  {displayLocation.user_name || 'Explorer'}
+                </span>
+                <span className={`text-[8px] font-bold uppercase tracking-widest mt-1 ${
+                   level >= 50 ? 'text-sunset' : level >= 10 ? 'text-cyan-glow' : 'text-text-muted'
                 }`}>
-                  {level >= 50 ? 'Master of Aether' : 
-                   level >= 25 ? 'Pathfinder' : 
-                   level >= 10 ? 'Explorer' : 'Scout'}
+                  Lvl.{level} {level >= 25 ? 'Pathfinder' : 'Scout'}
                 </span>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+
+            <motion.div
+              initial={{ x: 10, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="flex gap-1.5"
+            >
+              <div className="px-2 py-0.5 rounded-md glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[7px] font-black uppercase tracking-wider">
+                {displayLocation.category}
+              </div>
+              <div className="px-2 py-0.5 rounded-md glass-panel border-glass-border bg-glass-white text-text-muted text-[7px] font-black uppercase tracking-wider">
+                {displayLocation.is_public ? 'Public' : 'Private'}
+              </div>
+            </motion.div>
+          </div>
 
           <motion.h2
-            initial={{ y: 10, opacity: 0 }}
+            initial={{ y: 5, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-2xl font-plus font-black tracking-tight text-text-primary leading-tight"
+            className="text-xl font-jakarta font-black tracking-tight text-text-primary leading-tight mb-2"
           >
             {displayLocation.name}
           </motion.h2>
@@ -247,68 +226,53 @@ export default function LocationSidebar({ location, onClose }) {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-7 pt-2 space-y-7" ref={scrollRef}>
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="flex gap-4 items-start group">
-                <div
-                  className="p-2.5 rounded-lg bg-white/50 border border-glass-border text-cyan-glow group-hover:bg-cyan-glow/5 transition-all duration-500 shrink-0 mt-1">
-                  <PinIcon size={16} />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] mb-0.5">Vị trí</h4>
-                  <p
-                    className="text-[13px] text-text-primary font-semibold leading-relaxed tracking-tight break-words">{displayLocation.address}</p>
-                </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-0 space-y-5" ref={scrollRef}>
+          {/* Review Section - Compact */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="relative group/review"
+          >
+            <div className="relative p-4 glass-panel border-glass-border bg-white/30 rounded-[1.2rem] hover:bg-white/50 transition-all duration-300">
+              <div className="absolute top-0 right-0 p-2 opacity-[0.05]">
+                <CommentIcon size={40} className="text-text-primary" />
               </div>
+              <p className="text-text-primary text-[13px] leading-relaxed font-medium italic relative z-10">
+                "{displayLocation.review_text || "Chưa có review chi tiết."}"
+              </p>
+            </div>
+          </motion.div>
 
-              <div className="flex gap-4 items-center group">
-                <div
-                  className="p-2.5 rounded-lg bg-white/50 border border-glass-border text-sunset group-hover:bg-sunset/5 transition-all duration-500 shrink-0">
-                  <DateIcon size={16} />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] mb-0.5">Ngày khám
-                    phá</h4>
-                  <p className="text-[13px] text-text-primary font-semibold tracking-tight">
-                    {parseDBDate(displayLocation.created_at).toLocaleDateString('vi-VN', {
-                      day: '2-digit',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                  </p>
-                </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex gap-3 items-start p-3 glass-panel border-glass-border bg-white/10 rounded-xl group hover:bg-white/20 transition-colors">
+              <PinIcon size={14} className="text-cyan-glow shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <h4 className="text-[7px] font-black text-text-muted uppercase tracking-wider mb-0.5">Địa chỉ</h4>
+                <p className="text-[11px] text-text-primary font-bold leading-tight truncate">{displayLocation.address}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 p-3.5 glass-panel border-glass-border bg-white/20 rounded-xl">
-              <div className="flex-1 flex flex-col gap-0.5 border-r border-glass-border">
-                <span className="text-[8px] font-black text-text-muted uppercase tracking-widest">Vĩ độ</span>
-                <span
-                  className="text-[14px] font-mono text-cyan-glow font-bold">{Number(displayLocation.lat).toFixed(6)}°</span>
-              </div>
-              <div className="flex-1 flex flex-col gap-0.5 pl-4">
-                <span className="text-[8px] font-black text-text-muted uppercase tracking-widest">Kinh độ</span>
-                <span
-                  className="text-[14px] font-mono text-cyan-glow font-bold">{Number(displayLocation.lng).toFixed(6)}°</span>
+            <div className="flex gap-3 items-start p-3 glass-panel border-glass-border bg-white/10 rounded-xl group hover:bg-white/20 transition-colors">
+              <DateIcon size={14} className="text-sunset shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <h4 className="text-[7px] font-black text-text-muted uppercase tracking-wider mb-0.5">Ngày đăng</h4>
+                <p className="text-[11px] text-text-primary font-bold leading-tight">
+                  {parseDBDate(displayLocation.created_at).toLocaleDateString('vi-VN')}
+                </p>
               </div>
             </div>
+          </div>
 
-            <div className="space-y-3">
-              <h4
-                className="text-[9px] font-black text-text-primary uppercase tracking-[0.3em] flex items-center gap-3">
-                <div
-                  className="w-1 h-3.5 bg-gradient-to-b from-cyan-glow to-cyan-glow/20 rounded-full shadow-neon"></div>
-                Riview
-              </h4>
-              <div className="relative group">
-                <div
-                  className="p-4 border border-glass-border bg-white/30 rounded-xl group-hover:bg-white/50 transition-all duration-500">
-                  <p className="text-text-secondary text-[13px] leading-relaxed italic font-medium">
-                    "{displayLocation.review_text || "Chưa có review."}"
-                  </p>
-                </div>
-              </div>
+          <div className="flex items-center gap-2 p-3.5 glass-panel border-glass-border bg-white/20 rounded-xl">
+            <div className="flex-1 flex flex-col gap-0.5 border-r border-glass-border">
+              <span className="text-[8px] font-black text-text-muted uppercase tracking-widest">Vĩ độ</span>
+              <span
+                className="text-[14px] font-mono text-cyan-glow font-bold">{Number(displayLocation.lat).toFixed(6)}°</span>
+            </div>
+            <div className="flex-1 flex flex-col gap-0.5 pl-4">
+              <span className="text-[8px] font-black text-text-muted uppercase tracking-widest">Kinh độ</span>
+              <span
+                className="text-[14px] font-mono text-cyan-glow font-bold">{Number(displayLocation.lng).toFixed(6)}°</span>
             </div>
           </div>
 
@@ -365,23 +329,19 @@ export default function LocationSidebar({ location, onClose }) {
                 comments.map((c, i) => (
                   <motion.div
                     key={c.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="flex gap-3 group"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex gap-2.5 group"
                   >
-                    <UserBadge user={c} size={40} />
-                    <div className="flex-1 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span
-                          className="text-[12px] font-black text-text-primary tracking-tight group-hover:text-cyan-glow transition-colors">{c.name}</span>
-                        <span
-                          className="text-[8px] text-text-muted font-black uppercase tracking-widest">
+                    <UserBadge user={c} size={32} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-[11px] font-bold text-text-primary truncate mr-2">{c.name}</span>
+                        <span className="text-[7px] text-text-muted font-bold uppercase shrink-0">
                           {parseDBDate(c.created_at).toLocaleDateString('vi-VN')}
                         </span>
                       </div>
-                      <div
-                        className="bg-white/[0.02] backdrop-blur-xl rounded-xl rounded-tl-none p-3.5 border border-glass-border text-[12px] text-text-secondary leading-relaxed group-hover:bg-white/[0.04] transition-all duration-300">
+                      <div className="bg-white/10 rounded-lg rounded-tl-none p-2.5 border border-glass-border text-[11px] text-text-secondary leading-relaxed">
                         {c.content}
                       </div>
                     </div>
@@ -398,7 +358,7 @@ export default function LocationSidebar({ location, onClose }) {
         </div>
 
         <div
-          className="p-5 border-t border-glass-border-bright bg-white/90 backdrop-blur-3xl space-y-5 shrink-0 relative">
+          className="p-4 border-t border-glass-border-bright bg-white/90 backdrop-blur-3xl space-y-4 shrink-0 relative">
           <div
             className="absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-map-bg/80 to-transparent pointer-events-none"></div>
 

@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Inter:wght@100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Inter:wght@100..900&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -33,22 +32,27 @@
     --shadow-glass: 0 30px 60px rgba(0, 0, 0, 0.12);
     --shadow-floating: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
-    /* Fonts - Futuristic & Modern */
-    --font-plus: "Space Grotesk", sans-serif;
+    /* Fonts - Premium & Modern */
+    --font-jakarta: "Plus Jakarta Sans", sans-serif;
     --font-inter: "Inter", sans-serif;
 }
 
 @layer base {
     body {
-        @apply bg-map-bg text-text-primary font-inter antialiased overflow-x-hidden selection:bg-cyan-glow selection:text-white custom-scrollbar;
-        /* Kích hoạt các tính năng font cao cấp của Inter */
+        @apply bg-map-bg text-text-primary font-jakarta antialiased overflow-x-hidden selection:bg-cyan-glow selection:text-white custom-scrollbar;
+        /* Kích hoạt các tính năng font cao cấp */
         font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
     }
 
-    h1, h2, h3, h4, h5, h6 {
-        @apply font-plus font-bold tracking-tight text-text-primary;
-        /* Tối ưu cho Space Grotesk */
-        letter-spacing: -0.03em;
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-jakarta font-bold tracking-tight text-text-primary;
+        /* Tối ưu cho Plus Jakarta Sans */
+        letter-spacing: -0.02em;
     }
 
     /* Global Scrollbar Reset */

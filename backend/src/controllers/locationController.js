@@ -1,13 +1,14 @@
 import {
   createLocation,
   deleteLocation,
-  listLocations,
-  listTrendingLocations,
-  listUserLocations,
   getLocationDetail,
+  listLocations,
   listLocationsByTag,
-  listUniqueTags
+  listTrendingLocations,
+  listUniqueTags,
+  listUserLocations
 } from "../services/locationService.js";
+import { addXP } from "../services/gamificationService.js";
 
 const geocodingCache = new Map();
 const MAX_CACHE_SIZE = 1000;
@@ -29,8 +30,6 @@ export const getLocations = async (req, res) => {
   }
 };
 
-import { addXP } from "../services/gamificationService.js";
-
 export const createLocationEntry = async (req, res) => {
   try {
     const { tags, ...rest } = req.body;
@@ -39,7 +38,6 @@ export const createLocationEntry = async (req, res) => {
       : [];
     const saved = await createLocation({ ...rest, tags: normalizedTags });
 
-    // Gamification: Add XP
     if (saved) {
       if (saved.image_url) {
         await addXP(saved.user_id, "PHOTO");
@@ -135,11 +133,9 @@ export const reverseGeocode = async (req, res) => {
       return res.status(400).json({ success: false, message: "Thiếu tọa độ" });
     }
 
-    // Làm tròn tọa độ 5 chữ số thập phân để tăng tỉ lệ cache hit (~1m)
     const cacheKey = `${parseFloat(lat).toFixed(5)},${parseFloat(lng).toFixed(5)}`;
 
     if (geocodingCache.has(cacheKey)) {
-      // console.log("Cache hit for geocoding:", cacheKey);
       return res.status(200).json(geocodingCache.get(cacheKey));
     }
 
@@ -173,7 +169,6 @@ export const getDirections = async (req, res) => {
       return res.status(400).json({ success: false, message: "Thiếu tọa độ bắt đầu hoặc kết thúc" });
     }
 
-    // OSRM Public Server - sử dụng overview=full để đường đi chính xác nhất
     const url = `https://router.project-osrm.org/route/v1/driving/${start};${end}?overview=full&geometries=geojson`;
 
     const response = await fetch(url, {

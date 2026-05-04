@@ -1,4 +1,4 @@
-import React from 'react';
+import {motion} from 'framer-motion';
 
 const TIER_CONFIG = {
   'Scout': {
@@ -17,38 +17,34 @@ const TIER_CONFIG = {
     animate: true
   },
   'Master of Aether': {
-    colors: ['#4285F4', '#9b72cb', '#d96570', '#1a73e8'], // Gemini Spectral Colors
+    colors: ['#4285F4', '#9b72cb', '#d96570', '#1a73e8'],
     glow: 'rgba(155, 114, 203, 0.7)',
     animate: true,
     isGemini: true
   }
 };
 
-const UserBadge = ({ user, size = 64 }) => {
-  const { xp = 0, avatar_url, name } = user;
-  
-  // Calculate level directly from XP
+const UserBadge = ({user, size = 64}) => {
+  const {xp = 0, avatar_url, name} = user;
+
   const level = Math.floor(Math.sqrt(xp / 10)) + 1;
-  
-  // Calculate tier directly from level
+
   let tier = 'Scout';
   if (level >= 50) tier = 'Master of Aether';
   else if (level >= 25) tier = 'Pathfinder';
   else if (level >= 10) tier = 'Explorer';
-  
+
   const config = TIER_CONFIG[tier] || TIER_CONFIG['Scout'];
   const strokeWidth = size * 0.08;
   const radius = (size - strokeWidth) / 2;
 
-  // Extra padding for glow to prevent clipping
   const bleed = size * 0.15;
   const svgSize = size + bleed * 2;
 
   return (
-    <div className="relative inline-block group" style={{ width: size, height: size }}>
-      {/* Dynamic Animated Glow (Background) */}
+    <div className="relative inline-block group" style={{width: size, height: size}}>
       {config.animate && (
-        <div 
+        <div
           className="absolute rounded-full opacity-40 blur-md animate-pulse"
           style={{
             top: -bleed,
@@ -61,33 +57,31 @@ const UserBadge = ({ user, size = 64 }) => {
         />
       )}
 
-      {/* SVG Ring System */}
       <svg
         width={svgSize}
         height={svgSize}
         viewBox={`0 0 ${svgSize} ${svgSize}`}
         className="absolute transform -rotate-90 z-10"
-        style={{ 
-          top: -bleed, 
+        style={{
+          top: -bleed,
           left: -bleed,
-          overflow: 'visible' 
+          overflow: 'visible'
         }}
       >
         <defs>
           <linearGradient id={`grad-${tier.replace(/\s+/g, '-')}`} x1="0%" y1="0%" x2="100%" y2="100%">
             {config.colors.map((color, i) => (
-              <stop key={i} offset={`${(i / (config.colors.length - 1)) * 100}%`} stopColor={color} />
+              <stop key={i} offset={`${(i / (config.colors.length - 1)) * 100}%`} stopColor={color}/>
             ))}
           </linearGradient>
-          
+
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation={size * 0.04} result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            <feGaussianBlur stdDeviation={size * 0.04} result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
           </filter>
         </defs>
 
         <g transform={`translate(${bleed}, ${bleed})`}>
-          {/* Background Track (Subtle) */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -97,7 +91,6 @@ const UserBadge = ({ user, size = 64 }) => {
             strokeWidth={strokeWidth}
           />
 
-          {/* Main Spectral Ring (Full Circle) */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -106,12 +99,11 @@ const UserBadge = ({ user, size = 64 }) => {
             stroke={`url(#grad-${tier.replace(/\s+/g, '-')})`}
             strokeWidth={strokeWidth}
             filter="url(#glow)"
-            style={{ 
+            style={{
               transition: 'stroke 0.5s ease',
             }}
           />
 
-          {/* Gemini Pulse */}
           {config.isGemini && (
             <circle
               cx={size / 2}
@@ -126,7 +118,6 @@ const UserBadge = ({ user, size = 64 }) => {
         </g>
       </svg>
 
-      {/* Avatar Container with Inner Glow */}
       <div
         className="absolute overflow-hidden rounded-full z-20 backdrop-blur-sm"
         style={{
@@ -140,25 +131,25 @@ const UserBadge = ({ user, size = 64 }) => {
         }}
       >
         {avatar_url ? (
-          <img 
-            src={avatar_url} 
-            alt={name} 
-            className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500" 
+          <img
+            src={avatar_url}
+            alt={name}
+            className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-white font-bold" style={{ fontSize: size * 0.25 }}>
+          <div className="w-full h-full flex items-center justify-center text-white font-bold"
+               style={{fontSize: size * 0.25}}>
             {name?.[0]?.toUpperCase()}
           </div>
         )}
       </div>
 
-      {/* Level Hex Badge - Gaming Style */}
       <div
-        className="absolute -bottom-0.5 -right-0.5 z-30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+        className="absolute -bottom-1 -left-1 z-30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
         style={{
-          width: size * 0.32,
-          height: size * 0.28,
-          filter: `drop-shadow(0 2px 3px rgba(0,0,0,0.5))`
+          width: size * 0.35,
+          height: size * 0.32,
+          filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.6))`
         }}
       >
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full">
@@ -166,28 +157,39 @@ const UserBadge = ({ user, size = 64 }) => {
             d="M50 5 L95 27.5 L95 72.5 L50 95 L5 72.5 L5 27.5 Z"
             fill="#0A0A0A"
             stroke={config.colors[0]}
-            strokeWidth="10"
+            strokeWidth="12"
             className={config.animate ? "animate-pulse" : ""}
-            style={{ 
-              filter: `drop-shadow(0 0 5px ${config.glow})`,
-              strokeOpacity: 0.9
+            style={{
+              filter: `drop-shadow(0 0 8px ${config.glow})`,
+              strokeOpacity: 1
             }}
           />
         </svg>
-        <span 
-          className="relative z-10 text-white font-black italic tracking-tighter" 
-          style={{ fontSize: size * 0.12 }}
+        <span
+          className="relative z-10 text-white font-black italic tracking-tighter"
+          style={{fontSize: size * 0.14}}
         >
           {level}
         </span>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      {user.hasNotification && (
+        <motion.div
+          initial={{scale: 0}}
+          animate={{scale: 1}}
+          className="absolute -top-1 -right-1 w-4 h-4 bg-sunset rounded-full z-40 border-2 border-obsidian shadow-sunset"
+          style={{width: size * 0.25, height: size * 0.25}}
+        />
+      )}
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-      `}} />
+      `
+      }}/>
     </div>
   );
 };

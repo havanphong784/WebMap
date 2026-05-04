@@ -104,7 +104,7 @@ export default function Login() {
             <MapIcon size={32} className="text-cyan-glow" />
           </motion.div>
 
-          <h1 className="text-4xl font-plus font-black tracking-tighter text-text-primary mb-2">
+          <h1 className="text-4xl font-jakarta font-black tracking-tighter text-text-primary mb-2">
             AETHER <span className="text-cyan-glow shadow-neon">GEO</span>
           </h1>
           <p className="text-zinc-500 font-medium mb-8 uppercase tracking-[0.2em] text-[9px]">

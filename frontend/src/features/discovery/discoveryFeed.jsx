@@ -68,7 +68,7 @@ const DiscoveryCard = ({post, index, navigate, onLike}) => {
             <PinIcon size={12} className="shadow-neon"/>
             <span className="text-[10px] font-bold uppercase tracking-widest truncate">{post.address}</span>
           </div>
-          <h3 className="text-xl font-plus font-bold text-text-primary mb-3 line-clamp-1">{post.name}</h3>
+          <h3 className="text-xl font-jakarta font-bold text-text-primary mb-3 line-clamp-1">{post.name}</h3>
 
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
@@ -187,7 +187,7 @@ const DiscoveryFeed = () => {
       <div className="max-w-4xl mx-auto mb-8">
         <div className="flex items-center gap-3 mb-2">
           <TrendingIcon size={24} className="text-cyan-glow animate-pulse"/>
-          <h1 className="text-3xl font-plus font-black tracking-tight text-text-primary uppercase">Khám phá</h1>
+          <h1 className="text-3xl font-jakarta font-black tracking-tight text-text-primary uppercase">Khám phá</h1>
         </div>
         <p className="text-text-secondary text-sm font-medium">
           Những địa điểm được cộng đồng Aether săn đón nhất.
@@ -254,7 +254,7 @@ const DiscoveryFeed = () => {
         ) : (
           <div className="text-center py-40 glass-panel border-glass-border bg-glass-white/50 rounded-3xl">
             <FilterIcon size={48} className="text-text-dim mx-auto mb-4 opacity-20"/>
-            <p className="text-text-secondary font-plus font-bold uppercase tracking-widest text-sm mb-2">
+            <p className="text-text-secondary font-jakarta font-bold uppercase tracking-widest text-sm mb-2">
               {searchQuery ? `Không tìm thấy "${searchQuery}"` : 'Không tìm thấy địa điểm phù hợp'}
             </p>
             {(searchQuery || activeCategory !== 'All') && (
