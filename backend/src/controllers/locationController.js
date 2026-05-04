@@ -29,6 +29,8 @@ export const getLocations = async (req, res) => {
   }
 };
 
+import { addXP } from "../services/gamificationService.js";
+
 export const createLocationEntry = async (req, res) => {
   try {
     const { tags, ...rest } = req.body;
@@ -36,6 +38,17 @@ export const createLocationEntry = async (req, res) => {
       ? tags.map(t => t.trim().toLowerCase()).filter(Boolean)
       : [];
     const saved = await createLocation({ ...rest, tags: normalizedTags });
+
+    // Gamification: Add XP
+    if (saved) {
+      if (saved.image_url) {
+        await addXP(saved.user_id, "PHOTO");
+      }
+      if (saved.review_text && saved.review_text.length > 10) {
+        await addXP(saved.user_id, "REVIEW");
+      }
+    }
+
     res.status(201).json({ success: true, data: saved });
   } catch (error) {
     console.error("Lỗi khi lưu địa điểm:", error);

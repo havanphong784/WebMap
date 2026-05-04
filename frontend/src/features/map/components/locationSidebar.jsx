@@ -1,8 +1,8 @@
-import {AnimatePresence, motion} from "framer-motion";
-import {useCallback, useEffect, useRef, useState} from "react";
-import {useLocationStore} from "../store/useLocationsStore.jsx";
-import {useAuthStore} from "../../auth/context/authContext.jsx";
-import {apiClient} from "../../../shared/api/apiClient.js";
+import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocationStore } from "../store/useLocationsStore.jsx";
+import { useAuthStore } from "../../auth/context/authContext.jsx";
+import { apiClient } from "../../../shared/api/apiClient.js";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import {
@@ -18,13 +18,14 @@ import {
   ShareIcon,
   TagIcon,
 } from "../../../shared/components/common/icons.jsx";
-import {parseDBDate} from "../../../shared/utils/dateUtils.js";
+import { parseDBDate } from "../../../shared/utils/dateUtils.js";
 import Skeleton from "../../../shared/components/common/skeleton.jsx";
+import UserBadge from "../../../shared/components/UserBadge.jsx";
 
-export default function LocationSidebar({location, onClose}) {
-  const {user} = useAuthStore();
+export default function LocationSidebar({ location, onClose }) {
+  const { user } = useAuthStore();
   const locations = useLocationStore(state => state.locations);
-  const {fetchRoute, routeLoading, toggleLike, postComment} = useLocationStore();
+  const { fetchRoute, routeLoading, toggleLike, postComment } = useLocationStore();
 
   const displayLocation = locations.find(l => l.id === location?.id) || location;
 
@@ -93,12 +94,23 @@ export default function LocationSidebar({location, onClose}) {
 
   if (!location) return null;
 
+  const locationOwner = {
+    firebase_uid: displayLocation.user_id,
+    name: displayLocation.user_name,
+    avatar_url: displayLocation.user_avatar,
+    xp: displayLocation.user_xp,
+    level: displayLocation.user_level,
+    tier: displayLocation.user_tier
+  };
+
+  const level = Math.floor(Math.sqrt((locationOwner.xp || 0) / 10)) + 1;
+
   return (
     <motion.div
-      initial={{x: "-100%", opacity: 0, scale: 0.95}}
-      animate={{x: 0, opacity: 1, scale: 1}}
-      exit={{x: "-100%", opacity: 0, scale: 0.95}}
-      transition={{type: "spring", damping: 25, stiffness: 120}}
+      initial={{ x: "-100%", opacity: 0, scale: 0.95 }}
+      animate={{ x: 0, opacity: 1, scale: 1 }}
+      exit={{ x: "-100%", opacity: 0, scale: 0.95 }}
+      transition={{ type: "spring", damping: 25, stiffness: 120 }}
       className="fixed inset-y-0 left-0 z-[2000] w-full sm:w-[520px] p-4 sm:p-5 pointer-events-none"
     >
       <GlassPanel
@@ -113,9 +125,9 @@ export default function LocationSidebar({location, onClose}) {
           <div
             className="relative h-72 rounded-[2rem] overflow-hidden shadow-xl border border-black/5 group/img">
             <motion.div
-              initial={{scale: 1.1}}
-              animate={{scale: 1}}
-              transition={{duration: 1.5, ease: "easeOut"}}
+              initial={{ scale: 1.1 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
               className="w-full h-full"
             >
               <img
@@ -130,28 +142,28 @@ export default function LocationSidebar({location, onClose}) {
 
             <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
               <motion.button
-                whileHover={{scale: 1.1, rotate: 90}}
-                whileTap={{scale: 0.9}}
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
                 onClick={onClose}
                 className="p-2.5 glass-panel !rounded-xl border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
               >
-                <CloseIcon size={16}/>
+                <CloseIcon size={16} />
               </motion.button>
               <div className="flex gap-2">
                 <motion.button
-                  whileHover={{scale: 1.1, y: -2}}
-                  whileTap={{scale: 0.9}}
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={handleShare}
                   className="p-2.5 glass-panel !rounded-xl border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
                 >
-                  <ShareIcon size={14}/>
+                  <ShareIcon size={14} />
                 </motion.button>
                 <motion.button
-                  whileHover={{scale: 1.1, y: -2}}
-                  whileTap={{scale: 0.9}}
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.9 }}
                   className="p-2.5 glass-panel !rounded-xl border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
                 >
-                  <MoreIcon size={14}/>
+                  <MoreIcon size={14} />
                 </motion.button>
               </div>
             </div>
@@ -160,9 +172,9 @@ export default function LocationSidebar({location, onClose}) {
 
         <div className="px-7 pb-2 relative z-10">
           <motion.div
-            initial={{y: 10, opacity: 0}}
-            animate={{y: 0, opacity: 1}}
-            transition={{delay: 0.4}}
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
             className="flex items-center gap-2 mb-3 flex-wrap"
           >
             <div
@@ -175,31 +187,40 @@ export default function LocationSidebar({location, onClose}) {
             </div>
           </motion.div>
           <motion.div
-            initial={{y: 10, opacity: 0}}
-            animate={{y: 0, opacity: 1}}
-            transition={{delay: 0.45}}
-            className="flex items-center gap-3 mb-4 p-2.5 glass-panel border-glass-border bg-white/20 rounded-2xl w-fit"
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.45 }}
+            className="flex items-center gap-4 mb-6 p-3 glass-panel border-glass-border bg-white/40 rounded-[1.5rem] w-full"
           >
-            <div className="relative group/avatar">
-              <div
-                className="absolute -inset-1 bg-gradient-to-tr from-cyan-glow to-sunset rounded-full blur-[4px] opacity-20 group-hover/avatar:opacity-40 transition-opacity"></div>
-              <img
-                src={displayLocation.user_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayLocation.user_id}`}
-                className="w-8 h-8 rounded-full border border-white/50 relative z-10 shadow-sm"
-                alt={displayLocation.user_name}
-              />
-            </div>
+            <UserBadge user={locationOwner} size={54} />
             <div className="flex flex-col">
-              <span className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] leading-none mb-1">Khám phá bởi</span>
-              <span
-                className="text-[12px] font-bold text-text-primary leading-none">{displayLocation.user_name || 'Người dùng Aether'}</span>
+              <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] mb-1">Khám phá bởi</span>
+              <span className="text-[16px] font-plus font-black text-text-primary leading-none">
+                {displayLocation.user_name || 'Người dùng Aether'}
+              </span>
+              <div className="flex items-center gap-1.5 mt-2">
+                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                  level >= 50 ? 'bg-sunset' : 
+                  level >= 25 ? 'bg-purple-500' : 
+                  level >= 10 ? 'bg-cyan-glow' : 'bg-zinc-400'
+                }`} />
+                <span className={`text-[9px] font-bold uppercase tracking-widest ${
+                   level >= 50 ? 'text-sunset' : 
+                   level >= 25 ? 'text-purple-500' : 
+                   level >= 10 ? 'text-cyan-glow' : 'text-text-secondary'
+                }`}>
+                  {level >= 50 ? 'Master of Aether' : 
+                   level >= 25 ? 'Pathfinder' : 
+                   level >= 10 ? 'Explorer' : 'Scout'}
+                </span>
+              </div>
             </div>
           </motion.div>
 
           <motion.h2
-            initial={{y: 10, opacity: 0}}
-            animate={{y: 0, opacity: 1}}
-            transition={{delay: 0.5}}
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
             className="text-2xl font-plus font-black tracking-tight text-text-primary leading-tight"
           >
             {displayLocation.name}
@@ -207,18 +228,18 @@ export default function LocationSidebar({location, onClose}) {
 
           {displayLocation.tags?.length > 0 && (
             <motion.div
-              initial={{y: 8, opacity: 0}}
-              animate={{y: 0, opacity: 1}}
-              transition={{delay: 0.6}}
+              initial={{ y: 8, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
               className="flex items-center gap-2 mt-3 flex-wrap"
             >
-              <TagIcon size={11} className="text-text-dim shrink-0"/>
+              <TagIcon size={11} className="text-text-dim shrink-0" />
               {displayLocation.tags.map(tag => (
                 <span
                   key={tag}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/[0.04] border border-glass-border text-text-muted hover:bg-cyan-glow/5 hover:border-cyan-glow/20 hover:text-cyan-glow transition-all duration-300 text-[10px] font-bold cursor-default"
                 >
-                  <HashIcon size={8}/>
+                  <HashIcon size={8} />
                   {tag}
                 </span>
               ))}
@@ -232,7 +253,7 @@ export default function LocationSidebar({location, onClose}) {
               <div className="flex gap-4 items-start group">
                 <div
                   className="p-2.5 rounded-lg bg-white/50 border border-glass-border text-cyan-glow group-hover:bg-cyan-glow/5 transition-all duration-500 shrink-0 mt-1">
-                  <PinIcon size={16}/>
+                  <PinIcon size={16} />
                 </div>
                 <div className="flex-1">
                   <h4 className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] mb-0.5">Vị trí</h4>
@@ -244,7 +265,7 @@ export default function LocationSidebar({location, onClose}) {
               <div className="flex gap-4 items-center group">
                 <div
                   className="p-2.5 rounded-lg bg-white/50 border border-glass-border text-sunset group-hover:bg-sunset/5 transition-all duration-500 shrink-0">
-                  <DateIcon size={16}/>
+                  <DateIcon size={16} />
                 </div>
                 <div className="flex-1">
                   <h4 className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] mb-0.5">Ngày khám
@@ -302,8 +323,8 @@ export default function LocationSidebar({location, onClose}) {
 
             {user && (
               <motion.form
-                initial={{y: 10, opacity: 0}}
-                animate={{y: 0, opacity: 1}}
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
                 onSubmit={handleSendComment}
                 className="flex gap-2"
               >
@@ -317,8 +338,8 @@ export default function LocationSidebar({location, onClose}) {
                     className="bg-transparent border-none outline-none flex-1 text-[12px] text-text-primary placeholder-text-dim py-2.5 font-medium"
                   />
                   <button type="submit" disabled={!commentText.trim()}
-                          className="text-cyan-glow disabled:text-zinc-800 transition-all hover:scale-110 active:scale-90">
-                    <SendIcon size={18} className="drop-shadow-neon"/>
+                    className="text-cyan-glow disabled:text-zinc-800 transition-all hover:scale-110 active:scale-90">
+                    <SendIcon size={18} className="drop-shadow-neon" />
                   </button>
                 </div>
               </motion.form>
@@ -329,13 +350,13 @@ export default function LocationSidebar({location, onClose}) {
                 <div className="space-y-6">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="flex gap-3">
-                      <Skeleton circle width="2.5rem" height="2.5rem" className="shrink-0"/>
+                      <Skeleton circle width="2.5rem" height="2.5rem" className="shrink-0" />
                       <div className="flex-1 space-y-2">
                         <div className="flex justify-between">
-                          <Skeleton width="40%" height="1rem"/>
-                          <Skeleton width="20%" height="0.75rem"/>
+                          <Skeleton width="40%" height="1rem" />
+                          <Skeleton width="20%" height="0.75rem" />
                         </div>
-                        <Skeleton width="100%" height="3rem" className="rounded-xl rounded-tl-none"/>
+                        <Skeleton width="100%" height="3rem" className="rounded-xl rounded-tl-none" />
                       </div>
                     </div>
                   ))}
@@ -344,18 +365,12 @@ export default function LocationSidebar({location, onClose}) {
                 comments.map((c, i) => (
                   <motion.div
                     key={c.id}
-                    initial={{opacity: 0, x: -10}}
-                    animate={{opacity: 1, x: 0}}
-                    transition={{delay: i * 0.05}}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
                     className="flex gap-3 group"
                   >
-                    <div className="relative shrink-0">
-                      <div
-                        className="w-10 h-10 rounded-lg border border-glass-border p-1 overflow-hidden group-hover:border-cyan-glow/30 transition-all duration-500 bg-glass-white">
-                        <img src={c.avatar_url || `https://picsum.photos/150/150?random=${c.id}`}
-                             className="w-full h-full rounded-md object-cover" alt="avatar"/>
-                      </div>
-                    </div>
+                    <UserBadge user={c} size={40} />
                     <div className="flex-1 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <span
@@ -374,7 +389,7 @@ export default function LocationSidebar({location, onClose}) {
                 ))
               ) : (
                 <div className="text-center py-12 bg-white/[0.01] rounded-2xl border border-glass-border border-dashed">
-                  <CommentIcon size={20} className="text-text-dim mx-auto mb-3"/>
+                  <CommentIcon size={20} className="text-text-dim mx-auto mb-3" />
                   <p className="text-text-muted text-[8px] font-black uppercase tracking-[0.4em]">Trống thảo luận</p>
                 </div>
               )}

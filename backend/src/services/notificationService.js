@@ -2,7 +2,7 @@ import pool from "../config/db.js";
 
 export const getNotificationsByUserId = async (userId) => {
   const query = `
-      SELECT n.*, u.name as sender_name, u.avatar_url as sender_avatar, l.name as location_name, l.lat, l.lng
+      SELECT n.*, u.name as sender_name, u.avatar_url as sender_avatar, u.xp as sender_xp, l.name as location_name, l.lat, l.lng
       FROM notifications n
                LEFT JOIN users u ON n.sender_id = u.firebase_uid
                LEFT JOIN locations l ON n.location_id = l.id

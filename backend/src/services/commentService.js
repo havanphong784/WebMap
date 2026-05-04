@@ -2,7 +2,7 @@ import pool from "../config/db.js";
 
 export const listComments = async (locationId) => {
   const query = `
-      SELECT c.*, u.name, u.avatar_url
+      SELECT c.*, u.name, u.avatar_url, u.xp, u.level, u.tier
       FROM comments c
                JOIN users u ON c.user_id = u.firebase_uid
       WHERE c.location_id = $1

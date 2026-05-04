@@ -29,6 +29,8 @@ import colorfull from "./style/colorful";
 import { extractGPS } from "./utils/exifUtils.js";
 
 
+import UserBadge from "../../shared/components/UserBadge.jsx";
+
 export default function MapPage() {
   const navigate = useNavigate();
   const routerLocation = useLocation();
@@ -297,24 +299,38 @@ export default function MapPage() {
       >
         <div className="absolute top-6 right-6 z-100">
           <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => {
               if (user?.uid) navigate(`/profile/${user.uid}`);
               else navigate('/login');
             }}
-            className="bg-obsidian flex items-center gap-2 glass-panel p-1.5 pr-4 border-glass-border cursor-pointer shadow-neon"
+            className="flex items-center gap-3 glass-panel p-1 pr-5 border-glass-border cursor-pointer shadow-floating bg-obsidian/80 backdrop-blur-xl rounded-full group"
           >
-            <div className="w-9 h-9 rounded-full border-2 border-cyan-glow shadow-neon overflow-hidden ">
-              <img
-                src={user?.photoURL || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"}
-                className="w-full h-full object-cover"
-                alt="user"
-              />
-            </div>
-            <span className="text-text-primary text-[10px] font-bold tracking-widest uppercase">
-              {user ? 'Hồ sơ' : 'Đăng nhập'}
-            </span>
+            {user ? (
+              <>
+                <UserBadge user={user} size={42} />
+                <div className="flex flex-col">
+                  <span className="text-text-primary text-[11px] font-black tracking-widest uppercase leading-tight">
+                    {user.displayName || 'Hồ sơ'}
+                  </span>
+                  <span className="text-[9px] font-black text-cyan-glow uppercase tracking-[0.25em] mt-0.5 opacity-80">
+                    LVL.{Math.floor(Math.sqrt((user.xp || 0) / 10)) + 1}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white/40">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
+                <span className="text-text-primary text-[12px] font-black uppercase leading-none">
+                  Đăng nhập
+                </span>
+              </>
+            )}
           </motion.div>
         </div>
 

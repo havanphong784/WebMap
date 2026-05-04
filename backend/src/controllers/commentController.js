@@ -1,16 +1,17 @@
-import { createComment, listComments } from "../services/commentService.js";
+import {createComment, listComments} from "../services/commentService.js";
+import {addXP} from "../services/gamificationService.js";
 
 export const getComments = async (req, res) => {
   try {
     const data = await listComments(req.params.id);
-    res.json({ success: true, data });
+    res.json({success: true, data});
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({error: err.message});
   }
 };
 
 export const postComment = async (req, res) => {
-  const { user_id, content } = req.body;
+  const {user_id, content} = req.body;
 
   try {
     const data = await createComment({
@@ -18,9 +19,14 @@ export const postComment = async (req, res) => {
       userId: user_id,
       content
     });
-    res.json({ success: true, data });
+
+    if (data) {
+      await addXP(user_id, "COMMENT");
+    }
+
+    res.json({success: true, data});
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({error: err.message});
   }
 };
 

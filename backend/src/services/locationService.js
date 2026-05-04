@@ -5,6 +5,9 @@ export const listLocations = async ({ userId, minLng, maxLng, minLat, maxLat }) 
     SELECT l.*,
            u.name AS user_name,
            u.avatar_url AS user_avatar,
+           u.xp AS user_xp,
+           u.level AS user_level,
+           u.tier AS user_tier,
            (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
            (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $5) AS is_liked
@@ -62,6 +65,9 @@ export const listUserLocations = async ({ uid, currentUserId }) => {
     SELECT l.*,
            u.name AS user_name,
            u.avatar_url AS user_avatar,
+           u.xp AS user_xp,
+           u.level AS user_level,
+           u.tier AS user_tier,
            (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
            (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
@@ -80,6 +86,9 @@ export const listTrendingLocations = async ({ userId }) => {
     SELECT l.*,
            u.name AS user_name,
            u.avatar_url AS user_avatar,
+           u.xp AS user_xp,
+           u.level AS user_level,
+           u.tier AS user_tier,
            (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
            (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $1) AS is_liked
@@ -108,6 +117,9 @@ export const getLocationDetail = async ({ locationId, userId }) => {
     SELECT l.*,
            u.name AS user_name,
            u.avatar_url AS user_avatar,
+           u.xp AS user_xp,
+           u.level AS user_level,
+           u.tier AS user_tier,
            (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
            (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
@@ -124,6 +136,9 @@ export const listLocationsByTag = async ({ tag, userId }) => {
     SELECT l.*,
            u.name AS user_name,
            u.avatar_url AS user_avatar,
+           u.xp AS user_xp,
+           u.level AS user_level,
+           u.tier AS user_tier,
            (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
            (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked

@@ -8,6 +8,7 @@ import {useNotificationStore} from "./store/useNotificationStore.jsx";
 import {useEffect} from "react";
 import {formatFullTime} from "../../shared/utils/dateUtils.js";
 import Skeleton from "../../shared/components/common/skeleton.jsx";
+import UserBadge from "../../shared/components/UserBadge.jsx";
 
 const typeConfig = {
   like: {
@@ -60,9 +61,9 @@ export default function NotificationsPage() {
       <div className="sticky top-0 z-10 bg-obsidian/90 backdrop-blur-xl border-b border-glass-border px-6 py-5">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-plus font-black tracking-tight text-text-primary uppercase">Thông báo</h1>
+            <h1 className="text-2xl font-plus font-black tracking-tight text-text-primary uppercase italic">Thông báo</h1>
             {unreadCount > 0 && (
-              <p className="text-text-secondary text-xs font-bold mt-0.5">
+              <p className="text-cyan-glow text-[10px] font-black mt-1 uppercase tracking-widest opacity-80">
                 {unreadCount} thông báo mới
               </p>
             )}
@@ -70,7 +71,7 @@ export default function NotificationsPage() {
           {unreadCount > 0 && (
             <button
               onClick={() => markAllRead(user.uid)}
-              className="text-cyan-glow text-[10px] font-bold uppercase tracking-widest hover:underline"
+              className="text-text-muted text-[10px] font-bold uppercase tracking-widest hover:text-cyan-glow transition-colors"
             >
               Đánh dấu đã đọc tất cả
             </button>
@@ -114,16 +115,18 @@ export default function NotificationsPage() {
                   <div className="absolute top-0 left-0 w-1 h-full bg-cyan-glow shadow-neon"/>
                 )}
 
-                <div className="relative shrink-0">
-                  <div
-                    className="w-14 h-14 rounded-2xl overflow-hidden border border-glass-border bg-glass-white shadow-lg">
-                    <img
-                      src={notif.sender_avatar || "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"}
-                      className="w-full h-full object-cover" alt="avatar"/>
-                  </div>
-                  <div className={`absolute -bottom-1 -right-1 p-2 rounded-xl border backdrop-blur-md ${config.bg}`}>
+                <div className="relative shrink-0 flex items-center justify-center">
+                  <UserBadge 
+                    user={{
+                      xp: notif.sender_xp,
+                      avatar_url: notif.sender_avatar,
+                      name: notif.sender_name
+                    }} 
+                    size={48} 
+                  />
+                  <div className={`absolute -bottom-1 -right-1 p-1.5 rounded-lg border backdrop-blur-md z-30 ${config.bg}`}>
                     <Icon
-                      size={14}
+                      size={12}
                       className={`${config.color} drop-shadow-md`}
                       fill={notif.type === 'like' ? 'currentColor' : 'none'}
                     />
@@ -131,24 +134,24 @@ export default function NotificationsPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1.5">
                     <span
-                      className={`text-[9px] font-black px-2 py-0.5 rounded-md border ${config.bg} ${config.color}`}>
+                      className={`text-[8px] font-black px-2 py-0.5 rounded border uppercase tracking-[0.15em] ${config.bg} ${config.color}`}>
                       {config.label}
                     </span>
-                    <span className="text-[10px] text-text-muted font-bold uppercase tracking-widest">
+                    <span className="text-[9px] text-text-muted font-black uppercase tracking-[0.2em]">
                       {formatTime(notif.created_at)}
                     </span>
                   </div>
 
-                  <p className="text-[14px] text-text-primary leading-snug">
-                    <span className="font-bold">{notif.sender_name || 'Người dùng'}</span>{' '}
-                    <span className="text-text-secondary font-medium">{notif.message}</span>
+                  <p className="text-[13px] text-text-primary leading-snug font-medium">
+                    <span className="font-black text-cyan-glow uppercase tracking-tight">{notif.sender_name || 'Người dùng'}</span>{' '}
+                    <span className="text-text-secondary opacity-90 italic">{notif.message}</span>
                   </p>
 
                   <div
-                    className="mt-2 py-1.5 px-3 bg-white/[0.03] rounded-lg border border-glass-border inline-flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-cyan-glow truncate max-w-[200px]">
+                    className="mt-2.5 py-1 px-3 bg-white/[0.03] rounded-lg border border-glass-border inline-flex items-center gap-2 group-hover:border-cyan-glow/30 transition-colors">
+                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest truncate max-w-[200px]">
                       📍 {notif.location_name || 'Địa điểm'}
                     </span>
                   </div>

@@ -9,8 +9,6 @@
     --color-obsidian-light: #DDE4E3;
     --color-slate: #8E9AAF;
 
-
-
     /* các màuc phụ */
     --color-cyan-glow: #00CED1;
     --color-sky-glow: #535F72;
@@ -35,23 +33,22 @@
     --shadow-glass: 0 30px 60px rgba(0, 0, 0, 0.12);
     --shadow-floating: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
-    /* Fonts */
+    /* Fonts - Futuristic & Modern */
     --font-plus: "Space Grotesk", sans-serif;
-    --font-inter: "Roboto", sans-serif;
+    --font-inter: "Inter", sans-serif;
 }
 
 @layer base {
     body {
         @apply bg-map-bg text-text-primary font-inter antialiased overflow-x-hidden selection:bg-cyan-glow selection:text-white custom-scrollbar;
+        /* Kích hoạt các tính năng font cao cấp của Inter */
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
     }
 
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
+    h1, h2, h3, h4, h5, h6 {
         @apply font-plus font-bold tracking-tight text-text-primary;
+        /* Tối ưu cho Space Grotesk */
+        letter-spacing: -0.03em;
     }
 
     /* Global Scrollbar Reset */
@@ -162,9 +159,9 @@
         position: absolute;
         inset: 0;
         background: linear-gradient(90deg,
-        transparent,
-        rgba(255, 255, 255, 0.15),
-        transparent);
+                transparent,
+                rgba(255, 255, 255, 0.15),
+                transparent);
         animation: shimmer 1.5s infinite;
     }
 }

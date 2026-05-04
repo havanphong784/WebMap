@@ -1,6 +1,7 @@
 import pool from "../config/db.js";
+import { addXP } from "./gamificationService.js";
 
-export const toggleLike = async ({userId, locationId}) => {
+export const toggleLike = async ({ userId, locationId }) => {
   const check = await pool.query(
     "SELECT * FROM likes WHERE user_id = $1 AND location_id = $2",
     [userId, locationId]
@@ -11,7 +12,11 @@ export const toggleLike = async ({userId, locationId}) => {
       "DELETE FROM likes WHERE user_id = $1 AND location_id = $2",
       [userId, locationId]
     );
-    return {action: "unliked"};
+
+    // Xử lý XP âm khi unlike (Background task)
+    handleLikeXP(locationId, userId, "UNLIKE_RECEIVED");
+
+    return { action: "unliked" };
   }
 
   await pool.query(
@@ -19,25 +24,37 @@ export const toggleLike = async ({userId, locationId}) => {
     [userId, locationId]
   );
 
+  // Xử lý XP dương khi like (Background task)
+  handleLikeXP(locationId, userId, "LIKE_RECEIVED");
+
+  return { action: "liked" };
+};
+
+// Hàm bổ trợ để xử lý XP và Thông báo mà không làm chậm request chính
+async function handleLikeXP(locationId, userId, type) {
   try {
     const locInfo = await pool.query("SELECT user_id FROM locations WHERE id = $1", [locationId]);
     if (locInfo.rows.length > 0) {
       const ownerId = locInfo.rows[0].user_id;
       if (ownerId !== userId) {
-        const {createNotification} = await import("./notificationService.js");
-        await createNotification({
-          recipientId: ownerId,
-          senderId: userId,
-          type: 'like',
-          message: 'đã thích địa điểm của bạn',
-          locationId: locationId
-        });
+        // Cập nhật XP
+        await addXP(ownerId, type);
+
+        // Chỉ tạo thông báo nếu là hành động LIKE
+        if (type === "LIKE_RECEIVED") {
+          const { createNotification } = await import("./notificationService.js");
+          await createNotification({
+            recipientId: ownerId,
+            senderId: userId,
+            type: 'like',
+            message: 'đã thích địa điểm của bạn',
+            locationId: locationId
+          });
+        }
       }
     }
   } catch (err) {
-    console.error("Lỗi tạo thông báo like:", err);
+    console.error(`Lỗi xử lý Gamification cho ${type}:`, err);
   }
-
-  return {action: "liked"};
-};
+}
 
