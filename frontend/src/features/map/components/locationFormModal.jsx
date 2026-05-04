@@ -49,6 +49,7 @@ export default function LocationFormModal({point, onClose}) {
 
   useEffect(() => {
     if (point.imageFile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setImageFile(point.imageFile);
       setPreviewUrl(URL.createObjectURL(point.imageFile));
     }
@@ -260,7 +261,6 @@ export default function LocationFormModal({point, onClose}) {
               />
             </div>
 
-            {/* ── TAGS ─────────────────────────────────────────────── */}
             <div className="space-y-3">
               <label
                 className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">
@@ -268,7 +268,6 @@ export default function LocationFormModal({point, onClose}) {
                 Tags ({tags.length}/8)
               </label>
 
-              {/* Input box + chips */}
               <div
                 className="min-h-[52px] flex flex-wrap gap-2 items-center bg-glass-white border border-glass-border rounded-xl px-4 py-3 focus-within:border-cyan-glow/30 transition-all">
                 <AnimatePresence>
@@ -305,7 +304,6 @@ export default function LocationFormModal({point, onClose}) {
                 )}
               </div>
 
-              {/* Gợi ý tags */}
               <div className="flex flex-wrap gap-2">
                 {SUGGESTED_TAGS.filter(s => !tags.includes(s)).slice(0, 8).map(suggestion => (
                   <button
@@ -320,7 +318,6 @@ export default function LocationFormModal({point, onClose}) {
                 ))}
               </div>
             </div>
-            {/* ─────────────────────────────────────────────────────── */}
 
             <div className="flex gap-4 p-1.5 bg-glass-white rounded-2xl border border-glass-border">
               <button

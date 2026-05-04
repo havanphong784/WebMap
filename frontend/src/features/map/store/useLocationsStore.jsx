@@ -10,8 +10,10 @@ export const useLocationStore = create((set) => ({
   isLoading: false,
   tags: [],
   userLocation: null,
+  accuracy: null,
 
   setUserLocation: (loc) => set({userLocation: loc}),
+  setAccuracy: (acc) => set({accuracy: acc}),
   setRouteData: (state) => (set({routeData: state})),
 
   fetchTrending: async (userId) => {

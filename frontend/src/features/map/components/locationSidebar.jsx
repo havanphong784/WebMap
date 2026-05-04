@@ -16,7 +16,6 @@ import {
   RouteIcon,
   SendIcon,
   ShareIcon,
-  SpinnerIcon,
   TagIcon,
 } from "../../../shared/components/common/icons.jsx";
 import {parseDBDate} from "../../../shared/utils/dateUtils.js";
@@ -105,7 +104,7 @@ export default function LocationSidebar({location, onClose}) {
       <GlassPanel
         className="h-full flex flex-col border-glass-border bg-white/95 backdrop-blur-[80px] shadow-floating overflow-hidden pointer-events-auto rounded-[2.8rem] ring-1 ring-glass-border relative group/sidebar">
         <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"></div>
 
         <div
           className="absolute -top-40 -left-40 w-80 h-80 bg-cyan-glow/5 blur-[120px] rounded-full pointer-events-none animate-pulse"></div>
@@ -182,7 +181,8 @@ export default function LocationSidebar({location, onClose}) {
             className="flex items-center gap-3 mb-4 p-2.5 glass-panel border-glass-border bg-white/20 rounded-2xl w-fit"
           >
             <div className="relative group/avatar">
-              <div className="absolute -inset-1 bg-gradient-to-tr from-cyan-glow to-sunset rounded-full blur-[4px] opacity-20 group-hover/avatar:opacity-40 transition-opacity"></div>
+              <div
+                className="absolute -inset-1 bg-gradient-to-tr from-cyan-glow to-sunset rounded-full blur-[4px] opacity-20 group-hover/avatar:opacity-40 transition-opacity"></div>
               <img
                 src={displayLocation.user_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayLocation.user_id}`}
                 className="w-8 h-8 rounded-full border border-white/50 relative z-10 shadow-sm"
@@ -191,7 +191,8 @@ export default function LocationSidebar({location, onClose}) {
             </div>
             <div className="flex flex-col">
               <span className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] leading-none mb-1">Khám phá bởi</span>
-              <span className="text-[12px] font-bold text-text-primary leading-none">{displayLocation.user_name || 'Người dùng Aether'}</span>
+              <span
+                className="text-[12px] font-bold text-text-primary leading-none">{displayLocation.user_name || 'Người dùng Aether'}</span>
             </div>
           </motion.div>
 
@@ -229,26 +230,26 @@ export default function LocationSidebar({location, onClose}) {
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4">
               <div className="flex gap-4 items-start group">
-                  <div
-                    className="p-2.5 rounded-lg bg-white/50 border border-glass-border text-cyan-glow group-hover:bg-cyan-glow/5 transition-all duration-500 shrink-0 mt-1">
-                    <PinIcon size={16}/>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] mb-0.5">Vị trí</h4>
-                    <p
-                      className="text-[13px] text-text-primary font-semibold leading-relaxed tracking-tight break-words">{displayLocation.address}</p>
-                  </div>
+                <div
+                  className="p-2.5 rounded-lg bg-white/50 border border-glass-border text-cyan-glow group-hover:bg-cyan-glow/5 transition-all duration-500 shrink-0 mt-1">
+                  <PinIcon size={16}/>
                 </div>
-  
-                <div className="flex gap-4 items-center group">
-                  <div
-                    className="p-2.5 rounded-lg bg-white/50 border border-glass-border text-sunset group-hover:bg-sunset/5 transition-all duration-500 shrink-0">
-                    <DateIcon size={16}/>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] mb-0.5">Ngày khám
-                      phá</h4>
-                    <p className="text-[13px] text-text-primary font-semibold tracking-tight">
+                <div className="flex-1">
+                  <h4 className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] mb-0.5">Vị trí</h4>
+                  <p
+                    className="text-[13px] text-text-primary font-semibold leading-relaxed tracking-tight break-words">{displayLocation.address}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-center group">
+                <div
+                  className="p-2.5 rounded-lg bg-white/50 border border-glass-border text-sunset group-hover:bg-sunset/5 transition-all duration-500 shrink-0">
+                  <DateIcon size={16}/>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-[8px] font-black text-text-muted uppercase tracking-[0.2em] mb-0.5">Ngày khám
+                    phá</h4>
+                  <p className="text-[13px] text-text-primary font-semibold tracking-tight">
                     {parseDBDate(displayLocation.created_at).toLocaleDateString('vi-VN', {
                       day: '2-digit',
                       month: 'long',
@@ -328,13 +329,13 @@ export default function LocationSidebar({location, onClose}) {
                 <div className="space-y-6">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="flex gap-3">
-                      <Skeleton circle width="2.5rem" height="2.5rem" className="shrink-0" />
+                      <Skeleton circle width="2.5rem" height="2.5rem" className="shrink-0"/>
                       <div className="flex-1 space-y-2">
                         <div className="flex justify-between">
-                          <Skeleton width="40%" height="1rem" />
-                          <Skeleton width="20%" height="0.75rem" />
+                          <Skeleton width="40%" height="1rem"/>
+                          <Skeleton width="20%" height="0.75rem"/>
                         </div>
-                        <Skeleton width="100%" height="3rem" className="rounded-xl rounded-tl-none" />
+                        <Skeleton width="100%" height="3rem" className="rounded-xl rounded-tl-none"/>
                       </div>
                     </div>
                   ))}
