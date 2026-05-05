@@ -18,19 +18,19 @@ const pool = new Pool({
   }
 });
 
-async function initDB() {
-  const sqlPath = path.join(__dirname, 'achievements.sql');
+async function setupDatabase() {
+  const sqlPath = path.join(__dirname, 'full_db_setup.sql');
   const sql = fs.readFileSync(sqlPath, 'utf8');
 
   try {
-    console.log('Starting DB initialization...');
+    console.log('--- Đang khởi tạo Database từ đầu ---');
     await pool.query(sql);
-    console.log('Database initialized successfully with achievement tables.');
+    console.log('--- Khởi tạo Database THÀNH CÔNG ! ---');
   } catch (err) {
-    console.error('Error initializing database:', err);
+    console.error('Lỗi khi khởi tạo database:', err);
   } finally {
     await pool.end();
   }
 }
 
-initDB();
+setupDatabase();

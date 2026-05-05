@@ -15,8 +15,7 @@ import {
   RouteIcon,
   SendIcon,
   ShareIcon,
-  TagIcon,
-  CheckIcon
+  TagIcon
 } from "../../../shared/components/common/icons.jsx";
 import {parseDBDate} from "../../../shared/utils/dateUtils.js";
 import Skeleton from "../../../shared/components/common/skeleton.jsx";
@@ -116,7 +115,6 @@ export default function LocationSidebar({location, onClose}) {
       <GlassPanel
         className="h-[85vh] sm:h-full flex flex-col border-glass-border bg-white/95 backdrop-blur-[80px] shadow-floating overflow-hidden pointer-events-auto rounded-t-[2.5rem] sm:rounded-[2.8rem] ring-1 ring-glass-border relative group/sidebar">
 
-        {/* Mobile Drag Handle */}
         <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mt-4 sm:hidden shrink-0"/>
 
         <div
@@ -233,7 +231,6 @@ export default function LocationSidebar({location, onClose}) {
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-0 space-y-5" ref={scrollRef}>
-          {/* Review Section - Compact */}
           <motion.div
             initial={{opacity: 0}}
             animate={{opacity: 1}}

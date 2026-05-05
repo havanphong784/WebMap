@@ -40,7 +40,6 @@ export default function ProfilePage() {
       if (response.success) setProfileUser(response.user);
       await fetchUserLocations(uid, currentUser?.uid);
 
-      // Fetch achievements
       const achResponse = await apiClient.get(`/achievements/${uid}`);
       if (achResponse.success) {
         setAchievements(achResponse.data.achievements);
@@ -78,7 +77,8 @@ export default function ProfilePage() {
 
   if (!loading && !profileUser) return (
     <div className="min-h-screen bg-map-bg flex flex-col items-center justify-center space-y-6">
-      <p className="text-text-muted font-jakarta font-bold uppercase tracking-widest text-sm">Không tìm thấy người dùng</p>
+      <p className="text-text-muted font-jakarta font-bold uppercase tracking-widest text-sm">Không tìm thấy người
+        dùng</p>
       <ActionButton variant="glass" onClick={() => navigate('/')}>Về trang chủ</ActionButton>
     </div>
   );
@@ -180,24 +180,26 @@ export default function ProfilePage() {
               <GlassPanel
                 className="py-3 sm:py-4 px-1 sm:px-2 text-center border-glass-border bg-white/40 hover:bg-white/60 transition-colors shadow-sm">
                 <stat.icon size={16} className={`${stat.color || 'text-cyan-glow'} mx-auto mb-1.5 sm:mb-2`}/>
-                <div className="text-lg sm:text-2xl font-jakarta font-black tracking-tighter text-text-primary">{stat.value}</div>
-                <div className="text-[8px] sm:text-[10px] uppercase tracking-widest text-text-muted font-bold">{stat.label}</div>
+                <div
+                  className="text-lg sm:text-2xl font-jakarta font-black tracking-tighter text-text-primary">{stat.value}</div>
+                <div
+                  className="text-[8px] sm:text-[10px] uppercase tracking-widest text-text-muted font-bold">{stat.label}</div>
               </GlassPanel>
             </motion.div>
           ))}
         </div>
 
         <div className="mt-16 max-w-5xl mx-auto">
-          {/* Tabs Navigation */}
           <div className="flex items-center gap-8 mb-8 border-b border-glass-border">
-            <button 
+            <button
               onClick={() => setActiveTab('posts')}
               className={`pb-4 text-xs font-jakarta font-black uppercase tracking-[0.2em] relative transition-all duration-300 ${activeTab === 'posts' ? 'text-cyan-glow' : 'text-text-muted hover:text-text-primary'}`}
             >
               Địa điểm ({userLocations.length})
-              {activeTab === 'posts' && <motion.div layoutId="tabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-glow shadow-neon" />}
+              {activeTab === 'posts' && <motion.div layoutId="tabLine"
+                                                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-glow shadow-neon"/>}
             </button>
-            <button 
+            <button
               onClick={async () => {
                 setActiveTab('achievements');
                 if (isOwnProfile && unreadAchievements > 0) {
@@ -214,10 +216,11 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2">
                 Thành tựu & Nhiệm vụ
                 {isOwnProfile && unreadAchievements > 0 && (
-                  <span className="w-1.5 h-1.5 bg-sunset rounded-full shadow-sunset animate-pulse" />
+                  <span className="w-1.5 h-1.5 bg-sunset rounded-full shadow-sunset animate-pulse"/>
                 )}
               </div>
-              {activeTab === 'achievements' && <motion.div layoutId="tabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-sunset shadow-sunset" />}
+              {activeTab === 'achievements' && <motion.div layoutId="tabLine"
+                                                           className="absolute bottom-0 left-0 right-0 h-0.5 bg-sunset shadow-sunset"/>}
             </button>
           </div>
 
@@ -249,8 +252,10 @@ export default function ProfilePage() {
                           className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
                           alt={loc.name}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-60"></div>
-                        <div className="absolute top-4 right-4 glass-panel px-3 py-1.5 rounded-full text-[10px] font-bold border-white/10 flex items-center gap-2 shadow-xl bg-black/40">
+                        <div
+                          className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-60"></div>
+                        <div
+                          className="absolute top-4 right-4 glass-panel px-3 py-1.5 rounded-full text-[10px] font-bold border-white/10 flex items-center gap-2 shadow-xl bg-black/40">
                           <LikeIcon size={14} className={loc.is_liked ? "text-sunset fill-sunset" : "text-zinc-500"}/>
                           <span className={loc.is_liked ? "text-white" : "text-zinc-400"}>{loc.likes_count || 0}</span>
                         </div>
@@ -268,9 +273,11 @@ export default function ProfilePage() {
                         <div className="absolute bottom-4 left-4 right-4">
                           <div className="flex items-center gap-1.5 text-cyan-glow mb-1">
                             <PinIcon size={12} className="shadow-neon"/>
-                            <span className="text-[10px] font-bold uppercase tracking-widest truncate">{loc.address}</span>
+                            <span
+                              className="text-[10px] font-bold uppercase tracking-widest truncate">{loc.address}</span>
                           </div>
-                          <h3 className="text-lg font-jakarta font-bold text-text-primary group-hover:text-cyan-glow transition-colors line-clamp-1">
+                          <h3
+                            className="text-lg font-jakarta font-bold text-text-primary group-hover:text-cyan-glow transition-colors line-clamp-1">
                             {loc.name}
                           </h3>
                         </div>
@@ -288,10 +295,10 @@ export default function ProfilePage() {
               )}
             </>
           ) : (
-            <AchievementList 
-              achievements={achievements} 
-              dailyTasks={dailyTasks} 
-              loading={loading} 
+            <AchievementList
+              achievements={achievements}
+              dailyTasks={dailyTasks}
+              loading={loading}
             />
           )}
         </div>

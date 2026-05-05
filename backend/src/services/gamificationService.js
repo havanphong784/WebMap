@@ -47,10 +47,9 @@ export const addXP = async (userId, action) => {
     );
 
     if (result.rows.length > 0) {
-      // After adding regular action XP, check achievements and tasks
       await updateAchievementProgress(userId, action);
       await updateDailyTaskProgress(userId, action);
-      
+
       return {...result.rows[0], added: xpToAdd};
     }
   } catch (error) {
@@ -58,11 +57,7 @@ export const addXP = async (userId, action) => {
   }
 };
 
-/**
- * Updates progress for achievements based on user action
- */
 export const updateAchievementProgress = async (userId, action) => {
-  // Map action to requirement_type
   const actionToType = {
     'LOCATION_CREATED': 'location_count',
     'PHOTO': 'photo_count',
@@ -76,12 +71,12 @@ export const updateAchievementProgress = async (userId, action) => {
   if (!reqType) return;
 
   try {
-    // Find all achievements for this type that the user hasn't unlocked yet
     const achievements = await pool.query(
       `SELECT a.*, COALESCE(ua.progress, 0) as current_progress
        FROM achievements a
-       LEFT JOIN user_achievements ua ON a.id = ua.achievement_id AND ua.user_id = $1
-       WHERE a.requirement_type = $2 AND (ua.is_unlocked = FALSE OR ua.is_unlocked IS NULL)`,
+                LEFT JOIN user_achievements ua ON a.id = ua.achievement_id AND ua.user_id = $1
+       WHERE a.requirement_type = $2
+         AND (ua.is_unlocked = FALSE OR ua.is_unlocked IS NULL)`,
       [userId, reqType]
     );
 
@@ -91,18 +86,19 @@ export const updateAchievementProgress = async (userId, action) => {
 
       await pool.query(
         `INSERT INTO user_achievements (user_id, achievement_id, progress, is_unlocked, unlocked_at, is_seen)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (user_id, achievement_id) 
-         DO UPDATE SET 
+         VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (user_id, achievement_id) 
+         DO
+        UPDATE SET
             progress = EXCLUDED.progress,
             is_unlocked = EXCLUDED.is_unlocked,
-            unlocked_at = CASE WHEN EXCLUDED.is_unlocked AND user_achievements.is_unlocked = FALSE THEN CURRENT_TIMESTAMP ELSE user_achievements.unlocked_at END,
-            is_seen = CASE WHEN EXCLUDED.is_unlocked AND user_achievements.is_unlocked = FALSE THEN FALSE ELSE user_achievements.is_seen END`,
+            unlocked_at = CASE WHEN EXCLUDED.is_unlocked AND user_achievements.is_unlocked = FALSE THEN CURRENT_TIMESTAMP ELSE user_achievements.unlocked_at
+        END,
+            is_seen = CASE WHEN EXCLUDED.is_unlocked AND user_achievements.is_unlocked = FALSE THEN FALSE ELSE user_achievements.is_seen
+        END`,
         [userId, achievement.id, newProgress, isUnlocked, isUnlocked ? new Date() : null, isUnlocked ? false : true]
       );
 
       if (isUnlocked) {
-        // Award XP for unlocking achievement
         await addAchievementXP(userId, achievement.xp_reward, achievement.title_vi);
       }
     }
@@ -126,11 +122,11 @@ export const updateDailyTaskProgress = async (userId, action) => {
   if (!reqType) return;
 
   try {
-    // Find daily tasks for this day
     const tasks = await pool.query(
       `SELECT dt.*, COALESCE(udt.progress, 0) as current_progress, udt.is_completed
        FROM daily_tasks dt
-       LEFT JOIN user_daily_tasks udt ON dt.id = udt.task_id AND udt.user_id = $1 AND udt.task_date = CURRENT_DATE
+                LEFT JOIN user_daily_tasks udt
+                          ON dt.id = udt.task_id AND udt.user_id = $1 AND udt.task_date = CURRENT_DATE
        WHERE dt.requirement_type = $2`,
       [userId, reqType]
     );
@@ -143,13 +139,15 @@ export const updateDailyTaskProgress = async (userId, action) => {
 
       await pool.query(
         `INSERT INTO user_daily_tasks (user_id, task_id, progress, is_completed, completed_at, task_date, is_seen)
-         VALUES ($1, $2, $3, $4, $5, CURRENT_DATE, $6)
-         ON CONFLICT (user_id, task_id, task_date)
-         DO UPDATE SET 
+         VALUES ($1, $2, $3, $4, $5, CURRENT_DATE, $6) ON CONFLICT (user_id, task_id, task_date)
+         DO
+        UPDATE SET
             progress = EXCLUDED.progress,
             is_completed = EXCLUDED.is_completed,
-            completed_at = CASE WHEN EXCLUDED.is_completed AND user_daily_tasks.is_completed = FALSE THEN CURRENT_TIMESTAMP ELSE user_daily_tasks.completed_at END,
-            is_seen = CASE WHEN EXCLUDED.is_completed AND user_daily_tasks.is_completed = FALSE THEN FALSE ELSE user_daily_tasks.is_seen END`,
+            completed_at = CASE WHEN EXCLUDED.is_completed AND user_daily_tasks.is_completed = FALSE THEN CURRENT_TIMESTAMP ELSE user_daily_tasks.completed_at
+        END,
+            is_seen = CASE WHEN EXCLUDED.is_completed AND user_daily_tasks.is_completed = FALSE THEN FALSE ELSE user_daily_tasks.is_seen
+        END`,
         [userId, task.id, newProgress, isCompleted, isCompleted ? new Date() : null, isCompleted ? false : true]
       );
 
@@ -177,7 +175,7 @@ const addAchievementXP = async (userId, xpToAdd, reason) => {
                             WHEN floor(sqrt((xp + $1) / 10)) + 1 >= 25 THEN 'Pathfinder'
                             WHEN floor(sqrt((xp + $1) / 10)) + 1 >= 10 THEN 'Explorer'
                             ELSE 'Scout'
-                END,
+               END,
            updated_at = CURRENT_TIMESTAMP
        WHERE firebase_uid = $2`,
       [xpToAdd, userId]
