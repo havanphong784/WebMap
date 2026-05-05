@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {motion} from 'framer-motion';
 
 const TIER_CONFIG = {
@@ -24,7 +25,7 @@ const TIER_CONFIG = {
   }
 };
 
-const UserBadge = ({user, size = 64}) => {
+const UserBadge = memo(({user, size = 64}) => {
   const {xp = 0, avatar_url, name} = user;
 
   const level = Math.floor(Math.sqrt(xp / 10)) + 1;
@@ -192,6 +193,8 @@ const UserBadge = ({user, size = 64}) => {
       }}/>
     </div>
   );
-};
+});
+
+UserBadge.displayName = "UserBadge";
 
 export default UserBadge;

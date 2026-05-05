@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import compression from "compression";
+import helmet from "helmet";
 import "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import locationRoutes from "./routes/locationRoutes.js";
@@ -12,6 +14,10 @@ import achievementRoutes from "./routes/achievementRoutes.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
+app.use(compression());
 app.use(cors({
   origin: true,
   credentials: true

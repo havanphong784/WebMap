@@ -1,12 +1,24 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import MapPage from "./features/map/mapPage.jsx";
-import DiscoveryFeed from "./features/discovery/discoveryFeed.jsx";
-import ProfilePage from "./features/profile/profilePage.jsx";
-import Login from "./features/auth/loginPage.jsx";
-import NotificationsPage from "./features/notifications/notificationsPage.jsx";
+
+const MapPage = lazy(() => import("./features/map/mapPage.jsx"));
+const DiscoveryFeed = lazy(() => import("./features/discovery/discoveryFeed.jsx"));
+const ProfilePage = lazy(() => import("./features/profile/profilePage.jsx"));
+const Login = lazy(() => import("./features/auth/loginPage.jsx"));
+const NotificationsPage = lazy(() => import("./features/notifications/notificationsPage.jsx"));
+
 import BottomNav from "./shared/components/layout/bottomNav.jsx";
 import ProtectedRoute from "./shared/components/layout/protectedRoute.jsx";
+
+const LoadingFallback = () => (
+  <div className="h-screen w-full flex items-center justify-center bg-obsidian text-cyan-glow">
+    <div className="animate-pulse flex flex-col items-center">
+      <div className="w-12 h-12 border-4 border-cyan-glow border-t-transparent rounded-full animate-spin mb-4"></div>
+      <p className="text-xs font-black uppercase tracking-widest">Aether Loading...</p>
+    </div>
+  </div>
+);
 
 function App() {
   const location = useLocation();
@@ -15,36 +27,38 @@ function App() {
   return (
     <div className="min-h-screen bg-obsidian text-white selection:bg-cyan-glow selection:text-obsidian overflow-x-hidden">
       <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<MapPage />} />
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<MapPage />} />
 
-          <Route path="/discover" element={
-            <ProtectedRoute>
-              <DiscoveryFeed />
-            </ProtectedRoute>
-          } />
+            <Route path="/discover" element={
+              <ProtectedRoute>
+                <DiscoveryFeed />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/notifications" element={
-            <ProtectedRoute>
-              <NotificationsPage />
-            </ProtectedRoute>
-          } />
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/profile/:uid" element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          } />
+            <Route path="/profile/:uid" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
 
-          <Route path="*" element={<MapPage />} />
-        </Routes>
+            <Route path="*" element={<MapPage />} />
+          </Routes>
+        </Suspense>
       </AnimatePresence>
       {!isLoginPage && <BottomNav />}
     </div>

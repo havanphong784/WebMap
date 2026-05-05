@@ -275,6 +275,12 @@ export default function MapPage() {
     }
   };
 
+  const handleLocationClick = useCallback((locData) => {
+    setInfoClicked(null);
+    setActiveLocation(locData);
+    flyToLocation(locData.lng - 0.001, locData.lat, 16, 2000);
+  }, [flyToLocation]);
+
   return (
     <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
       <Map ref={mapRef}
@@ -405,11 +411,7 @@ export default function MapPage() {
           <LocationCard
             key={loc.id}
             location={loc}
-            onClick={(locData) => {
-              setInfoClicked(null);
-              setActiveLocation(locData)
-              flyToLocation(locData.lng - 0.001, locData.lat, 16, 2000);
-            }}
+            onClick={handleLocationClick}
           />
         ))}
 

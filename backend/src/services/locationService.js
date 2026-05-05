@@ -8,11 +8,21 @@ export const listLocations = async ({ userId, minLng, maxLng, minLat, maxLat }) 
            u.xp AS user_xp,
            u.level AS user_level,
            u.tier AS user_tier,
-           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
-           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
+           COALESCE(lc.likes_count, 0) AS likes_count,
+           COALESCE(cc.comments_count, 0) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $5) AS is_liked
     FROM locations l
     LEFT JOIN users u ON l.user_id = u.firebase_uid
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as likes_count
+      FROM likes
+      GROUP BY location_id
+    ) lc ON lc.location_id = l.id
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as comments_count
+      FROM comments
+      GROUP BY location_id
+    ) cc ON cc.location_id = l.id
     WHERE (l.lat BETWEEN $1 AND $2)
       AND (l.lng BETWEEN $3 AND $4)
       AND (l.is_public = true OR l.user_id = $5)
@@ -68,11 +78,21 @@ export const listUserLocations = async ({ uid, currentUserId }) => {
            u.xp AS user_xp,
            u.level AS user_level,
            u.tier AS user_tier,
-           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
-           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
+           COALESCE(lc.likes_count, 0) AS likes_count,
+           COALESCE(cc.comments_count, 0) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
     FROM locations l
     LEFT JOIN users u ON l.user_id = u.firebase_uid
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as likes_count
+      FROM likes
+      GROUP BY location_id
+    ) lc ON lc.location_id = l.id
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as comments_count
+      FROM comments
+      GROUP BY location_id
+    ) cc ON cc.location_id = l.id
     WHERE l.user_id = $1
     ORDER BY l.created_at DESC;
   `;
@@ -89,11 +109,21 @@ export const listTrendingLocations = async ({ userId }) => {
            u.xp AS user_xp,
            u.level AS user_level,
            u.tier AS user_tier,
-           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
-           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
+           COALESCE(lc.likes_count, 0) AS likes_count,
+           COALESCE(cc.comments_count, 0) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $1) AS is_liked
     FROM locations l
     LEFT JOIN users u ON l.user_id = u.firebase_uid
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as likes_count
+      FROM likes
+      GROUP BY location_id
+    ) lc ON lc.location_id = l.id
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as comments_count
+      FROM comments
+      GROUP BY location_id
+    ) cc ON cc.location_id = l.id
     WHERE l.is_public = true
     ORDER BY likes_count DESC, l.created_at DESC LIMIT 20;
   `;
@@ -120,11 +150,21 @@ export const getLocationDetail = async ({ locationId, userId }) => {
            u.xp AS user_xp,
            u.level AS user_level,
            u.tier AS user_tier,
-           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
-           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
+           COALESCE(lc.likes_count, 0) AS likes_count,
+           COALESCE(cc.comments_count, 0) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
     FROM locations l
     LEFT JOIN users u ON l.user_id = u.firebase_uid
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as likes_count
+      FROM likes
+      GROUP BY location_id
+    ) lc ON lc.location_id = l.id
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as comments_count
+      FROM comments
+      GROUP BY location_id
+    ) cc ON cc.location_id = l.id
     WHERE l.id = $1;
   `;
   const result = await pool.query(query, [locationId, userId || "guest"]);
@@ -139,11 +179,21 @@ export const listLocationsByTag = async ({ tag, userId }) => {
            u.xp AS user_xp,
            u.level AS user_level,
            u.tier AS user_tier,
-           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
-           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
+           COALESCE(lc.likes_count, 0) AS likes_count,
+           COALESCE(cc.comments_count, 0) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
     FROM locations l
     LEFT JOIN users u ON l.user_id = u.firebase_uid
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as likes_count
+      FROM likes
+      GROUP BY location_id
+    ) lc ON lc.location_id = l.id
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as comments_count
+      FROM comments
+      GROUP BY location_id
+    ) cc ON cc.location_id = l.id
     WHERE $1 = ANY(l.tags)
       AND (l.is_public = true OR l.user_id = $2)
     ORDER BY l.created_at DESC LIMIT 100;

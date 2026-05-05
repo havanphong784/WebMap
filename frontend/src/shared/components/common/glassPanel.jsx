@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import {motion} from 'framer-motion';
 
-const GlassPanel = ({children, className = '', ...props}) => {
+const GlassPanel = memo(({children, className = '', ...props}) => {
   return (
     <motion.div
       initial={{opacity: 0, y: 20}}
@@ -11,7 +12,9 @@ const GlassPanel = ({children, className = '', ...props}) => {
       {children}
     </motion.div>
   );
-}
+});
+
+GlassPanel.displayName = "GlassPanel";
 
 export default GlassPanel;
 

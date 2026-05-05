@@ -1,15 +1,13 @@
+import {apiClient} from "../../../shared/api/apiClient.js";
+
 export const getAddress = async (lat, lng) => {
   try {
-    const url = `https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}`;
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.features && data.features.length > 0) {
-      const prop = data.features[0].properties;
+    // Proxy qua backend để tránh CORS và 503 trên máy tính
+    const result = await apiClient.get(`/locations/geocoding/reverse?lat=${lat}&lng=${lng}`);
+    
+    if (result && result.display_name) {
       return {
-        display_name: [prop.name, prop.street, prop.district, prop.city, prop.country]
-          .filter(Boolean)
-          .join(", ")
+        display_name: result.display_name
       };
     }
     return {display_name: "Không xác định được địa chỉ"};
@@ -21,8 +19,7 @@ export const getAddress = async (lat, lng) => {
 
 export const searchAddress = async (query) => {
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
-    const results = await response.json();
+    const results = await apiClient.get(`/locations/geocoding/search?q=${encodeURIComponent(query)}`);
     return results;
   } catch (error) {
     console.error("Lỗi tìm kiếm:", error);

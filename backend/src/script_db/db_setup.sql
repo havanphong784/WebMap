@@ -1,3 +1,8 @@
+-- ==========================================================
+-- SCRIPT KHỞI TẠO DATABASE ĐẦY ĐỦ - AETHER GEO-SOCIAL
+-- Bao gồm: Bảng, Chỉ mục (Indexes), và Dữ liệu mẫu
+-- ==========================================================
+
 -- 1. Bảng Users (Người dùng)
 CREATE TABLE IF NOT EXISTS users (
     firebase_uid VARCHAR(128) PRIMARY KEY,
@@ -30,6 +35,9 @@ CREATE TABLE IF NOT EXISTS locations (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_locations_tags ON locations USING GIN (tags);
+CREATE INDEX IF NOT EXISTS idx_locations_lat ON locations (lat);
+CREATE INDEX IF NOT EXISTS idx_locations_lng ON locations (lng);
+CREATE INDEX IF NOT EXISTS idx_locations_user_id ON locations (user_id);
 
 -- 3. Bảng Likes (Lượt thích)
 CREATE TABLE IF NOT EXISTS likes (
@@ -39,6 +47,8 @@ CREATE TABLE IF NOT EXISTS likes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (user_id, location_id)
 );
+CREATE INDEX IF NOT EXISTS idx_likes_location_id ON likes (location_id);
+CREATE INDEX IF NOT EXISTS idx_likes_user_id ON likes (user_id);
 
 -- 4. Bảng Comments (Bình luận)
 CREATE TABLE IF NOT EXISTS comments (
@@ -48,6 +58,8 @@ CREATE TABLE IF NOT EXISTS comments (
     content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_comments_location_id ON comments (location_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments (user_id);
 
 -- 5. Bảng Notifications (Thông báo)
 CREATE TABLE IF NOT EXISTS notifications (
@@ -108,6 +120,11 @@ CREATE TABLE IF NOT EXISTS user_daily_tasks (
     is_seen BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (user_id, task_id, task_date)
 );
+CREATE INDEX IF NOT EXISTS idx_user_daily_tasks_date ON user_daily_tasks (user_id, task_date);
+
+-- ==========================================================
+-- DỮ LIỆU MẪU (DATA SEEDING)
+-- ==========================================================
 
 -- Chèn Thành tựu mẫu
 INSERT INTO achievements (key_name, title_vi, description_vi, xp_reward, icon_name, category, requirement_type, requirement_value, rarity)

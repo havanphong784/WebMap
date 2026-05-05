@@ -16,17 +16,22 @@ const MAX_CACHE_SIZE = 1000;
 export const getLocations = async (req, res) => {
   try {
     const {user_id, minLng, maxLng, minLat, maxLat} = req.query;
+
+    if (!minLng || !maxLng || !minLat || !maxLat) {
+      return res.status(200).json({ success: true, data: [], message: "Thiếu tham số tọa độ" });
+    }
+
     const data = await listLocations({
       userId: user_id,
-      minLng,
-      maxLng,
-      minLat,
-      maxLat
+      minLng: parseFloat(minLng),
+      maxLng: parseFloat(maxLng),
+      minLat: parseFloat(minLat),
+      maxLat: parseFloat(maxLat)
     });
     res.status(200).json({success: true, data});
   } catch (error) {
     console.error("Lỗi lấy danh sách địa điểm:", error);
-    res.status(500).json({success: false, message: "Lỗi Server"});
+    res.status(500).json({success: false, message: "Lỗi Server", detail: error.message});
   }
 };
 
@@ -187,6 +192,28 @@ export const getDirections = async (req, res) => {
     res.status(200).json(data);
   } catch (error) {
     console.error("Lỗi proxy routing:", error);
+    res.status(500).json({success: false, message: "Lỗi Server"});
+  }
+};
+
+export const searchAddress = async (req, res) => {
+  try {
+    const {q} = req.query;
+    if (!q) {
+      return res.status(400).json({success: false, message: "Thiếu từ khóa tìm kiếm"});
+    }
+
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5`, {
+      headers: {
+        'User-Agent': 'AetherMapApp/1.0 (contact: havanphong784@gmail.com)',
+        'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8'
+      }
+    });
+
+    const data = await response.json();
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Lỗi proxy search:", error);
     res.status(500).json({success: false, message: "Lỗi Server"});
   }
 };

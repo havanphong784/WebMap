@@ -22,8 +22,18 @@ const getHeaders = async (includeAuth = true) => {
 export const apiClient = {
   get: async (endpoint) => {
     const headers = await getHeaders();
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, { headers });
-    return await response.json();
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, { headers });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API Error ${response.status}: ${errorText}`);
+        return { success: false, error: errorText };
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Network Error:", error);
+      return { success: false, error: error.message };
+    }
   },
   post: async (endpoint, data) => {
     const headers = await getHeaders();
