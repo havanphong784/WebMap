@@ -29,4 +29,23 @@ export const getUserProfile = async (uid) => {
   const result = await pool.query(query, [uid]);
   return result.rows[0];
 };
+export const listActiveUsers = async (limit = 10) => {
+  const query = `
+    SELECT firebase_uid, name, avatar_url, last_seen_at, level, tier
+    FROM users
+    WHERE last_seen_at > NOW() - INTERVAL '5 minutes'
+    ORDER BY last_seen_at DESC
+    LIMIT $1;
+  `;
+  const result = await pool.query(query, [limit]);
+  return result.rows;
+};
 
+export const updateLastSeen = async (uid) => {
+  const query = `
+    UPDATE users 
+    SET last_seen_at = NOW() 
+    WHERE firebase_uid = $1;
+  `;
+  await pool.query(query, [uid]);
+};

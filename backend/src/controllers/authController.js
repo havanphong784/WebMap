@@ -1,4 +1,4 @@
-import { getUserProfile, upsertUser } from "../services/authService.js";
+import { getUserProfile, upsertUser, listActiveUsers, updateLastSeen } from "../services/authService.js";
 
 export const login = async (req, res) => {
   try {
@@ -23,6 +23,27 @@ export const getProfile = async (req, res) => {
     res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("Lỗi khi lấy profile:", error);
+    res.status(500).json({ error: "Lỗi Server" });
+  }
+};
+
+export const getActiveUsers = async (req, res) => {
+  try {
+    const users = await listActiveUsers(10);
+    res.status(200).json({ success: true, data: users });
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách user active:", error);
+    res.status(500).json({ error: "Lỗi Server" });
+  }
+};
+
+export const heartbeat = async (req, res) => {
+  try {
+    const { uid } = req.user;
+    await updateLastSeen(uid);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Lỗi heartbeat:", error);
     res.status(500).json({ error: "Lỗi Server" });
   }
 };

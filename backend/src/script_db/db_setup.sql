@@ -1,8 +1,3 @@
--- ==========================================================
--- SCRIPT KHỞI TẠO DATABASE ĐẦY ĐỦ - AETHER GEO-SOCIAL
--- Bao gồm: Bảng, Chỉ mục (Indexes), và Dữ liệu mẫu
--- ==========================================================
-
 -- 1. Bảng Users (Người dùng)
 CREATE TABLE IF NOT EXISTS users (
     firebase_uid VARCHAR(128) PRIMARY KEY,
@@ -13,7 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
     level INTEGER DEFAULT 1,
     tier VARCHAR(20) DEFAULT 'Scout',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_users_xp ON users (xp);
 

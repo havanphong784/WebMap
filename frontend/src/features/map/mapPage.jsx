@@ -9,6 +9,7 @@ import { debounce } from "./utils/performance.js";
 import MapStyleSwitcher from "./components/mapStyleSwitcher.jsx";
 import SearchBox from "./components/searchBox.jsx";
 import { useLocationStore } from "./store/useLocationsStore.jsx";
+import { useSocialStore } from "./store/useSocialStore.jsx";
 import { useAuthStore } from "../auth/context/authContext.jsx";
 import ClusterLocations from "./components/clusterLocations.jsx";
 import LocationCard from "./components/locationCard.jsx";
@@ -45,6 +46,14 @@ export default function MapPage() {
   const setAccuracy = useLocationStore(state => state.setAccuracy);
   const userLocation = useLocationStore(state => state.userLocation);
   const accuracy = useLocationStore(state => state.accuracy);
+
+  const { activeUsers, fetchActiveUsers } = useSocialStore();
+
+  useEffect(() => {
+    fetchActiveUsers();
+    const interval = setInterval(fetchActiveUsers, 300000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -441,10 +450,29 @@ export default function MapPage() {
             </span>
           </div>
           <div className="flex -space-x-2 sm:-space-x-3">
-            {[1, 2, 3].map(i => (
-              <img key={i} src={`https://picsum.photos/50/50?random=${i + 10}`}
-                className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-map-bg shadow-lg" alt="u" />
-            ))}
+            {activeUsers.slice(0, 10).map((u, i) => {
+              const lastSeen = new Date(u.last_seen_at);
+              const now = new Date();
+              const diffMinutes = (now - lastSeen) / 1000 / 60;
+              const isOnline = diffMinutes < 2;
+
+              return (
+                <div key={u.firebase_uid} className="relative group cursor-pointer" onClick={() => navigate(`/profile/${u.firebase_uid}`)} style={{ pointerEvents: 'auto' }}>
+                  <img
+                    src={u.avatar_url || `https://picsum.photos/50/50?random=${i}`}
+                    className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-obsidian shadow-lg hover:scale-110 transition-transform"
+                    alt={u.name}
+                    title={`${u.name} (${isOnline ? "Đang trực tuyến" : "Hoạt động " + Math.round(diffMinutes) + " phút trước"})`}
+                  />
+                  <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 border-2 border-obsidian rounded-full ${isOnline ? "bg-green-500 shadow-[0_0_8px_#22c55e]" : "bg-amber-500"}`}></div>
+                </div>
+              );
+            })}
+            {activeUsers.length > 10 && (
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-obsidian-soft border-2 border-obsidian flex items-center justify-center text-[8px] sm:text-[10px] text-text-secondary font-bold">
+                +{activeUsers.length - 10}
+              </div>
+            )}
           </div>
         </GlassPanel>
       </div>

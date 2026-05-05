@@ -10,6 +10,9 @@ const NotificationsPage = lazy(() => import("./features/notifications/notificati
 
 import BottomNav from "./shared/components/layout/bottomNav.jsx";
 import ProtectedRoute from "./shared/components/layout/protectedRoute.jsx";
+import { useAuthStore } from "./features/auth/context/authContext.jsx";
+import { useSocialStore } from "./features/map/store/useSocialStore.jsx";
+import { useEffect } from "react";
 
 const LoadingFallback = () => (
   <div className="h-screen w-full flex items-center justify-center bg-obsidian text-cyan-glow">
@@ -23,6 +26,16 @@ const LoadingFallback = () => (
 function App() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+  const { user } = useAuthStore();
+  const { sendHeartbeat } = useSocialStore();
+
+  useEffect(() => {
+    if (user?.uid) {
+      sendHeartbeat();
+      const interval = setInterval(sendHeartbeat, 45000);
+      return () => clearInterval(interval);
+    }
+  }, [user?.uid]);
 
   return (
     <div className="min-h-screen bg-obsidian text-white selection:bg-cyan-glow selection:text-obsidian overflow-x-hidden">
