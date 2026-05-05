@@ -16,6 +16,7 @@ import {
   SendIcon,
   ShareIcon,
   TagIcon,
+  CheckIcon
 } from "../../../shared/components/common/icons.jsx";
 import {parseDBDate} from "../../../shared/utils/dateUtils.js";
 import Skeleton from "../../../shared/components/common/skeleton.jsx";
@@ -398,6 +399,7 @@ export default function LocationSidebar({location, onClose}) {
               <LikeIcon size={20} fill={displayLocation.is_liked ? "currentColor" : "none"}
                         className={displayLocation.is_liked ? "drop-shadow-[0_0_8px_rgba(255,75,43,0.3)]" : ""}/>
             </motion.button>
+
           </div>
         </div>
       </GlassPanel>

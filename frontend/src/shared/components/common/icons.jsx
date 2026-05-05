@@ -36,7 +36,8 @@ import {
   Tag,
   Hash,
   Eye,
-  EyeOff
+  EyeOff,
+  Check
 } from 'lucide-react';
 
 export {
@@ -77,6 +78,7 @@ export {
   Tag as TagIcon,
   Hash as HashIcon,
   Eye as EyeIcon,
-  EyeOff as EyeOffIcon
+  EyeOff as EyeOffIcon,
+  Check as CheckIcon
 };
 

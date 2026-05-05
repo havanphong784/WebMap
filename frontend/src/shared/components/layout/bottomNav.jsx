@@ -6,7 +6,7 @@ import { useNotificationStore } from "../../../features/notifications/store/useN
 import { useEffect } from 'react';
 
 const BottomNav = () => {
-  const { user } = useAuthStore();
+  const { user, unreadAchievements } = useAuthStore();
   const { unreadCount, fetchNotifications } = useNotificationStore();
 
   useEffect(() => {
@@ -24,7 +24,12 @@ const BottomNav = () => {
       label: 'Thông báo',
       badge: unreadCount > 0 ? unreadCount : null 
     },
-    { icon: UserIcon, path: user ? `/profile/${user.uid}` : '/login', label: user ? 'Hồ sơ' : 'Đăng nhập' },
+    { 
+      icon: UserIcon, 
+      path: user ? `/profile/${user.uid}` : '/login', 
+      label: user ? 'Hồ sơ' : 'Đăng nhập',
+      badge: unreadAchievements > 0 ? unreadAchievements : null
+    },
   ];
 
   return (

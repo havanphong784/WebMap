@@ -226,7 +226,8 @@ export const useLocationStore = create((set) => ({
       console.error("Lỗi fetch chi tiết địa điểm:", error);
     }
     return null;
-  }
+  },
+
 }));
 
 

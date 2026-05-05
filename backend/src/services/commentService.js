@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { addXP } from "./gamificationService.js";
 
 export const listComments = async (locationId) => {
   const query = `
@@ -36,6 +37,8 @@ export const createComment = async ({locationId, userId, content}) => {
   } catch (err) {
     console.error("Lỗi tạo thông báo comment:", err);
   }
+
+  await addXP(userId, "COMMENT");
 
   return result.rows[0];
 };

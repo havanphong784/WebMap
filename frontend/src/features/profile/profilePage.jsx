@@ -9,17 +9,21 @@ import UserBadge from "../../shared/components/UserBadge.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
 import Skeleton from "../../shared/components/common/skeleton.jsx";
+import AchievementList from "./components/AchievementList.jsx";
 
 export default function ProfilePage() {
   const {uid: uidParam} = useParams();
   const navigate = useNavigate();
-  const {user: currentUser, logout} = useAuthStore();
+  const {user: currentUser, logout, unreadAchievements, setUnreadAchievements} = useAuthStore();
   const {userLocations, fetchUserLocations, removeLocation, isLoading: locationsLoading} = useLocationStore();
   const uid = uidParam || currentUser?.uid;
 
   const [profileUser, setProfileUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const [achievements, setAchievements] = useState([]);
+  const [dailyTasks, setDailyTasks] = useState([]);
+  const [activeTab, setActiveTab] = useState('posts'); // 'posts' or 'achievements'
 
   useEffect(() => {
     if (!uid) {
@@ -35,6 +39,13 @@ export default function ProfilePage() {
       const response = await apiClient.get(`/auth/${uid}`);
       if (response.success) setProfileUser(response.user);
       await fetchUserLocations(uid, currentUser?.uid);
+
+      // Fetch achievements
+      const achResponse = await apiClient.get(`/achievements/${uid}`);
+      if (achResponse.success) {
+        setAchievements(achResponse.data.achievements);
+        setDailyTasks(achResponse.data.dailyTasks);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -177,78 +188,111 @@ export default function ProfilePage() {
         </div>
 
         <div className="mt-16 max-w-5xl mx-auto">
-          <div className="flex items-center gap-3 mb-8 border-b border-glass-border pb-4">
-            <div className="w-1.5 h-6 bg-cyan-glow rounded-full shadow-neon"></div>
-            <h2 className="text-xl font-jakarta font-bold uppercase tracking-tight text-text-primary">Địa điểm đã chinh
-              phục</h2>
-            <span className="ml-auto glass-panel px-3 py-1 text-[10px] font-mono text-text-muted border-glass-border">
-              {userLocations.length} GHIM
-            </span>
+          {/* Tabs Navigation */}
+          <div className="flex items-center gap-8 mb-8 border-b border-glass-border">
+            <button 
+              onClick={() => setActiveTab('posts')}
+              className={`pb-4 text-xs font-jakarta font-black uppercase tracking-[0.2em] relative transition-all duration-300 ${activeTab === 'posts' ? 'text-cyan-glow' : 'text-text-muted hover:text-text-primary'}`}
+            >
+              Địa điểm ({userLocations.length})
+              {activeTab === 'posts' && <motion.div layoutId="tabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-glow shadow-neon" />}
+            </button>
+            <button 
+              onClick={async () => {
+                setActiveTab('achievements');
+                if (isOwnProfile && unreadAchievements > 0) {
+                  try {
+                    await apiClient.post(`/achievements/mark-seen/${currentUser.uid}`);
+                    setUnreadAchievements(0);
+                  } catch (err) {
+                    console.error("Lỗi mark seen:", err);
+                  }
+                }
+              }}
+              className={`pb-4 text-xs font-jakarta font-black uppercase tracking-[0.2em] relative transition-all duration-300 ${activeTab === 'achievements' ? 'text-sunset' : 'text-text-muted hover:text-text-primary'}`}
+            >
+              <div className="flex items-center gap-2">
+                Thành tựu & Nhiệm vụ
+                {isOwnProfile && unreadAchievements > 0 && (
+                  <span className="w-1.5 h-1.5 bg-sunset rounded-full shadow-sunset animate-pulse" />
+                )}
+              </div>
+              {activeTab === 'achievements' && <motion.div layoutId="tabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-sunset shadow-sunset" />}
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {loading ? (
-              [...Array(3)].map((_, i) => (
-                <div key={i} className="glass-panel rounded-3xl border-white/5 overflow-hidden p-0 space-y-0 h-64">
-                  <Skeleton width="100%" height="100%"/>
-                </div>
-              ))
-            ) : userLocations.map((loc, i) => (
-              <motion.div
-                key={loc.id}
-                initial={{opacity: 0, scale: 0.9}}
-                whileInView={{opacity: 1, scale: 1}}
-                viewport={{once: true}}
-                transition={{delay: (i % 3) * 0.1}}
-                onClick={() => navigate("/", {state: {focusLocation: loc}})}
-                className="group relative glass-panel rounded-3xl border-glass-border overflow-hidden hover:border-cyan-glow/30 transition-all duration-500 cursor-pointer shadow-lg"
-              >
-                <div className="aspect-[4/3] relative overflow-hidden">
-                  <img
-                    src={loc.image_url || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500"}
-                    className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
-                    alt={loc.name}
-                  />
-                  <div
-                    className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-60"></div>
-
-                  <div
-                    className="absolute top-4 right-4 glass-panel px-3 py-1.5 rounded-full text-[10px] font-bold border-white/10 flex items-center gap-2 shadow-xl bg-black/40">
-                    <LikeIcon size={14} className={loc.is_liked ? "text-sunset fill-sunset" : "text-zinc-500"}/>
-                    <span className={loc.is_liked ? "text-white" : "text-zinc-400"}>{loc.likes_count || 0}</span>
-                  </div>
-
-                  {isOwnProfile && (
-                    <button
-                      onClick={(e) => handleDeleteLocation(e, loc.id)}
-                      disabled={deletingId === loc.id}
-                      className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-sunset/80 hover:bg-sunset text-white p-2 rounded-xl text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm disabled:opacity-50"
-                    >
-                      {deletingId === loc.id ? '...' : 'Xóa'}
-                    </button>
-                  )}
-
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <div className="flex items-center gap-1.5 text-cyan-glow mb-1">
-                      <PinIcon size={12} className="shadow-neon"/>
-                      <span className="text-[10px] font-bold uppercase tracking-widest truncate">{loc.address}</span>
+          {activeTab === 'posts' ? (
+            <>
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="glass-panel rounded-3xl border-white/5 overflow-hidden p-0 space-y-0 h-64">
+                      <Skeleton width="100%" height="100%"/>
                     </div>
-                    <h3
-                      className="text-lg font-jakarta font-bold text-text-primary group-hover:text-cyan-glow transition-colors line-clamp-1">
-                      {loc.name}
-                    </h3>
-                  </div>
+                  ))}
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              ) : userLocations.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {userLocations.map((loc, i) => (
+                    <motion.div
+                      key={loc.id}
+                      initial={{opacity: 0, scale: 0.9}}
+                      whileInView={{opacity: 1, scale: 1}}
+                      viewport={{once: true}}
+                      transition={{delay: (i % 3) * 0.1}}
+                      onClick={() => navigate("/", {state: {focusLocation: loc}})}
+                      className="group relative glass-panel rounded-3xl border-glass-border overflow-hidden hover:border-cyan-glow/30 transition-all duration-500 cursor-pointer shadow-lg"
+                    >
+                      <div className="aspect-[4/3] relative overflow-hidden">
+                        <img
+                          src={loc.image_url || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500"}
+                          className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+                          alt={loc.name}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent opacity-60"></div>
+                        <div className="absolute top-4 right-4 glass-panel px-3 py-1.5 rounded-full text-[10px] font-bold border-white/10 flex items-center gap-2 shadow-xl bg-black/40">
+                          <LikeIcon size={14} className={loc.is_liked ? "text-sunset fill-sunset" : "text-zinc-500"}/>
+                          <span className={loc.is_liked ? "text-white" : "text-zinc-400"}>{loc.likes_count || 0}</span>
+                        </div>
 
-          {userLocations.length === 0 && (
-            <div className="text-center py-20 glass-panel border-white/5 bg-white/2">
-              <PhotoIcon size={48} className="text-zinc-800 mx-auto mb-4 opacity-20"/>
-              <p className="text-zinc-500 font-jakarta font-bold uppercase tracking-widest text-sm">Chưa có bài viết nào
-                được đăng</p>
-            </div>
+                        {isOwnProfile && (
+                          <button
+                            onClick={(e) => handleDeleteLocation(e, loc.id)}
+                            disabled={deletingId === loc.id}
+                            className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-sunset/80 hover:bg-sunset text-white p-2 rounded-xl text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm disabled:opacity-50"
+                          >
+                            {deletingId === loc.id ? '...' : 'Xóa'}
+                          </button>
+                        )}
+
+                        <div className="absolute bottom-4 left-4 right-4">
+                          <div className="flex items-center gap-1.5 text-cyan-glow mb-1">
+                            <PinIcon size={12} className="shadow-neon"/>
+                            <span className="text-[10px] font-bold uppercase tracking-widest truncate">{loc.address}</span>
+                          </div>
+                          <h3 className="text-lg font-jakarta font-bold text-text-primary group-hover:text-cyan-glow transition-colors line-clamp-1">
+                            {loc.name}
+                          </h3>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-20 glass-panel border-white/5 bg-white/2">
+                  <PhotoIcon size={48} className="text-zinc-800 mx-auto mb-4 opacity-20"/>
+                  <p className="text-zinc-500 font-jakarta font-bold uppercase tracking-widest text-sm">
+                    Chưa có bài viết nào được đăng
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <AchievementList 
+              achievements={achievements} 
+              dailyTasks={dailyTasks} 
+              loading={loading} 
+            />
           )}
         </div>
       </div>

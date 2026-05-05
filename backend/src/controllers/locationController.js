@@ -39,11 +39,18 @@ export const createLocationEntry = async (req, res) => {
     const saved = await createLocation({ ...rest, tags: normalizedTags });
 
     if (saved) {
+      await addXP(saved.user_id, "LOCATION_CREATED");
       if (saved.image_url) {
         await addXP(saved.user_id, "PHOTO");
       }
-      if (saved.review_text && saved.review_text.length > 10) {
-        await addXP(saved.user_id, "REVIEW");
+      
+      if (saved.review_text) {
+        const wordCount = saved.review_text.trim().split(/\s+/).length;
+        if (wordCount >= 10) {
+          await addXP(saved.user_id, "LONG_REVIEW");
+        } else if (saved.review_text.length > 5) {
+          await addXP(saved.user_id, "REVIEW");
+        }
       }
     }
 
@@ -184,3 +191,4 @@ export const getDirections = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi Server" });
   }
 };
+

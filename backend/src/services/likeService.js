@@ -23,6 +23,7 @@ export const toggleLike = async ({userId, locationId}) => {
     [userId, locationId]
   );
 
+  await addXP(userId, "LIKE_GIVEN");
   handleLikeXP(locationId, userId, "LIKE_RECEIVED");
 
   return {action: "liked"};

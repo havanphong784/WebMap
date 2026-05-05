@@ -91,8 +91,40 @@ export const AuthProvider = ({children}) => {
     await signOut(auth);
   };
 
+  const [unreadAchievements, setUnreadAchievements] = useState(0);
+
+  const fetchUnreadCount = async (userId) => {
+    try {
+      const response = await fetch(`${API_URL}/achievements/unread/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadAchievements(data.count);
+      }
+    } catch (err) {
+      console.error("Lỗi fetch unread count:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.uid) {
+      fetchUnreadCount(user.uid);
+      const interval = setInterval(() => fetchUnreadCount(user.uid), 60000); // Polling every 1 min
+      return () => clearInterval(interval);
+    }
+  }, [user?.uid]);
+
   return (
-    <AuthContext.Provider value={{user, loading, logout, loginWithEmail, registerWithEmail, resetPassword}}>
+    <AuthContext.Provider value={{
+      user, 
+      loading, 
+      logout, 
+      loginWithEmail, 
+      registerWithEmail, 
+      resetPassword, 
+      unreadAchievements, 
+      fetchUnreadCount,
+      setUnreadAchievements
+    }}>
       {children}
     </AuthContext.Provider>
   );
