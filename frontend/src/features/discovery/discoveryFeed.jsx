@@ -43,12 +43,21 @@ const DiscoveryCard = ({post, index, navigate, onLike}) => {
         {!imageLoaded && (
           <Skeleton width="100%" height="300px" className="rounded-3xl"/>
         )}
-        <img
-          src={post.image_url || `https://picsum.photos/400/600?random=${post.id}`}
-          alt={post.name}
-          onLoad={() => setImageLoaded(true)}
-          className={`w-full rounded-3xl grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ${imageLoaded ? 'opacity-100 block' : 'opacity-0 absolute inset-0'}`}
-        />
+        {post.image_url ? (
+          <img
+            src={post.image_url}
+            alt={post.name}
+            onLoad={() => setImageLoaded(true)}
+            className={`w-full rounded-3xl grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ${imageLoaded ? 'opacity-100 block' : 'opacity-0 absolute inset-0'}`}
+          />
+        ) : (
+          <div className="w-full h-64 bg-obsidian-soft/30 flex flex-col items-center justify-center gap-3 rounded-3xl" onMouseEnter={() => setImageLoaded(true)}>
+             <div className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center">
+                <PinIcon size={20} className="text-text-dim/40"/>
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-text-dim/50">Không có ảnh</span>
+          </div>
+        )}
         <div
           className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 transition-opacity ${imageLoaded ? 'opacity-80 group-hover:opacity-100' : 'opacity-0'}`}>
         </div>

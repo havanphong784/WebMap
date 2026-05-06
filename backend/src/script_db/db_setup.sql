@@ -1,4 +1,3 @@
--- 1. Bảng Users (Người dùng)
 CREATE TABLE IF NOT EXISTS users (
     firebase_uid VARCHAR(128) PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -7,13 +6,12 @@ CREATE TABLE IF NOT EXISTS users (
     xp INTEGER DEFAULT 0,
     level INTEGER DEFAULT 1,
     tier VARCHAR(20) DEFAULT 'Scout',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_users_xp ON users (xp);
 
--- 2. Bảng Locations (Địa điểm)
 CREATE TABLE IF NOT EXISTS locations (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR(128) NOT NULL REFERENCES users (firebase_uid) ON DELETE CASCADE,
@@ -27,37 +25,34 @@ CREATE TABLE IF NOT EXISTS locations (
     image_url TEXT,
     tags TEXT[] DEFAULT '{}',
     is_public BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_locations_tags ON locations USING GIN (tags);
 CREATE INDEX IF NOT EXISTS idx_locations_lat ON locations (lat);
 CREATE INDEX IF NOT EXISTS idx_locations_lng ON locations (lng);
 CREATE INDEX IF NOT EXISTS idx_locations_user_id ON locations (user_id);
 
--- 3. Bảng Likes (Lượt thích)
 CREATE TABLE IF NOT EXISTS likes (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR(128) NOT NULL REFERENCES users (firebase_uid) ON DELETE CASCADE,
     location_id INT NOT NULL REFERENCES locations (id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (user_id, location_id)
 );
 CREATE INDEX IF NOT EXISTS idx_likes_location_id ON likes (location_id);
 CREATE INDEX IF NOT EXISTS idx_likes_user_id ON likes (user_id);
 
--- 4. Bảng Comments (Bình luận)
 CREATE TABLE IF NOT EXISTS comments (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR(128) NOT NULL REFERENCES users (firebase_uid) ON DELETE CASCADE,
     location_id INT NOT NULL REFERENCES locations (id) ON DELETE CASCADE,
     content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_comments_location_id ON comments (location_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments (user_id);
 
--- 5. Bảng Notifications (Thông báo)
 CREATE TABLE IF NOT EXISTS notifications (
     id SERIAL PRIMARY KEY,
     recipient_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
@@ -66,11 +61,10 @@ CREATE TABLE IF NOT EXISTS notifications (
     message TEXT,
     location_id INT REFERENCES locations(id) ON DELETE CASCADE,
     is_read BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_id);
 
--- 6. Bảng Achievements (Thành tựu)
 CREATE TABLE IF NOT EXISTS achievements (
     id SERIAL PRIMARY KEY,
     key_name VARCHAR(50) UNIQUE NOT NULL,
@@ -84,18 +78,16 @@ CREATE TABLE IF NOT EXISTS achievements (
     rarity VARCHAR(20) DEFAULT 'common'
 );
 
--- 7. Bảng User Achievements (Tiến trình thành tựu)
 CREATE TABLE IF NOT EXISTS user_achievements (
     user_id VARCHAR(128) REFERENCES users(firebase_uid) ON DELETE CASCADE,
     achievement_id INTEGER REFERENCES achievements(id) ON DELETE CASCADE,
     progress INTEGER DEFAULT 0,
     is_unlocked BOOLEAN DEFAULT FALSE,
-    unlocked_at TIMESTAMP,
+    unlocked_at TIMESTAMPTZ,
     is_seen BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (user_id, achievement_id)
 );
 
--- 8. Bảng Daily Tasks (Nhiệm vụ hàng ngày)
 CREATE TABLE IF NOT EXISTS daily_tasks (
     id SERIAL PRIMARY KEY,
     key_name VARCHAR(50) UNIQUE NOT NULL,
@@ -105,24 +97,19 @@ CREATE TABLE IF NOT EXISTS daily_tasks (
     requirement_value INTEGER NOT NULL
 );
 
--- 9. Bảng User Daily Tasks (Tiến trình nhiệm vụ ngày)
 CREATE TABLE IF NOT EXISTS user_daily_tasks (
     user_id VARCHAR(128) REFERENCES users(firebase_uid) ON DELETE CASCADE,
     task_id INTEGER REFERENCES daily_tasks(id) ON DELETE CASCADE,
     progress INTEGER DEFAULT 0,
     is_completed BOOLEAN DEFAULT FALSE,
-    completed_at TIMESTAMP,
+    completed_at TIMESTAMPTZ,
     task_date DATE DEFAULT CURRENT_DATE,
     is_seen BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (user_id, task_id, task_date)
 );
 CREATE INDEX IF NOT EXISTS idx_user_daily_tasks_date ON user_daily_tasks (user_id, task_date);
 
--- ==========================================================
--- DỮ LIỆU MẪU (DATA SEEDING)
--- ==========================================================
 
--- Chèn Thành tựu mẫu
 INSERT INTO achievements (key_name, title_vi, description_vi, xp_reward, icon_name, category, requirement_type, requirement_value, rarity)
 VALUES 
 ('first_location', 'Người Tiên Phong', 'Tạo địa điểm đầu tiên trên bản đồ', 100, 'MapPin', 'contribution', 'location_count', 1, 'common'),
@@ -134,7 +121,6 @@ VALUES
 ('master_contributor', 'Kiến Trúc Sư Aether', 'Tạo 30 địa điểm công cộng trên bản đồ', 2000, 'Zap', 'contribution', 'location_count', 30, 'legendary')
 ON CONFLICT (key_name) DO NOTHING;
 
--- Chèn Nhiệm vụ ngày mẫu
 INSERT INTO daily_tasks (key_name, title_vi, xp_reward, requirement_type, requirement_value)
 VALUES 
 ('daily_like', 'Lan tỏa yêu thương', 20, 'like_given_count', 1),

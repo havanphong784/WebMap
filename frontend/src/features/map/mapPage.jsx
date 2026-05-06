@@ -453,23 +453,27 @@ export default function MapPage() {
             {activeUsers.slice(0, 10).map((u, i) => {
               const lastSeen = new Date(u.last_seen_at);
               const now = new Date();
-              const diffMinutes = (now - lastSeen) / 1000 / 60;
-              const isOnline = diffMinutes < 2;
+              const isOnline = (now - lastSeen) / 1000 / 60 < 2;
 
               return (
-                <div key={u.firebase_uid} className="relative group cursor-pointer" onClick={() => navigate(`/profile/${u.firebase_uid}`)} style={{ pointerEvents: 'auto' }}>
-                  <img
-                    src={u.avatar_url || `https://picsum.photos/50/50?random=${i}`}
-                    className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-obsidian shadow-lg hover:scale-110 transition-transform"
-                    alt={u.name}
-                    title={`${u.name} (${isOnline ? "Đang trực tuyến" : "Hoạt động " + Math.round(diffMinutes) + " phút trước"})`}
+                <div 
+                  key={u.firebase_uid} 
+                  className="cursor-pointer hover:scale-110 transition-transform relative z-10" 
+                  onClick={() => navigate(`/profile/${u.firebase_uid}`)}
+                  style={{ pointerEvents: 'auto' }}
+                  title={`${u.name} (${isOnline ? "Đang trực tuyến" : "Vừa hoạt động"})`}
+                >
+                  <UserBadge 
+                    user={u} 
+                    size={window.innerWidth < 640 ? 32 : 40} 
+                    showLevel={false}
+                    isOnline={isOnline}
                   />
-                  <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 border-2 border-obsidian rounded-full ${isOnline ? "bg-green-500 shadow-[0_0_8px_#22c55e]" : "bg-amber-500"}`}></div>
                 </div>
               );
             })}
             {activeUsers.length > 10 && (
-              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-obsidian-soft border-2 border-obsidian flex items-center justify-center text-[8px] sm:text-[10px] text-text-secondary font-bold">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-obsidian-soft border-2 border-obsidian flex items-center justify-center text-[10px] text-text-secondary font-black shadow-lg relative z-0">
                 +{activeUsers.length - 10}
               </div>
             )}

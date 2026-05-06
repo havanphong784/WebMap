@@ -1,7 +1,3 @@
-/**
- * Chuyển đổi chuỗi thời gian từ DB (thường là UTC) sang đối tượng Date của JS
- * Đảm bảo xử lý đúng múi giờ dù chuỗi có hay không có hậu tố Z/+
- */
 export const parseDBDate = (dateStr) => {
   if (!dateStr) return new Date();
   if (dateStr instanceof Date) return dateStr;
@@ -10,12 +6,10 @@ export const parseDBDate = (dateStr) => {
     ? dateStr
     : `${dateStr.replace(' ', 'T')}Z`;
 
-  return new Date(normalized);
+  const date = new Date(normalized);
+  return isNaN(date.getTime()) ? new Date() : date;
 };
 
-/**
- * Định dạng ngày tháng năm giờ phút thân thiện (Việt Nam)
- */
 export const formatFullTime = (dateStr) => {
   const d = parseDBDate(dateStr);
   if (isNaN(d.getTime())) return 'Vừa xong';

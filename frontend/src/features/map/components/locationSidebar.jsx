@@ -1,5 +1,6 @@
 import {AnimatePresence, motion} from "framer-motion";
 import {useCallback, useEffect, useRef, useState} from "react";
+import {useNavigate} from "react-router-dom";
 import {useLocationStore} from "../store/useLocationsStore.jsx";
 import {useAuthStore} from "../../auth/context/authContext.jsx";
 import {apiClient} from "../../../shared/api/apiClient.js";
@@ -23,6 +24,7 @@ import UserBadge from "../../../shared/components/UserBadge.jsx";
 
 export default function LocationSidebar({location, onClose}) {
   const {user} = useAuthStore();
+  const navigate = useNavigate();
   const locations = useLocationStore(state => state.locations);
   const {fetchRoute, routeLoading, toggleLike, postComment} = useLocationStore();
 
@@ -37,6 +39,12 @@ export default function LocationSidebar({location, onClose}) {
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 1600);
+  };
+
+  const handleOpenProfile = (uid) => {
+    if (!uid) return;
+    onClose(); 
+    navigate(`/profile/${uid}`);
   };
 
   const handleShare = async () => {
@@ -117,30 +125,35 @@ export default function LocationSidebar({location, onClose}) {
 
         <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mt-4 sm:hidden shrink-0"/>
 
-        <div
-          className="absolute inset-0 opacity-[0.03] pointer-events-none"></div>
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none"></div>
 
-        <div
-          className="absolute -top-40 -left-40 w-80 h-80 bg-cyan-glow/5 blur-[120px] rounded-full pointer-events-none animate-pulse"></div>
+        <div className="absolute -top-40 -left-40 w-80 h-80 bg-cyan-glow/5 blur-[120px] rounded-full pointer-events-none animate-pulse"></div>
 
         <div className="relative p-4 shrink-0">
-          <div
-            className="relative h-56 rounded-[1.8rem] overflow-hidden shadow-lg border border-black/5 group/img">
+          <div className="relative h-56 rounded-[1.8rem] overflow-hidden shadow-lg border border-black/5 group/img">
             <motion.div
               initial={{scale: 1.1}}
               animate={{scale: 1}}
               transition={{duration: 1.5, ease: "easeOut"}}
               className="w-full h-full"
             >
-              <img
-                src={displayLocation.image_url || `https://picsum.photos/1200/900?random=${displayLocation.id}`}
-                className="w-full h-full object-cover transition-all duration-700 group-hover/img:scale-110"
-                alt={displayLocation.name}
-              />
+              {displayLocation.image_url ? (
+                <img
+                  src={displayLocation.image_url}
+                  className="w-full h-full object-cover transition-all duration-700 group-hover/img:scale-110"
+                  alt={displayLocation.name}
+                />
+              ) : (
+                <div className="w-full h-full bg-black/[0.03] flex flex-col items-center justify-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-black/[0.02] border border-black/5 flex items-center justify-center">
+                    <PinIcon size={24} className="text-text-dim/40"/>
+                  </div>
+                  <span className="text-[10px] font-jakarta font-black uppercase tracking-[0.2em] text-text-dim/50">Không có ảnh</span>
+                </div>
+              )}
             </motion.div>
 
-            <div
-              className="absolute inset-0 bg-obsidian/10 group-hover/img:bg-transparent transition-colors duration-500"></div>
+            <div className="absolute inset-0 bg-obsidian/10 group-hover/img:bg-transparent transition-colors duration-500"></div>
 
             <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-10">
               <motion.button
@@ -170,11 +183,12 @@ export default function LocationSidebar({location, onClose}) {
             <motion.div
               initial={{x: -10, opacity: 0}}
               animate={{x: 0, opacity: 1}}
-              className="flex items-center gap-3"
+              className="flex items-center gap-3 cursor-pointer group/user"
+              onClick={() => handleOpenProfile(locationOwner.firebase_uid)}
             >
               <UserBadge user={locationOwner} size={36}/>
               <div className="flex flex-col">
-                <span className="text-[13px] font-jakarta font-bold text-text-primary leading-none">
+                <span className="text-[13px] font-jakarta font-bold text-text-primary leading-none group-hover/user:text-cyan-glow transition-colors">
                   {displayLocation.user_name || 'Explorer'}
                 </span>
                 <span className={`text-[8px] font-bold uppercase tracking-widest mt-1 ${
@@ -338,12 +352,13 @@ export default function LocationSidebar({location, onClose}) {
                     key={c.id}
                     initial={{opacity: 0}}
                     animate={{opacity: 1}}
-                    className="flex gap-2.5 group"
+                    className="flex gap-2.5 group cursor-pointer"
+                    onClick={() => handleOpenProfile(c.firebase_uid)}
                   >
                     <UserBadge user={c} size={32}/>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[11px] font-bold text-text-primary truncate mr-2">{c.name}</span>
+                        <span className="text-[11px] font-bold text-text-primary truncate mr-2 group-hover:text-cyan-glow transition-colors">{c.name}</span>
                         <span className="text-[7px] text-text-muted font-bold uppercase shrink-0">
                           {parseDBDate(c.created_at).toLocaleDateString('vi-VN')}
                         </span>
@@ -416,4 +431,3 @@ export default function LocationSidebar({location, onClose}) {
     </motion.div>
   );
 }
-

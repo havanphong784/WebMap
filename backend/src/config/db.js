@@ -1,7 +1,7 @@
 import pg from "pg";
 import "dotenv/config";
 
-const { Pool, types } = pg;
+const {Pool, types} = pg;
 
 types.setTypeParser(1114, (val) => val);
 
@@ -18,13 +18,16 @@ pool.on("error", (err) => {
   console.error("Lỗi PostgreSQL Pool bất ngờ:", err.message);
 });
 
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error("Database: Lỗi kết nối !", err.stack);
-  } else {
+// Kiểm tra kết nối khi khởi tạo
+pool.connect()
+  .then(client => {
     console.log("Database: Kết nối PostgreSQL thành công !");
-    release();
-  }
-});
+    // Thiết lập múi giờ một lần cho toàn bộ session của client này nếu cần
+    // Nhưng cách tốt nhất là set mặc định trong DB hoặc qua connection string
+    client.release();
+  })
+  .catch(err => {
+    console.error("Database: Lỗi kết nối !", err.stack);
+  });
 
 export default pool;
