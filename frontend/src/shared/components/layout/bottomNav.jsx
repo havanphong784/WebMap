@@ -3,17 +3,10 @@ import { NavLink } from 'react-router-dom';
 import { useAuthStore } from "../../../features/auth/context/authContext.jsx";
 import { MapIcon, DiscoverIcon, NotificationIcon, UserIcon } from "../common/icons.jsx";
 import { useNotificationStore } from "../../../features/notifications/store/useNotificationStore.jsx";
-import { useEffect } from 'react';
 
 const BottomNav = () => {
   const { user, unreadAchievements } = useAuthStore();
-  const { unreadCount, fetchNotifications } = useNotificationStore();
-
-  useEffect(() => {
-    if (user?.uid) {
-      fetchNotifications(user.uid);
-    }
-  }, [user, fetchNotifications]);
+  const { unreadCount } = useNotificationStore();
 
   const navItems = [
     { icon: MapIcon, path: '/', label: 'Bản đồ' },
@@ -48,9 +41,12 @@ const BottomNav = () => {
               <>
                 <item.icon size={20} className={isActive ? 'drop-shadow-[0_0_8px_rgba(0,245,255,0.5)]' : 'transition-transform group-hover:scale-110'} />
                 {item.badge && (
-                  <span className="absolute top-1 right-2 w-4 h-4 bg-sunset text-white text-[9px] font-black rounded-full flex items-center justify-center border border-obsidian shadow-sunset">
+                  <motion.span 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute top-1 right-2 w-4 h-4 bg-sunset text-white text-[9px] font-black rounded-full flex items-center justify-center border border-obsidian shadow-sunset">
                     {item.badge > 9 ? '9+' : item.badge}
-                  </span>
+                  </motion.span>
                 )}
                 <span className="hidden sm:block text-[9px] font-bold tracking-wider uppercase mt-1">
                   {item.label}

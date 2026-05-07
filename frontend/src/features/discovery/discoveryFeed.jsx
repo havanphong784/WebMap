@@ -47,6 +47,8 @@ const DiscoveryCard = ({post, index, navigate, onLike}) => {
           <img
             src={post.image_url}
             alt={post.name}
+            loading="lazy"
+            decoding="async"
             onLoad={() => setImageLoaded(true)}
             className={`w-full rounded-3xl grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ${imageLoaded ? 'opacity-100 block' : 'opacity-0 absolute inset-0'}`}
           />
@@ -301,23 +303,50 @@ const DiscoveryFeed = () => {
             </AnimatePresence>
           </div>
         ) : (
-          <div className="text-center py-40 glass-panel border-glass-border bg-glass-white/50 rounded-3xl">
-            <FilterIcon size={48} className="text-text-dim mx-auto mb-4 opacity-20"/>
-            <p className="text-text-secondary font-jakarta font-bold uppercase tracking-widest text-sm mb-2">
-              {searchQuery ? `Không tìm thấy "${searchQuery}"` : 'Không tìm thấy địa điểm phù hợp'}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-32 sm:py-40 glass-panel border border-glass-border bg-glass-obsidian rounded-3xl flex flex-col items-center justify-center relative overflow-hidden group"
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-cyan-glow/5 opacity-50"></div>
+            
+            <motion.div 
+              animate={{ y: [-5, 5, -5] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="relative z-10 p-6 rounded-full bg-white/[0.02] border border-white/[0.05] mb-6 group-hover:border-cyan-glow/20 transition-colors duration-500"
+            >
+              <FilterIcon size={48} className="text-cyan-glow/40 drop-shadow-neon" />
+            </motion.div>
+            
+            <p className="relative z-10 text-text-primary font-jakarta font-black uppercase tracking-[0.2em] text-sm sm:text-base mb-3 drop-shadow-md">
+              {searchQuery ? `Không tìm thấy "${searchQuery}"` : 'Trống rỗng...'}
             </p>
-            {(searchQuery || activeCategory !== 'All') && (
+            
+            <p className="relative z-10 text-text-muted text-xs font-medium max-w-xs mx-auto mb-6">
+              {searchQuery 
+                ? "Thử thay đổi từ khóa hoặc xóa bộ lọc để xem thêm địa điểm." 
+                : "Chưa có địa điểm nào trong khu vực này. Hãy là người đầu tiên khám phá!"}
+            </p>
+
+            {(searchQuery || activeCategory !== 'All') ? (
               <button
                 onClick={() => {
                   setSearchQuery('');
                   setActiveCategory('All');
                 }}
-                className="text-cyan-glow text-xs font-bold uppercase tracking-widest hover:underline mt-2"
+                className="relative z-10 text-obsidian bg-cyan-glow px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-neon hover:scale-105 active:scale-95"
               >
                 Xóa bộ lọc
               </button>
+            ) : (
+              <button
+                onClick={() => navigate('/')}
+                className="relative z-10 text-cyan-glow bg-cyan-glow/10 border border-cyan-glow/30 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-cyan-glow/20 transition-all shadow-glass hover:scale-105 active:scale-95"
+              >
+                Trở về bản đồ
+              </button>
             )}
-          </div>
+          </motion.div>
         )}
       </div>
 

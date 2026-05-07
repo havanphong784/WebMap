@@ -128,29 +128,27 @@ export const useLocationStore = create((set) => ({
     }
     set({routeLoading: true, routeData: null});
     try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`;
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.code === 'Ok') {
-        set({routeData: data.routes[0].geometry});
+      const startStr = `${start[0]},${start[1]}`;
+      const endStr = `${end[0]},${end[1]}`;
+      const result = await apiClient.get(`/locations/routing?start=${startStr}&end=${endStr}`);
+      if (result.success !== false && result.code === 'Ok') {
+        set({routeData: result.routes[0].geometry});
       } else {
-        throw new Error("OSRM Public failed");
+        throw new Error("Backend routing failed");
       }
     } catch (error) {
-      console.warn("Gọi trực tiếp thất bại, thử qua Proxy backend...", error);
+      console.warn("Gọi backend thất bại, thử qua public OSRM...", error);
       try {
-        const startStr = `${start[0]},${start[1]}`;
-        const endStr = `${end[0]},${end[1]}`;
-        const result = await apiClient.get(`/locations/routing?start=${startStr}&end=${endStr}`);
-        if (result.code === 'Ok') {
-          set({routeData: result.routes[0].geometry});
+        const url = `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.code === 'Ok') {
+          set({routeData: data.routes[0].geometry});
         } else {
-          alert("Không thể tìm thấy đường đi.");
+          console.error("Lỗi tìm đường đi.");
         }
       } catch (proxyError) {
-        console.error("Lỗi cả proxy:", proxyError);
-        alert("Dịch vụ dẫn đường hiện không khả dụng.");
+        console.error("Lỗi cả public OSRM:", proxyError);
       }
     } finally {
       set({routeLoading: false});

@@ -31,6 +31,8 @@ import {extractGPS} from "./utils/exifUtils.js";
 
 
 import UserBadge from "../../shared/components/UserBadge.jsx";
+import { useToastStore } from "../../shared/components/toast/useToastStore.jsx";
+import useWindowSize from "../../shared/hooks/useWindowSize.jsx";
 
 export default function MapPage() {
   const navigate = useNavigate();
@@ -41,6 +43,8 @@ export default function MapPage() {
   const [activeStyle, setActiveStyle] = useState(colorfull);
   const [showStyleSwitcher, setShowStyleSwitcher] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
+  const addToast = useToastStore(state => state.addToast);
+  const { width: windowWidth } = useWindowSize();
 
   const setUserLocation = useLocationStore(state => state.setUserLocation);
   const setAccuracy = useLocationStore(state => state.setAccuracy);
@@ -202,7 +206,7 @@ export default function MapPage() {
   const debouncedFetch = useRef(
     debounce((uid, bounds) => {
       fetchLocations(uid, bounds);
-    }, 400)
+    }, 200)
   ).current;
 
   const handleMapChange = useCallback(() => {
@@ -235,7 +239,7 @@ export default function MapPage() {
       (err) => {
         setIsLocating(false);
         console.error("Lỗi lấy vị trí:", err);
-        alert("Không thể truy cập vị trí của bạn. Vui lòng cho phép quyền truy cập vị trí.");
+        addToast("Không thể truy cập vị trí của bạn. Vui lòng cấp quyền.", "error");
       },
       {enableHighAccuracy: true}
     );
@@ -246,7 +250,7 @@ export default function MapPage() {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert("Vui lòng chọn tệp hình ảnh!");
+      addToast("Vui lòng chọn tệp hình ảnh!", "error");
       return;
     }
 
@@ -259,11 +263,11 @@ export default function MapPage() {
         const diachi = await getAddress(gps.lat, gps.lng);
         setInfoClicked({lng: gps.lng, lat: gps.lat, address: diachi, imageFile: file, autoOpenForm: true});
       } else {
-        alert("Ảnh này không chứa thông tin vị trí (GPS metadata).");
+        addToast("Ảnh này không chứa thông tin vị trí (GPS metadata).", "error");
       }
     } catch (error) {
       console.error("Lỗi khi xử lý ảnh:", error);
-      alert("Không thể trích xuất vị trí từ ảnh.");
+      addToast("Không thể trích xuất vị trí từ ảnh.", "error");
     } finally {
       setIsExtractingPhoto(false);
       e.target.value = "";
@@ -419,7 +423,7 @@ export default function MapPage() {
           </Marker>
         )}
 
-        {currentZoom >= 13 && locations.map(loc => (
+        {currentZoom >= 13 && locations.slice(0, 80).map(loc => (
           <LocationCard
             key={loc.id}
             location={loc}
@@ -469,7 +473,7 @@ export default function MapPage() {
                 >
                   <UserBadge
                     user={u}
-                    size={window.innerWidth < 640 ? 32 : 40}
+                    size={windowWidth < 640 ? 32 : 40}
                     showLevel={false}
                     isOnline={isOnline}
                   />

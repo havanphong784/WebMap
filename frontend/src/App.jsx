@@ -3,9 +3,11 @@ import {Route, Routes, useLocation} from 'react-router-dom';
 import {AnimatePresence} from 'framer-motion';
 import BottomNav from "./shared/components/layout/bottomNav.jsx";
 import ProtectedRoute from "./shared/components/layout/protectedRoute.jsx";
+import PageTransition from "./shared/components/layout/pageTransition.jsx";
 import {useAuthStore} from "./features/auth/context/authContext.jsx";
 import {useSocialStore} from "./features/map/store/useSocialStore.jsx";
 import {useNotificationStore} from "./features/notifications/store/useNotificationStore.jsx";
+import ToastProvider from "./shared/components/toast/ToastProvider.jsx";
 
 const MapPage = lazy(() => import("./features/map/mapPage.jsx"));
 const DiscoveryFeed = lazy(() => import("./features/discovery/discoveryFeed.jsx"));
@@ -33,12 +35,14 @@ function App() {
     if (user?.uid) {
       sendHeartbeat();
       fetchNotifications(user.uid, true);
-      // 1 phút
+
       const heartbeatInterval = setInterval(sendHeartbeat, 60000);
-      // 15s lấy thông báo 1 lần
+
       const notifInterval = setInterval(() => {
-        fetchNotifications(user.uid, true);
-      }, 15000);
+        if (document.visibilityState === 'visible') {
+          fetchNotifications(user.uid, true);
+        }
+      }, 30000);
 
       return () => {
         clearInterval(heartbeatInterval);
@@ -53,38 +57,39 @@ function App() {
       <Suspense fallback={<LoadingFallback/>}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            <Route path="/login" element={<Login/>}/>
-            <Route path="/" element={<MapPage/>}/>
+            <Route path="/login" element={<PageTransition><Login/></PageTransition>}/>
+            <Route path="/" element={<PageTransition><MapPage/></PageTransition>}/>
 
             <Route path="/discover" element={
               <ProtectedRoute>
-                <DiscoveryFeed/>
+                <PageTransition><DiscoveryFeed/></PageTransition>
               </ProtectedRoute>
             }/>
 
             <Route path="/notifications" element={
               <ProtectedRoute>
-                <NotificationsPage/>
+                <PageTransition><NotificationsPage/></PageTransition>
               </ProtectedRoute>
             }/>
 
             <Route path="/profile/:uid" element={
               <ProtectedRoute>
-                <ProfilePage/>
+                <PageTransition><ProfilePage/></PageTransition>
               </ProtectedRoute>
             }/>
 
             <Route path="/profile" element={
               <ProtectedRoute>
-                <ProfilePage/>
+                <PageTransition><ProfilePage/></PageTransition>
               </ProtectedRoute>
             }/>
 
-            <Route path="*" element={<MapPage/>}/>
+            <Route path="*" element={<PageTransition><MapPage/></PageTransition>}/>
           </Routes>
         </AnimatePresence>
       </Suspense>
       {!isLoginPage && <BottomNav/>}
+      <ToastProvider />
     </div>
   );
 }

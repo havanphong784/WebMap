@@ -7,10 +7,12 @@ import { CloseIcon, PinIcon, PlusIcon, RouteIcon, SpinnerIcon } from "../../../s
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
+import { useToastStore } from "../../../shared/components/toast/useToastStore.jsx";
 
 export default function ClickedMarker({ point, setPoint }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { fetchRoute, routeLoading, setRouteLoading, userLocation } = useLocationStore();
+  const addToast = useToastStore(state => state.addToast);
 
   useEffect(() => {
     if (point?.autoOpenForm) {
@@ -42,7 +44,7 @@ export default function ClickedMarker({ point, setPoint }) {
       (error) => {
         setRouteLoading(false);
         console.error("Lỗi định vị:", error);
-        alert("Không thể lấy vị trí của bạn. Vui lòng cho phép truy cập vị trí.");
+        addToast("Không thể lấy vị trí của bạn. Vui lòng cho phép truy cập vị trí.", "error");
       },
       { timeout: 5000, enableHighAccuracy: true }
     );

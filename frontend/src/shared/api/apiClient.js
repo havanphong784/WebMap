@@ -37,29 +37,59 @@ export const apiClient = {
   },
   post: async (endpoint, data) => {
     const headers = await getHeaders();
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(data)
-    });
-    return await response.json();
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API POST Error ${response.status}: ${errorText}`);
+        return { success: false, error: errorText };
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Network Error:", error);
+      return { success: false, error: error.message };
+    }
   },
   delete: async (endpoint, data) => {
     const headers = await getHeaders();
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "DELETE",
-      headers,
-      body: JSON.stringify(data)
-    });
-    return await response.json();
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: "DELETE",
+        headers,
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API DELETE Error ${response.status}: ${errorText}`);
+        return { success: false, error: errorText };
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Network Error:", error);
+      return { success: false, error: error.message };
+    }
   },
   put: async (endpoint, data) => {
     const headers = await getHeaders();
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "PUT",
-      headers,
-      body: JSON.stringify(data)
-    });
-    return await response.json();
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API PUT Error ${response.status}: ${errorText}`);
+        return { success: false, error: errorText };
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Network Error:", error);
+      return { success: false, error: error.message };
+    }
   }
 };

@@ -23,6 +23,7 @@ import {
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import {AnimatePresence, motion} from "framer-motion";
+import { useToastStore } from "../../../shared/components/toast/useToastStore.jsx";
 
 const SUGGESTED_TAGS = [
   "view đẹp", "cà phê", "ăn ngon", "check-in", "yên tĩnh",
@@ -34,6 +35,7 @@ export default function LocationFormModal({point, onClose}) {
   const addLocation = useLocationStore((state) => state.addLocation);
   const isLoading = useLocationStore((state) => state.isLoading);
   const {user} = useAuthStore();
+  const addToast = useToastStore(state => state.addToast);
 
   const rawAddress = point.address || {};
   const defaultName = rawAddress.amenity || rawAddress.shop || rawAddress.tourism || rawAddress.display_name?.split(',')[0] || "";
@@ -107,7 +109,7 @@ export default function LocationFormModal({point, onClose}) {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert("Vui lòng chọn tệp hình ảnh!");
+      addToast("Vui lòng chọn tệp hình ảnh!", "error");
       e.target.value = "";
       return;
     }
@@ -118,7 +120,7 @@ export default function LocationFormModal({point, onClose}) {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!user) return alert("Vui lòng đăng nhập!");
+    if (!user) return addToast("Vui lòng đăng nhập!", "error");
 
     setIsUploading(true);
     let finalImageUrl = null;
@@ -147,7 +149,7 @@ export default function LocationFormModal({point, onClose}) {
       onClose();
     } catch (error) {
       console.error("Lỗi khi upload ảnh hoặc lưu data:", error);
-      alert("Có lỗi xảy ra, vui lòng thử lại!");
+      addToast("Có lỗi xảy ra, vui lòng thử lại!", "error");
     } finally {
       setIsUploading(false);
     }

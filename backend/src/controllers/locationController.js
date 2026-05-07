@@ -191,7 +191,6 @@ export const reverseGeocode = async (req, res) => {
     }
   };
 
-  // Nguồn 1: Nominatim (OpenStreetMap)
   try {
     const response = await fetchWithTimeout(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
       headers: {
@@ -213,7 +212,6 @@ export const reverseGeocode = async (req, res) => {
     console.warn("Nominatim failed:", e.message);
   }
 
-  // Nguồn 2: ArcGIS (Cực kỳ ổn định)
   try {
     const arcgisUrl = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?f=pjson&location=${lng},${lat}`;
     const response = await fetchWithTimeout(arcgisUrl, {}, 3000);
@@ -235,7 +233,6 @@ export const reverseGeocode = async (req, res) => {
     console.warn("ArcGIS failed:", e.message);
   }
 
-  // Nguồn 3: Photon (Mạnh mẽ)
   try {
     const response = await fetchWithTimeout(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}`, {}, 3000);
     if (response.ok) {
@@ -257,7 +254,6 @@ export const reverseGeocode = async (req, res) => {
     console.warn("Photon failed:", e.message);
   }
 
-  // Nguồn 4: BigDataCloud
   try {
     const response = await fetchWithTimeout(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=vi`, {}, 3000);
     if (response.ok) {
@@ -276,9 +272,9 @@ export const reverseGeocode = async (req, res) => {
     console.warn("BigDataCloud failed:", e.message);
   }
 
-  res.status(500).json({ 
-    success: false, 
-    message: "Tất cả 4 dịch vụ định vị đều không phản hồi. Có thể do Render IP bị chặn hoặc tọa độ không hợp lệ. Vui lòng thử lại sau giây lát." 
+  res.status(500).json({
+    success: false,
+    message: "Tất cả 4 dịch vụ định vị đều không phản hồi. Có thể do Render IP bị chặn hoặc tọa độ không hợp lệ. Vui lòng thử lại sau giây lát."
   });
 };
 
