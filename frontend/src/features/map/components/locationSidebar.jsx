@@ -16,7 +16,9 @@ import {
   RouteIcon,
   SendIcon,
   ShareIcon,
-  TagIcon
+  TagIcon,
+  PlusIcon,
+  CheckIcon
 } from "../../../shared/components/common/icons.jsx";
 import {parseDBDate} from "../../../shared/utils/dateUtils.js";
 import Skeleton from "../../../shared/components/common/skeleton.jsx";
@@ -34,6 +36,8 @@ export default function LocationSidebar({location, onClose}) {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const scrollRef = useRef(null);
 
   const showToast = (msg) => {
@@ -87,6 +91,39 @@ export default function LocationSidebar({location, onClose}) {
       fetchComments();
     }
   }, [fetchComments, location]);
+
+  useEffect(() => {
+    const fetchFollowStatus = async () => {
+      if (!user?.uid || !displayLocation?.user_id || user.uid === displayLocation.user_id) return;
+      try {
+        const followRes = await apiClient.get(`/follows/status?followerId=${user.uid}&followedId=${displayLocation.user_id}`);
+        if (followRes.success) setIsFollowing(followRes.data.isFollowing);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchFollowStatus();
+  }, [user?.uid, displayLocation?.user_id]);
+
+  const handleToggleFollow = async (e) => {
+    e.stopPropagation();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    setIsFollowLoading(true);
+    try {
+      const res = await apiClient.post('/follows/toggle', { follower_id: user.uid, followed_id: displayLocation.user_id });
+      if (res.success) {
+        setIsFollowing(res.data.followed);
+        showToast(res.data.followed ? '✓ Đã theo dõi' : '✓ Đã bỏ theo dõi');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
 
   const handleSendComment = async (e) => {
     e.preventDefault();
@@ -186,16 +223,39 @@ export default function LocationSidebar({location, onClose}) {
               className="flex items-center gap-3 cursor-pointer group/user"
               onClick={() => handleOpenProfile(locationOwner.firebase_uid)}
             >
-              <UserBadge user={locationOwner} size={36}/>
-              <div className="flex flex-col">
-                <span className="text-[13px] font-jakarta font-bold text-text-primary leading-none group-hover/user:text-cyan-glow transition-colors">
-                  {displayLocation.user_name || 'Explorer'}
-                </span>
-                <span className={`text-[8px] font-bold uppercase tracking-widest mt-1 ${
-                  level >= 50 ? 'text-sunset' : level >= 10 ? 'text-cyan-glow' : 'text-text-muted'
-                }`}>
-                  Lvl.{level} {level >= 25 ? 'Pathfinder' : 'Scout'}
-                </span>
+              <div className="relative">
+                <UserBadge user={locationOwner} size={36} hideLevelBadge={true} />
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col">
+                  <span className="text-[13px] font-jakarta font-bold text-text-primary leading-none group-hover/user:text-cyan-glow transition-colors">
+                    {displayLocation.user_name || 'Explorer'}
+                  </span>
+                  <span className={`text-[8px] font-bold uppercase tracking-widest mt-1.5 ${
+                    level >= 50 ? 'text-sunset' : level >= 10 ? 'text-cyan-glow' : 'text-text-muted'
+                  }`}>
+                    Lvl.{level} {level >= 25 ? 'Pathfinder' : 'Scout'}
+                  </span>
+                </div>
+                {user?.uid && user.uid !== locationOwner.firebase_uid && (
+                  <button
+                    onClick={handleToggleFollow}
+                    disabled={isFollowLoading}
+                    className={`w-6 h-6 flex items-center justify-center rounded-full border shadow-sm transition-all duration-300 shrink-0 ${
+                      isFollowing 
+                        ? 'bg-white border-glass-border text-text-primary hover:bg-white hover:scale-110' 
+                        : 'bg-cyan-glow border-cyan-glow/50 text-white hover:bg-cyan-glow/80 hover:scale-110 shadow-neon-sm'
+                    }`}
+                  >
+                    {isFollowLoading ? (
+                      <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"/>
+                    ) : isFollowing ? (
+                      <CheckIcon size={12} strokeWidth={3} />
+                    ) : (
+                      <PlusIcon size={12} strokeWidth={3} />
+                    )}
+                  </button>
+                )}
               </div>
             </motion.div>
 

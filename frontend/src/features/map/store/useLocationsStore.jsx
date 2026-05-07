@@ -4,6 +4,7 @@ import {apiClient} from "../../../shared/api/apiClient.js";
 export const useLocationStore = create((set) => ({
   locations: [],
   trendingLocations: [],
+  followingLocations: [],
   userLocations: [],
   routeData: null,
   routeLoading: false,
@@ -22,6 +23,20 @@ export const useLocationStore = create((set) => ({
       const result = await apiClient.get(`/locations/trending?user_id=${userId || "guest"}`);
       if (result.success) {
         set({trendingLocations: result.data, isLoading: false});
+      }
+    } catch (error) {
+      console.error(error);
+      set({isLoading: false});
+    }
+  },
+
+  fetchFollowing: async (userId) => {
+    if (!userId) return;
+    set({isLoading: true});
+    try {
+      const result = await apiClient.get(`/locations/following?user_id=${userId}`);
+      if (result.success) {
+        set({followingLocations: result.data, isLoading: false});
       }
     } catch (error) {
       console.error(error);
@@ -161,7 +176,8 @@ export const useLocationStore = create((set) => ({
 
         set((state) => ({
           locations: updateLoc(state.locations),
-          trendingLocations: updateLoc(state.trendingLocations)
+          trendingLocations: updateLoc(state.trendingLocations),
+          followingLocations: updateLoc(state.followingLocations)
         }));
       }
     } catch (err) {
@@ -195,7 +211,8 @@ export const useLocationStore = create((set) => ({
         set((state) => ({
           locations: state.locations.filter(loc => loc.id !== locationId),
           trendingLocations: state.trendingLocations.filter(loc => loc.id !== locationId),
-          userLocations: state.userLocations.filter(loc => loc.id !== locationId)
+          userLocations: state.userLocations.filter(loc => loc.id !== locationId),
+          followingLocations: state.followingLocations.filter(loc => loc.id !== locationId)
         }));
       }
       return result;

@@ -24,6 +24,8 @@ export default function ProfilePage() {
   const [achievements, setAchievements] = useState([]);
   const [dailyTasks, setDailyTasks] = useState([]);
   const [activeTab, setActiveTab] = useState('posts'); // 'posts' or 'achievements'
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   useEffect(() => {
     if (!uid) {
@@ -45,6 +47,11 @@ export default function ProfilePage() {
         setAchievements(achResponse.data.achievements);
         setDailyTasks(achResponse.data.dailyTasks);
       }
+
+      if (currentUser?.uid && uid !== currentUser.uid) {
+        const followRes = await apiClient.get(`/follows/status?followerId=${currentUser.uid}&followedId=${uid}`);
+        if (followRes.success) setIsFollowing(followRes.data.isFollowing);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -55,6 +62,19 @@ export default function ProfilePage() {
   useEffect(() => {
     fetchProfileData();
   }, [fetchProfileData]);
+
+  const handleToggleFollow = async () => {
+    if (!currentUser) return navigate('/login');
+    setIsFollowLoading(true);
+    try {
+      const res = await apiClient.post('/follows/toggle', { follower_id: currentUser.uid, followed_id: uid });
+      if (res.success) setIsFollowing(res.data.followed);
+    } catch (err) {
+      console.error("Lỗi toggle follow", err);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
 
   const handleDeleteLocation = async (e, locId) => {
     e.stopPropagation();
@@ -144,7 +164,7 @@ export default function ProfilePage() {
                     className="px-4 py-1.5 rounded-full glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[10px] font-bold uppercase tracking-widest shadow-neon">
                     {profileUser?.tier || 'Scout'}
                   </div>
-                  {isOwnProfile && (
+                  {isOwnProfile ? (
                     <motion.button
                       whileHover={{scale: 1.05}}
                       whileTap={{scale: 0.95}}
@@ -153,6 +173,16 @@ export default function ProfilePage() {
                     >
                       <PowerIcon size={12}/>
                       Đăng xuất
+                    </motion.button>
+                  ) : (
+                    <motion.button
+                      whileHover={{scale: 1.05}}
+                      whileTap={{scale: 0.95}}
+                      onClick={handleToggleFollow}
+                      disabled={isFollowLoading}
+                      className={`px-4 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-2 ${isFollowing ? 'border-text-secondary bg-white/10 text-text-primary' : 'border-cyan-glow/50 bg-cyan-glow/10 text-cyan-glow hover:bg-cyan-glow/20'}`}
+                    >
+                      {isFollowLoading ? '...' : isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
                     </motion.button>
                   )}
                 </div>

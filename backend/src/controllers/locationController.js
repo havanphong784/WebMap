@@ -6,9 +6,12 @@ import {
   listLocationsByTag,
   listTrendingLocations,
   listUniqueTags,
-  listUserLocations
+  listUserLocations,
+  listFollowingLocations
 } from "../services/locationService.js";
 import {addXP} from "../services/gamificationService.js";
+import {getFollowers} from "../services/followService.js";
+import {createNotification} from "../services/notificationService.js";
 
 const geocodingCache = new Map();
 const MAX_CACHE_SIZE = 1000;
@@ -57,6 +60,18 @@ export const createLocationEntry = async (req, res) => {
           await addXP(saved.user_id, "REVIEW");
         }
       }
+
+      // Notify followers
+      const followers = await getFollowers(saved.user_id);
+      for (const f of followers) {
+        await createNotification({
+          recipientId: f.firebase_uid,
+          senderId: saved.user_id,
+          type: "NEW_POST",
+          message: `đã đăng một địa điểm mới: ${saved.name}`,
+          locationId: saved.id
+        });
+      }
     }
 
     res.status(201).json({success: true, data: saved});
@@ -86,6 +101,20 @@ export const getTrendingLocations = async (req, res) => {
   } catch (error) {
     console.error("Lỗi lấy địa điểm xu hướng:", error);
     res.status(500).json({success: false, message: "Lỗi Server"});
+  }
+};
+
+export const getFollowingLocations = async (req, res) => {
+  try {
+    const { user_id } = req.query;
+    if (!user_id) {
+      return res.status(400).json({ success: false, message: "Thiếu user_id" });
+    }
+    const data = await listFollowingLocations({ userId: user_id });
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Lỗi lấy địa điểm của người đang theo dõi:", error);
+    res.status(500).json({ success: false, message: "Lỗi Server" });
   }
 };
 

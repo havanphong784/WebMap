@@ -212,3 +212,34 @@ export const listUniqueTags = async () => {
   const result = await pool.query(query);
   return result.rows.map(r => r.tag);
 };
+
+export const listFollowingLocations = async ({ userId }) => {
+  const query = `
+    SELECT l.*,
+           u.name AS user_name,
+           u.avatar_url AS user_avatar,
+           u.xp AS user_xp,
+           u.level AS user_level,
+           u.tier AS user_tier,
+           COALESCE(lc.likes_count, 0) AS likes_count,
+           COALESCE(cc.comments_count, 0) AS comments_count,
+           EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $1) AS is_liked
+    FROM locations l
+    JOIN follows f ON l.user_id = f.followed_id
+    LEFT JOIN users u ON l.user_id = u.firebase_uid
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as likes_count
+      FROM likes
+      GROUP BY location_id
+    ) lc ON lc.location_id = l.id
+    LEFT JOIN (
+      SELECT location_id, COUNT(*) as comments_count
+      FROM comments
+      GROUP BY location_id
+    ) cc ON cc.location_id = l.id
+    WHERE f.follower_id = $1 AND l.is_public = true
+    ORDER BY l.created_at DESC LIMIT 50;
+  `;
+  const result = await pool.query(query, [userId]);
+  return result.rows;
+};

@@ -25,7 +25,7 @@ const TIER_CONFIG = {
   }
 };
 
-const UserBadge = memo(({user, size = 64}) => {
+const UserBadge = memo(({user, size = 64, hideLevelBadge = false}) => {
   const {xp = 0, avatar_url, name} = user;
 
   const level = Math.floor(Math.sqrt(xp / 10)) + 1;
@@ -145,34 +145,36 @@ const UserBadge = memo(({user, size = 64}) => {
         )}
       </div>
 
-      <div
-        className="absolute -bottom-1 -left-1 z-30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-        style={{
-          width: size * 0.35,
-          height: size * 0.32,
-          filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.6))`
-        }}
-      >
-        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full">
-          <path
-            d="M50 5 L95 27.5 L95 72.5 L50 95 L5 72.5 L5 27.5 Z"
-            fill="#0A0A0A"
-            stroke={config.colors[0]}
-            strokeWidth="12"
-            className={config.animate ? "animate-pulse" : ""}
-            style={{
-              filter: `drop-shadow(0 0 8px ${config.glow})`,
-              strokeOpacity: 1
-            }}
-          />
-        </svg>
-        <span
-          className="relative z-10 text-white font-black italic tracking-tighter"
-          style={{fontSize: size * 0.14}}
+      {!hideLevelBadge && (
+        <div
+          className="absolute -bottom-1 -left-1 z-30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+          style={{
+            width: size * 0.35,
+            height: size * 0.32,
+            filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.6))`
+          }}
         >
-          {level}
-        </span>
-      </div>
+          <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full">
+            <path
+              d="M50 5 L95 27.5 L95 72.5 L50 95 L5 72.5 L5 27.5 Z"
+              fill="#0A0A0A"
+              stroke={config.colors[0]}
+              strokeWidth="12"
+              className={config.animate ? "animate-pulse" : ""}
+              style={{
+                filter: `drop-shadow(0 0 8px ${config.glow})`,
+                strokeOpacity: 1
+              }}
+            />
+          </svg>
+          <span
+            className="relative z-10 text-white font-black italic tracking-tighter"
+            style={{fontSize: size * 0.14}}
+          >
+            {level}
+          </span>
+        </div>
+      )}
 
       {user.hasNotification && (
         <motion.div

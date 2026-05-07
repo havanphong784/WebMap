@@ -63,7 +63,7 @@ const DiscoveryCard = ({post, index, navigate, onLike}) => {
         </div>
 
         <div className="absolute top-4 left-4 right-4 flex items-center gap-2 z-10">
-          <UserBadge user={postUser} size={32}/>
+          <UserBadge user={postUser} size={32} hideLevelBadge={true} />
           <div className="flex flex-col">
             <span
               className="text-[10px] font-bold text-white uppercase tracking-wider drop-shadow-md leading-none">{post.user_name || 'Aether User'}</span>
@@ -123,23 +123,30 @@ const DiscoveryFeed = () => {
     isLoading,
     tags,
     fetchUniqueTags,
-    fetchByTag
+    fetchByTag,
+    followingLocations,
+    fetchFollowing
   } = useLocationStore();
 
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [feedType, setFeedType] = useState('global');
 
   useEffect(() => {
     fetchUniqueTags();
   }, [fetchUniqueTags]);
 
   useEffect(() => {
-    if (activeCategory === 'All') {
-      fetchTrending(user?.uid);
+    if (feedType === 'global') {
+      if (activeCategory === 'All') {
+        fetchTrending(user?.uid);
+      } else {
+        fetchByTag(activeCategory, user?.uid);
+      }
     } else {
-      fetchByTag(activeCategory, user?.uid);
+      fetchFollowing(user?.uid);
     }
-  }, [fetchTrending, fetchByTag, activeCategory, user?.uid]);
+  }, [fetchTrending, fetchByTag, fetchFollowing, activeCategory, user?.uid, feedType]);
 
   const categories = ['All', ...tags];
 
@@ -152,7 +159,9 @@ const DiscoveryFeed = () => {
     toggleLike(post.id, user.uid);
   };
 
-  const filteredPosts = trendingLocations.filter(p => {
+  const currentLocationsList = feedType === 'global' ? trendingLocations : followingLocations;
+
+  const filteredPosts = currentLocationsList.filter(p => {
     const matchSearch = !searchQuery || p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.address?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchSearch;
   });
@@ -183,7 +192,7 @@ const DiscoveryFeed = () => {
           className="cursor-pointer shrink-0"
         >
           {user ? (
-            <UserBadge user={user} size={48}/>
+            <UserBadge user={user} size={48} hideLevelBadge={true} />
           ) : (
             <div
               className="w-12 h-12 rounded-full border-2 border-dashed border-glass-border flex items-center justify-center text-text-dim">
@@ -194,34 +203,59 @@ const DiscoveryFeed = () => {
       </div>
 
       <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
+        <div className="flex items-center gap-8 border-b border-glass-border mb-6">
+          <button
+            onClick={() => setFeedType('global')}
+            className={`pb-4 text-sm font-jakarta font-black uppercase tracking-[0.2em] relative transition-all duration-300 ${feedType === 'global' ? 'text-cyan-glow' : 'text-text-muted hover:text-text-primary'}`}
+          >
+            Cộng đồng
+            {feedType === 'global' && <motion.div layoutId="feedTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-glow shadow-neon"/>}
+          </button>
+          {user && (
+            <button
+              onClick={() => setFeedType('following')}
+              className={`pb-4 text-sm font-jakarta font-black uppercase tracking-[0.2em] relative transition-all duration-300 ${feedType === 'following' ? 'text-sunset' : 'text-text-muted hover:text-text-primary'}`}
+            >
+              Đang theo dõi
+              {feedType === 'following' && <motion.div layoutId="feedTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-sunset shadow-sunset"/>}
+            </button>
+          )}
+        </div>
+
         <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
           <TrendingIcon size={20} className="text-cyan-glow animate-pulse sm:size-24"/>
-          <h1 className="text-2xl sm:text-3xl font-jakarta font-black tracking-tight text-text-primary uppercase">Khám phá</h1>
+          <h1 className="text-2xl sm:text-3xl font-jakarta font-black tracking-tight text-text-primary uppercase">
+            {feedType === 'global' ? 'Khám phá' : 'Đang theo dõi'}
+          </h1>
         </div>
         <p className="text-text-secondary text-sm font-medium">
-          Những địa điểm được cộng đồng Aether săn đón nhất.
+          {feedType === 'global' 
+            ? 'Những địa điểm được cộng đồng Aether săn đón nhất.'
+            : 'Những địa điểm mới nhất từ những người bạn theo dõi.'}
           {searchQuery && <span className="text-cyan-glow ml-2">Đang tìm: "{searchQuery}"</span>}
         </p>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-8 no-scrollbar -mx-6 px-6 max-w-4xl md:mx-auto">
-        {categories.map((cat) => (
-          <motion.button
-            key={cat}
-            whileHover={{y: -2}}
-            whileTap={{scale: 0.95}}
-            onClick={() => setActiveCategory(cat)}
-            className={`
-              whitespace-nowrap px-6 py-2.5 rounded-full border text-xs font-bold tracking-widest uppercase transition-all duration-300
-              ${activeCategory === cat
-              ? 'bg-cyan-glow text-white border-cyan-glow shadow-neon'
-              : 'glass-panel border-glass-border text-text-secondary hover:text-text-primary hover:border-glass-border-bright'}
-            `}
-          >
-            {cat}
-          </motion.button>
-        ))}
-      </div>
+      {feedType === 'global' && (
+        <div className="flex gap-3 overflow-x-auto pb-8 no-scrollbar -mx-6 px-6 max-w-4xl md:mx-auto">
+          {categories.map((cat) => (
+            <motion.button
+              key={cat}
+              whileHover={{y: -2}}
+              whileTap={{scale: 0.95}}
+              onClick={() => setActiveCategory(cat)}
+              className={`
+                whitespace-nowrap px-6 py-2.5 rounded-full border text-xs font-bold tracking-widest uppercase transition-all duration-300
+                ${activeCategory === cat
+                ? 'bg-cyan-glow text-white border-cyan-glow shadow-neon'
+                : 'glass-panel border-glass-border text-text-secondary hover:text-text-primary hover:border-glass-border-bright'}
+              `}
+            >
+              {cat}
+            </motion.button>
+          ))}
+        </div>
+      )}
 
       <div className="max-w-4xl mx-auto">
         {isLoading ? (

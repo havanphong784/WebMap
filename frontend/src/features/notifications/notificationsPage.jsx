@@ -29,6 +29,18 @@ const typeConfig = {
     bg: 'bg-emerald/20 border-emerald/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]',
     label: 'KHÁM PHÁ'
   },
+  FOLLOW: {
+    icon: LikeIcon,
+    color: 'text-pink-400',
+    bg: 'bg-pink-500/20 border-pink-500/40 shadow-[0_0_10px_rgba(236,72,153,0.3)]',
+    label: 'THEO DÕI'
+  },
+  NEW_POST: {
+    icon: MapIcon,
+    color: 'text-purple-400',
+    bg: 'bg-purple-500/20 border-purple-500/40 shadow-[0_0_10px_rgba(168,85,247,0.3)]',
+    label: 'BÀI VIẾT MỚI'
+  },
 };
 
 export default function NotificationsPage() {
@@ -108,7 +120,11 @@ export default function NotificationsPage() {
                 className={`p-5 flex items-start gap-4 border-glass-border cursor-pointer hover:border-cyan-glow/30 transition-all duration-300 relative overflow-hidden ${!notif.is_read ? 'bg-cyan-glow/[0.04]' : ''}`}
                 onClick={() => {
                   if (!notif.is_read) markRead(notif.id, user.uid);
-                  navigate('/', {state: {focusLocation: {lat: notif.lat, lng: notif.lng, id: notif.location_id}}});
+                  if (notif.type === 'FOLLOW') {
+                    navigate(`/profile/${notif.sender_id}`);
+                  } else {
+                    navigate('/', {state: {focusLocation: {lat: notif.lat, lng: notif.lng, id: notif.location_id}}});
+                  }
                 }}
               >
                 {!notif.is_read && (
@@ -149,12 +165,14 @@ export default function NotificationsPage() {
                     <span className="text-text-secondary opacity-90 italic">{notif.message}</span>
                   </p>
 
-                  <div
-                    className="mt-2.5 py-1 px-3 bg-white/[0.03] rounded-lg border border-glass-border inline-flex items-center gap-2 group-hover:border-cyan-glow/30 transition-colors">
-                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest truncate max-w-[200px]">
-                      📍 {notif.location_name || 'Địa điểm'}
-                    </span>
-                  </div>
+                  {notif.type !== 'FOLLOW' && (
+                    <div
+                      className="mt-2.5 py-1 px-3 bg-white/[0.03] rounded-lg border border-glass-border inline-flex items-center gap-2 group-hover:border-cyan-glow/30 transition-colors">
+                      <span className="text-[10px] font-black text-text-muted uppercase tracking-widest truncate max-w-[200px]">
+                        📍 {notif.location_name || 'Địa điểm'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </GlassPanel>
             </motion.div>

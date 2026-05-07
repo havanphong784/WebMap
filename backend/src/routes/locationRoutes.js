@@ -10,7 +10,8 @@ import {
   getUniqueTags,
   reverseGeocode,
   getDirections,
-  searchAddress
+  searchAddress,
+  getFollowingLocations
 } from "../controllers/locationController.js";
 
 const router = express.Router();
@@ -18,6 +19,7 @@ const router = express.Router();
 router.get("/", getLocations);
 router.post("/", createLocationEntry);
 router.get("/user/:uid", getUserLocations);
+router.get("/following", getFollowingLocations);
 router.get("/trending", getTrendingLocations);
 router.get("/tags", getUniqueTags);
 router.get("/geocoding/reverse", reverseGeocode);

@@ -128,3 +128,21 @@ VALUES
 ('daily_long_review', 'Review có tâm', 60, 'long_review_count', 1),
 ('daily_photo', 'Chia sẻ khoảnh khắc', 50, 'photo_count', 1)
 ON CONFLICT (key_name) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS follows (
+    follower_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
+    followed_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (follower_id, followed_id)
+);
+CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
+CREATE INDEX IF NOT EXISTS idx_follows_followed ON follows(followed_id);
+  
+CREATE TABLE IF NOT EXISTS follows (
+    follower_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
+    followed_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (follower_id, followed_id)
+);
+CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
+CREATE INDEX IF NOT EXISTS idx_follows_followed ON follows(followed_id);
