@@ -12,6 +12,7 @@ import BottomNav from "./shared/components/layout/bottomNav.jsx";
 import ProtectedRoute from "./shared/components/layout/protectedRoute.jsx";
 import { useAuthStore } from "./features/auth/context/authContext.jsx";
 import { useSocialStore } from "./features/map/store/useSocialStore.jsx";
+import { useNotificationStore } from "./features/notifications/store/useNotificationStore.jsx";
 import { useEffect } from "react";
 
 const LoadingFallback = () => (
@@ -28,12 +29,26 @@ function App() {
   const isLoginPage = location.pathname === '/login';
   const { user } = useAuthStore();
   const { sendHeartbeat } = useSocialStore();
+  const { fetchNotifications } = useNotificationStore();
 
   useEffect(() => {
     if (user?.uid) {
       sendHeartbeat();
-      const interval = setInterval(sendHeartbeat, 45000);
-      return () => clearInterval(interval);
+      // Fetch initial notifications when app loads and user is available
+      fetchNotifications(user.uid, true);
+
+      // Heartbeat interval (45s)
+      const heartbeatInterval = setInterval(sendHeartbeat, 45000);
+      
+      // Polling for notifications (15s) to ensure accurate and real-time feel
+      const notifInterval = setInterval(() => {
+        fetchNotifications(user.uid, true);
+      }, 15000);
+
+      return () => {
+        clearInterval(heartbeatInterval);
+        clearInterval(notifInterval);
+      };
     }
   }, [user?.uid]);
 

@@ -6,9 +6,9 @@ export const useNotificationStore = create((set, get) => ({
   loading: false,
   unreadCount: 0,
 
-  fetchNotifications: async (userId) => {
+  fetchNotifications: async (userId, silent = false) => {
     if (!userId) return;
-    set({ loading: true });
+    if (!silent) set({ loading: true });
     try {
       const response = await apiClient.get(`/notifications/user/${userId}`);
       if (response.success) {
@@ -20,7 +20,7 @@ export const useNotificationStore = create((set, get) => ({
     } catch (error) {
       console.error("Lỗi fetch thông báo:", error);
     } finally {
-      set({ loading: false });
+      if (!silent) set({ loading: false });
     }
   },
 

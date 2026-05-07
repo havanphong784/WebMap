@@ -1,38 +1,38 @@
-import {motion} from "framer-motion";
-import {useNavigate} from "react-router-dom";
-import {useAuthStore} from "../auth/context/authContext.jsx";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../auth/context/authContext.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
-import {CommentIcon, LikeIcon, MapIcon, PinIcon} from "../../shared/components/common/icons.jsx";
+import { CommentIcon, LikeIcon, MapIcon, PinIcon, FollowIcon, CheckIcon } from "../../shared/components/common/icons.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
-import {useNotificationStore} from "./store/useNotificationStore.jsx";
-import {useEffect} from "react";
-import {formatFullTime} from "../../shared/utils/dateUtils.js";
+import { useNotificationStore } from "./store/useNotificationStore.jsx";
+import { useEffect } from "react";
+import { formatFullTime } from "../../shared/utils/dateUtils.js";
 import Skeleton from "../../shared/components/common/skeleton.jsx";
 import UserBadge from "../../shared/components/UserBadge.jsx";
 
 const typeConfig = {
-  like: {
+  LIKE: {
     icon: LikeIcon,
     color: 'text-white',
-    bg: 'bg-sunset border-sunset/50 shadow-[0_0_15px_rgba(255,75,43,0.4)]',
+    bg: 'bg-pink-500 border-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.4)]',
     label: 'THÍCH'
   },
-  comment: {
+  COMMENT: {
     icon: CommentIcon,
-    color: 'text-cyan-glow',
-    bg: 'bg-cyan-glow/20 border-cyan-glow/40 shadow-[0_0_10px_rgba(0,243,255,0.3)]',
+    color: 'text-white',
+    bg: 'bg-cyan-glow border-cyan-glow/50 shadow-[0_0_15px_rgba(0,243,255,0.4)]',
     label: 'BÌNH LUẬN'
   },
-  discovery: {
+  DISCOVERY: {
     icon: PinIcon,
     color: 'text-emerald',
     bg: 'bg-emerald/20 border-emerald/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]',
     label: 'KHÁM PHÁ'
   },
   FOLLOW: {
-    icon: LikeIcon,
-    color: 'text-pink-400',
-    bg: 'bg-pink-500/20 border-pink-500/40 shadow-[0_0_10px_rgba(236,72,153,0.3)]',
+    icon: FollowIcon,
+    color: 'text-white',
+    bg: 'bg-sunset border-sunset/50 shadow-[0_0_15px_rgba(255,75,43,0.4)]',
     label: 'THEO DÕI'
   },
   NEW_POST: {
@@ -45,8 +45,8 @@ const typeConfig = {
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
-  const {user} = useAuthStore();
-  const {notifications, fetchNotifications, markRead, markAllRead, unreadCount, loading} = useNotificationStore();
+  const { user } = useAuthStore();
+  const { notifications, fetchNotifications, markRead, markAllRead, unreadCount, loading } = useNotificationStore();
 
   useEffect(() => {
     if (user?.uid) {
@@ -59,7 +59,7 @@ export default function NotificationsPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center gap-6">
-        <MapIcon size={48} className="text-cyan-glow opacity-30"/>
+        <MapIcon size={48} className="text-cyan-glow opacity-30" />
         <p className="text-zinc-500 font-jakarta font-bold uppercase tracking-widest text-sm text-center">
           Đăng nhập để xem thông báo
         </p>
@@ -81,12 +81,17 @@ export default function NotificationsPage() {
             )}
           </div>
           {unreadCount > 0 && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => markAllRead(user.uid)}
-              className="text-text-muted text-[10px] font-bold uppercase tracking-widest hover:text-cyan-glow transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 glass-panel bg-white/10 border-glass-border hover:bg-cyan-glow/10 hover:border-cyan-glow/30 transition-all group shrink-0"
             >
-              Đánh dấu đã đọc tất cả
-            </button>
+              <CheckIcon size={12} className="text-cyan-glow group-hover:scale-125 transition-transform" />
+              <span className="text-text-primary text-[9px] font-black uppercase tracking-widest whitespace-nowrap">
+                Đọc tất cả
+              </span>
+            </motion.button>
           )}
         </div>
       </div>
@@ -107,14 +112,14 @@ export default function NotificationsPage() {
             </div>
           ))
         ) : notifications.map((notif, i) => {
-          const config = typeConfig[notif.type] || typeConfig.like;
+          const config = typeConfig[notif.type] || typeConfig.LIKE;
           const Icon = config.icon;
           return (
             <motion.div
               key={notif.id}
-              initial={{opacity: 0, x: -20}}
-              animate={{opacity: 1, x: 0}}
-              transition={{delay: i * 0.05}}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.05 }}
             >
               <GlassPanel
                 className={`p-5 flex items-start gap-4 border-glass-border cursor-pointer hover:border-cyan-glow/30 transition-all duration-300 relative overflow-hidden ${!notif.is_read ? 'bg-cyan-glow/[0.04]' : ''}`}
@@ -123,28 +128,28 @@ export default function NotificationsPage() {
                   if (notif.type === 'FOLLOW') {
                     navigate(`/profile/${notif.sender_id}`);
                   } else {
-                    navigate('/', {state: {focusLocation: {lat: notif.lat, lng: notif.lng, id: notif.location_id}}});
+                    navigate('/', { state: { focusLocation: { lat: notif.lat, lng: notif.lng, id: notif.location_id } } });
                   }
                 }}
               >
                 {!notif.is_read && (
-                  <div className="absolute top-0 left-0 w-1 h-full bg-cyan-glow shadow-neon"/>
+                  <div className="absolute top-0 left-0 w-1 h-full bg-cyan-glow shadow-neon" />
                 )}
 
                 <div className="relative shrink-0 flex items-center justify-center">
-                  <UserBadge 
+                  <UserBadge
                     user={{
                       xp: notif.sender_xp,
                       avatar_url: notif.sender_avatar,
                       name: notif.sender_name
-                    }} 
-                    size={48} 
+                    }}
+                    size={48}
                   />
                   <div className={`absolute -bottom-1 -right-1 p-1.5 rounded-lg border backdrop-blur-md z-30 ${config.bg}`}>
                     <Icon
                       size={12}
                       className={`${config.color} drop-shadow-md`}
-                      fill={notif.type === 'like' ? 'currentColor' : 'none'}
+                      fill={['LIKE', 'COMMENT', 'FOLLOW', 'like', 'comment'].includes(notif.type) ? 'currentColor' : 'none'}
                     />
                   </div>
                 </div>
@@ -181,7 +186,7 @@ export default function NotificationsPage() {
 
         {!loading && notifications.length === 0 && (
           <div className="text-center py-40 glass-panel border-glass-border rounded-3xl">
-            <MapIcon size={48} className="text-text-dim mx-auto mb-4 opacity-20"/>
+            <MapIcon size={48} className="text-text-dim mx-auto mb-4 opacity-20" />
             <p className="text-text-secondary font-jakarta font-bold uppercase tracking-widest text-sm">
               Chưa có thông báo nào
             </p>

@@ -42,7 +42,7 @@ async function handleLikeXP(locationId, userId, type) {
           await createNotification({
             recipientId: ownerId,
             senderId: userId,
-            type: 'like',
+            type: 'LIKE',
             message: 'đã thích địa điểm của bạn',
             locationId: locationId
           });

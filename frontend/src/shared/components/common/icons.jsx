@@ -37,7 +37,8 @@ import {
   Hash,
   Eye,
   EyeOff,
-  Check
+  Check,
+  UserPlus
 } from 'lucide-react';
 
 export {
@@ -79,6 +80,7 @@ export {
   Hash as HashIcon,
   Eye as EyeIcon,
   EyeOff as EyeOffIcon,
-  Check as CheckIcon
+  Check as CheckIcon,
+  UserPlus as FollowIcon
 };
 

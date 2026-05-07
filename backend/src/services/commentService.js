@@ -28,7 +28,7 @@ export const createComment = async ({locationId, userId, content}) => {
         await createNotification({
           recipientId: ownerId,
           senderId: userId,
-          type: 'comment',
+          type: 'COMMENT',
           message: `đã bình luận: "${content.substring(0, 30)}${content.length > 30 ? '...' : ''}"`,
           locationId: locationId
         });
