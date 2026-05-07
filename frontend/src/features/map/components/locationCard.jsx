@@ -1,20 +1,20 @@
 import {Marker} from "react-map-gl/maplibre";
 import {memo, useState} from "react";
-import {motion} from "framer-motion";
-import { StarIcon } from "../../../shared/components/common/icons.jsx";
-import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
-import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
+import {AnimatePresence, motion} from "framer-motion";
+import {StarIcon} from "../../../shared/components/common/icons.jsx";
 
-const LocationCard = memo(({location, onClick}) => {
+const LocationCard = memo(({location, onClick, viewMode = 'mini'}) => {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+
+  const isExpanded = viewMode === 'full' || isHovered;
 
   return (
     <Marker
       longitude={Number(location.lng)}
       latitude={Number(location.lat)}
       anchor="bottom"
-      style={{zIndex: isHovered ? 100 : 1}}
+      style={{zIndex: isExpanded ? 100 : 1}}
       onClick={(e) => {
         e.originalEvent.stopPropagation();
         onClick(location);
@@ -29,55 +29,77 @@ const LocationCard = memo(({location, onClick}) => {
         }}
         className="relative cursor-pointer"
       >
-        <motion.div
+        <motion.v
+          layout
+          initial={false}
           animate={{
-            scale: isHovered ? 1.05 : 1,
-            y: isHovered ? -5 : 0
+            y: isExpanded ? -12 : 0,
+            scale: isExpanded ? 1.05 : 1,
           }}
-          transition={{type: "spring", stiffness: 300, damping: 20}}
+          className="relative"
         >
-          <GlassPanel
-            className="p-2 w-48 border-glass-border bg-white/90 backdrop-blur-xl shadow-glass rounded-2xl overflow-hidden ring-1 ring-glass-border">
-            {location.image_url && (
-              <div className="overflow-hidden rounded-xl p-0 mb-2 border border-glass-border aspect-video relative group">
-                {!imageLoaded && (
-                  <SkeletonTheme baseColor="rgba(0,0,0,0.05)" highlightColor="rgba(0,0,0,0.1)">
-                    <Skeleton width="100%" height="100%" containerClassName="w-full h-full" borderRadius={12} />
-                  </SkeletonTheme>
-                )}
-                <img
-                  src={location.image_url}
-                  alt={location.name}
-                  loading="lazy"
-                  onLoad={() => setImageLoaded(true)}
-                  className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
-                />
-                <div className={`absolute inset-0 bg-gradient-to-t from-black/60 to-transparent transition-opacity ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}></div>
-              </div>
-            )}
-
-            <div className="px-1.5 py-1">
-              <h4 className="text-[11px] font-bold text-text-primary leading-tight truncate uppercase tracking-wider mb-1"
-                  title={location.name}>
-                {location.name}
-              </h4>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <StarIcon
-                      key={i}
-                      size={10}
-                      className={i < location.rating ? "text-amber-400 fill-amber-400" : "text-white/10"}
-                    />
-                  ))}
+          <div
+            className={`
+              relative transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]
+              bg-obsidian/95 border border-glass-border shadow-glass overflow-hidden
+              ${isExpanded ? 'w-56 p-2.5 rounded-[1.5rem]' : 'w-10 h-10 p-0 rounded-full ring-2 ring-cyan-glow/40'}
+            `}
+          >
+            <div className={`
+              relative overflow-hidden transition-all duration-300 ease-in-out
+              ${isExpanded ? 'rounded-xl aspect-[16/10] mb-2.5' : 'rounded-full w-full h-full'}
+            `}>
+              {location.image_url ? (
+                <>
+                  <img
+                    src={location.image_url}
+                    alt={location.name}
+                    onLoad={() => setImageLoaded(true)}
+                    className={`w-full h-full object-cover transition-transform duration-700 ${isExpanded ? 'scale-110' : 'scale-100'}`}
+                  />
+                </>
+              ) : (
+                <div className="w-full h-full bg-cyan-glow/10 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-cyan-glow rounded-full shadow-neon animate-pulse"/>
                 </div>
-                <div className="text-[9px] font-bold text-cyan-glow uppercase tracking-widest opacity-60">
-                  {location.category}
-                </div>
-              </div>
+              )}
             </div>
-          </GlassPanel>
-        </motion.div>
+
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{opacity: 0, y: 10}}
+                  animate={{opacity: 1, y: 0}}
+                  exit={{opacity: 0, y: 5}}
+                  transition={{duration: 0.3}}
+                  className="px-1"
+                >
+                  <h4
+                    className="text-[11px] font-jakarta font-black text-black truncate uppercase tracking-wider mb-1.5">
+                    {location.name}
+                  </h4>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <StarIcon key={i} size={9}
+                                  className={i < location.rating ? "text-text-primary fill-text-primary" : "text-white/10"}/>
+                      ))}
+                    </div>
+                    <span
+                      className="text-[9px] font-bold text-text-primary uppercase tracking-[0.1em] drop-shadow-neon-sm">
+                      {location.category}
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className={`
+            absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-obsidian border-b border-r border-glass-border rotate-45 transition-opacity duration-300
+            ${isExpanded ? 'opacity-100' : 'opacity-0'}
+          `}/>
+        </motion.v>
 
         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 flex items-center justify-center">
           <div className="w-2 h-2 bg-cyan-glow rounded-full shadow-neon ring-4 ring-cyan-glow/10"></div>

@@ -6,7 +6,6 @@ import ClickedMarker from "./components/clickedMarker.jsx";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {getAddress} from "./utils/geocoding.js";
 import {debounce} from "./utils/performance.js";
-import MapStyleSwitcher from "./components/mapStyleSwitcher.jsx";
 import SearchBox from "./components/searchBox.jsx";
 import {useLocationStore} from "./store/useLocationsStore.jsx";
 import {useSocialStore} from "./store/useSocialStore.jsx";
@@ -22,7 +21,8 @@ import {
   PhotoIcon,
   PlusIcon,
   SpinnerIcon,
-  StyleIcon
+  PinIcon,
+  EyeIcon
 } from "../../shared/components/common/icons.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
@@ -40,8 +40,7 @@ export default function MapPage() {
   const mapRef = useRef(null);
 
   const [infoClicked, setInfoClicked] = useState(null);
-  const [activeStyle, setActiveStyle] = useState(colorfull);
-  const [showStyleSwitcher, setShowStyleSwitcher] = useState(false);
+  const [markerViewMode, setMarkerViewMode] = useState('mini'); // 'mini' or 'full'
   const [isMapReady, setIsMapReady] = useState(false);
   const addToast = useToastStore(state => state.addToast);
   const { width: windowWidth } = useWindowSize();
@@ -297,7 +296,7 @@ export default function MapPage() {
   return (
     <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
       <Map ref={mapRef}
-           mapStyle={activeStyle}
+           mapStyle={colorfull}
            onLoad={() => {
              setIsMapReady(true);
              handleMapChange();
@@ -359,10 +358,11 @@ export default function MapPage() {
         <div className="absolute right-4 top-1/2 -translate-y-1/2 sm:right-6 z-100 flex flex-col gap-3 sm:gap-4">
           <ActionButton
             variant="icon"
-            onClick={() => setShowStyleSwitcher(!showStyleSwitcher)}
-            className={showStyleSwitcher ? "bg-cyan-glow/20 border-cyan-glow" : "bg-obsidian "}
+            onClick={() => setMarkerViewMode(prev => prev === 'mini' ? 'full' : 'mini')}
+            className={markerViewMode === 'full' ? "bg-cyan-glow/20 border-cyan-glow" : "bg-obsidian"}
+            title={markerViewMode === 'full' ? "Chế độ Thu nhỏ" : "Chế độ Đầy đủ"}
           >
-            <StyleIcon size={22} className={showStyleSwitcher ? "text-cyan-glow" : "text-text-primary"}/>
+            {markerViewMode === 'full' ? <PinIcon size={22} className="text-cyan-glow"/> : <EyeIcon size={22} className="text-text-primary"/>}
           </ActionButton>
 
           <ActionButton
@@ -428,23 +428,11 @@ export default function MapPage() {
             key={loc.id}
             location={loc}
             onClick={handleLocationClick}
+            viewMode={markerViewMode}
           />
         ))}
 
-        <AnimatePresence>
-          {showStyleSwitcher && (
-            <div className="absolute right-24 top-1/2 -translate-y-1/2 z-100">
-              <MapStyleSwitcher
-                currentStyleUrl={activeStyle}
-                onStyleChange={(newStyle) => {
-                  setActiveStyle(newStyle);
-                  setShowStyleSwitcher(false);
-                }}
-                isStandalone={false}
-              />
-            </div>
-          )}
-        </AnimatePresence>
+        {/* Removed Style Switcher */}
       </Map>
 
       <div

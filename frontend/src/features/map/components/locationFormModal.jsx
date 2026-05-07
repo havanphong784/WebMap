@@ -60,7 +60,7 @@ export default function LocationFormModal({point, onClose}) {
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [point.imageFile]);
+  }, [point.imageFile, previewUrl]);
 
   useEffect(() => {
     const updateAddress = async () => {
@@ -346,18 +346,20 @@ export default function LocationFormModal({point, onClose}) {
                 <div className="relative group overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
                   <img src={previewUrl} className="w-full h-48 object-cover" alt="preview"/>
                   <div
-                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPreviewUrl(null);
-                        setImageFile(null);
-                      }}
-                      className="bg-red-500 text-white p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
-                    >
-                      <CloseIcon size={20}/>
-                    </button>
-                  </div>
+                    className="absolute inset-0 bg-black/20 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreviewUrl(prev => {
+                        if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+                        return null;
+                      });
+                      setImageFile(null);
+                    }}
+                    className="absolute top-3 right-3 z-10 bg-sunset text-white p-2.5 rounded-full shadow-neon-sm hover:scale-110 active:scale-90 transition-all sm:opacity-0 sm:group-hover:opacity-100 opacity-100"
+                  >
+                    <CloseIcon size={18}/>
+                  </button>
                 </div>
               ) : (
                 <label
