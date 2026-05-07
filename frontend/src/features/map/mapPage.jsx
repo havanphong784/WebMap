@@ -1,21 +1,21 @@
-import { useLocation, useNavigate } from 'react-router-dom';
-import Map, { Marker } from 'react-map-gl/maplibre';
+import {useLocation, useNavigate} from 'react-router-dom';
+import Map, {Marker} from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import ClickedMarker from "./components/clickedMarker.jsx";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { getAddress } from "./utils/geocoding.js";
-import { debounce } from "./utils/performance.js";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {getAddress} from "./utils/geocoding.js";
+import {debounce} from "./utils/performance.js";
 import MapStyleSwitcher from "./components/mapStyleSwitcher.jsx";
 import SearchBox from "./components/searchBox.jsx";
-import { useLocationStore } from "./store/useLocationsStore.jsx";
-import { useSocialStore } from "./store/useSocialStore.jsx";
-import { useAuthStore } from "../auth/context/authContext.jsx";
+import {useLocationStore} from "./store/useLocationsStore.jsx";
+import {useSocialStore} from "./store/useSocialStore.jsx";
+import {useAuthStore} from "../auth/context/authContext.jsx";
 import ClusterLocations from "./components/clusterLocations.jsx";
 import LocationCard from "./components/locationCard.jsx";
 import LocationSidebar from "./components/locationSidebar.jsx";
 import RouteLayer from "./components/routeLayer.jsx";
-import { AnimatePresence, motion } from 'framer-motion';
+import {AnimatePresence, motion} from 'framer-motion';
 import {
   LocateIcon,
   MinusIcon,
@@ -27,7 +27,7 @@ import {
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
 import colorfull from "./style/colorful";
-import { extractGPS } from "./utils/exifUtils.js";
+import {extractGPS} from "./utils/exifUtils.js";
 
 
 import UserBadge from "../../shared/components/UserBadge.jsx";
@@ -47,7 +47,7 @@ export default function MapPage() {
   const userLocation = useLocationStore(state => state.userLocation);
   const accuracy = useLocationStore(state => state.accuracy);
 
-  const { activeUsers, fetchActiveUsers } = useSocialStore();
+  const {activeUsers, fetchActiveUsers} = useSocialStore();
 
   useEffect(() => {
     fetchActiveUsers();
@@ -64,7 +64,7 @@ export default function MapPage() {
         setAccuracy(pos.coords.accuracy);
       },
       (err) => console.error("Lỗi định vị:", err),
-      { enableHighAccuracy: true }
+      {enableHighAccuracy: true}
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
@@ -74,10 +74,10 @@ export default function MapPage() {
   const locations = useLocationStore(state => state.locations);
   const routeData = useLocationStore(state => state.routeData);
   const setRouteData = useLocationStore(state => state.setRouteData);
-  const { user } = useAuthStore();
+  const {user} = useAuthStore();
   const [currentZoom, setCurrentZoom] = useState(13);
   const [activeLocation, setActiveLocation] = useState(null);
-  const { fetchLocationDetail } = useLocationStore();
+  const {fetchLocationDetail} = useLocationStore();
   const [isLocating, setIsLocating] = useState(false);
   const [isExtractingPhoto, setIsExtractingPhoto] = useState(false);
   const fileInputRef = useRef(null);
@@ -143,9 +143,9 @@ export default function MapPage() {
         }
       }
 
-      setInfoClicked({ lng, lat, address: null });
+      setInfoClicked({lng, lat, address: null});
       const diachi = await getAddress(lat, lng);
-      setInfoClicked({ lng, lat, address: diachi });
+      setInfoClicked({lng, lat, address: diachi});
     }, 300);
 
     return () => clearTimeout(timer);
@@ -163,13 +163,13 @@ export default function MapPage() {
 
     if (activeLocation === null) {
       map.fitBounds(bounds, {
-        padding: { top: 100, bottom: 200, left: 100, right: 100 },
+        padding: {top: 100, bottom: 200, left: 100, right: 100},
         duration: 1200,
         essential: true,
       });
     } else {
       map.fitBounds(bounds, {
-        padding: { top: 100, bottom: 200, left: 400, right: 100 },
+        padding: {top: 100, bottom: 200, left: 400, right: 100},
         duration: 1200,
         essential: true,
       });
@@ -185,18 +185,18 @@ export default function MapPage() {
 
     setActiveLocation(null);
     setRouteData(null);
-    const { lng, lat } = e.lngLat;
+    const {lng, lat} = e.lngLat;
     flyToLocation(lng, lat, 15);
-    setInfoClicked({ lng, lat, address: { display_name: "Đang xác định vị trí..." } });
+    setInfoClicked({lng, lat, address: {display_name: "Đang xác định vị trí..."}});
     const diachi = await getAddress(lat, lng);
-    setInfoClicked({ lng, lat, address: diachi });
+    setInfoClicked({lng, lat, address: diachi});
   }
 
   const handleSearchSelect = async (lng, lat, addressName) => {
     flyToLocation(lng, lat, 15);
-    setInfoClicked({ lng, lat, address: { display_name: addressName } });
+    setInfoClicked({lng, lat, address: {display_name: addressName}});
     const diachi = await getAddress(lat, lng);
-    setInfoClicked({ lng, lat, address: diachi });
+    setInfoClicked({lng, lat, address: diachi});
   };
 
   const debouncedFetch = useRef(
@@ -220,7 +220,7 @@ export default function MapPage() {
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { longitude, latitude, accuracy } = pos.coords;
+        const {longitude, latitude, accuracy} = pos.coords;
         setUserLocation([longitude, latitude]);
         setAccuracy(accuracy);
 
@@ -237,7 +237,7 @@ export default function MapPage() {
         console.error("Lỗi lấy vị trí:", err);
         alert("Không thể truy cập vị trí của bạn. Vui lòng cho phép quyền truy cập vị trí.");
       },
-      { enableHighAccuracy: true }
+      {enableHighAccuracy: true}
     );
   };
 
@@ -255,9 +255,9 @@ export default function MapPage() {
       const gps = await extractGPS(file);
       if (gps) {
         flyToLocation(gps.lng, gps.lat, 17);
-        setInfoClicked({ lng: gps.lng, lat: gps.lat, address: null, imageFile: file, autoOpenForm: true });
+        setInfoClicked({lng: gps.lng, lat: gps.lat, address: null, imageFile: file, autoOpenForm: true});
         const diachi = await getAddress(gps.lat, gps.lng);
-        setInfoClicked({ lng: gps.lng, lat: gps.lat, address: diachi, imageFile: file, autoOpenForm: true });
+        setInfoClicked({lng: gps.lng, lat: gps.lat, address: diachi, imageFile: file, autoOpenForm: true});
       } else {
         alert("Ảnh này không chứa thông tin vị trí (GPS metadata).");
       }
@@ -293,38 +293,38 @@ export default function MapPage() {
   return (
     <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
       <Map ref={mapRef}
-        mapStyle={activeStyle}
-        onLoad={() => {
-          setIsMapReady(true);
-          handleMapChange();
-        }}
-        onMoveEnd={handleMapChange}
-        mapLib={maplibregl}
-        antialias={true}
-        attributionControl={false}
-        initialViewState={{
-          longitude: 108.249476,
-          latitude: 15.972143,
-          zoom: 13,
-          pitch: 45,
-          bearing: 0
-        }}
-        style={{ width: '100%', height: '100%' }}
-        onClick={handleClick}
+           mapStyle={activeStyle}
+           onLoad={() => {
+             setIsMapReady(true);
+             handleMapChange();
+           }}
+           onMoveEnd={handleMapChange}
+           mapLib={maplibregl}
+           antialias={true}
+           attributionControl={false}
+           initialViewState={{
+             longitude: 108.249476,
+             latitude: 15.972143,
+             zoom: 13,
+             pitch: 45,
+             bearing: 0
+           }}
+           style={{width: '100%', height: '100%'}}
+           onClick={handleClick}
       >
         <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-100">
           <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{scale: 1.02}}
+            whileTap={{scale: 0.98}}
             onClick={() => {
               if (user?.uid) navigate(`/profile/${user.uid}`);
               else navigate('/login');
             }}
-            className="flex items-center gap-2 sm:gap-3 glass-panel p-1 pr-3 sm:pr-5 border-glass-border cursor-pointer shadow-floating bg-obsidian/80 backdrop-blur-xl rounded-full group"
+            className="hidden sm:flex items-center gap-2 sm:gap-3 glass-panel p-1 pr-3 sm:pr-5 border-glass-border cursor-pointer shadow-floating bg-obsidian/80 backdrop-blur-xl rounded-full group"
           >
             {user ? (
               <>
-                <UserBadge user={user} size={38} />
+                <UserBadge user={user} size={38}/>
                 <div className="hidden sm:flex flex-col">
                   <span className="text-text-primary text-[11px] font-black tracking-widest uppercase leading-tight">
                     {user.displayName || 'Hồ sơ'}
@@ -336,9 +336,12 @@ export default function MapPage() {
               </>
             ) : (
               <>
-                <div className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white/40">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                <div
+                  className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white/40">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                       strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
                   </svg>
                 </div>
                 <span className="text-text-primary text-[12px] font-black uppercase leading-none">
@@ -355,7 +358,7 @@ export default function MapPage() {
             onClick={() => setShowStyleSwitcher(!showStyleSwitcher)}
             className={showStyleSwitcher ? "bg-cyan-glow/20 border-cyan-glow" : "bg-obsidian "}
           >
-            <StyleIcon size={22} className={showStyleSwitcher ? "text-cyan-glow" : "text-text-primary"} />
+            <StyleIcon size={22} className={showStyleSwitcher ? "text-cyan-glow" : "text-text-primary"}/>
           </ActionButton>
 
           <ActionButton
@@ -364,8 +367,8 @@ export default function MapPage() {
             disabled={isLocating}
             className="bg-obsidian"
           >
-            {isLocating ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin" /> :
-              <LocateIcon size={22} className="text-cyan-glow" />}
+            {isLocating ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin"/> :
+              <LocateIcon size={22} className="text-cyan-glow"/>}
           </ActionButton>
 
           <ActionButton
@@ -374,8 +377,8 @@ export default function MapPage() {
             disabled={isExtractingPhoto}
             className="bg-obsidian"
           >
-            {isExtractingPhoto ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin" /> :
-              <PhotoIcon size={22} className="text-cyan-glow" />}
+            {isExtractingPhoto ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin"/> :
+              <PhotoIcon size={22} className="text-cyan-glow"/>}
           </ActionButton>
 
           <input
@@ -388,19 +391,19 @@ export default function MapPage() {
 
           <div className="flex flex-col bg-obsidian gap-2 glass-panel p-2 rounded-2xl border-glass-border">
             <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={zoomIn}>
-              <PlusIcon size={22} className="text-text-primary" />
+              <PlusIcon size={22} className="text-text-primary"/>
             </ActionButton>
-            <div className="h-px w-full bg-glass-border mx-auto" style={{ width: '60%' }}></div>
+            <div className="h-px w-full bg-glass-border mx-auto" style={{width: '60%'}}></div>
             <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={zoomOut}>
-              <MinusIcon size={22} className="text-text-primary" />
+              <MinusIcon size={22} className="text-text-primary"/>
             </ActionButton>
           </div>
         </div>
 
-        <ClickedMarker point={infoClicked} setPoint={setInfoClicked} />
-        <SearchBox onSelectLocation={handleSearchSelect} />
-        <ClusterLocations />
-        <RouteLayer />
+        <ClickedMarker point={infoClicked} setPoint={setInfoClicked}/>
+        <SearchBox onSelectLocation={handleSearchSelect}/>
+        <ClusterLocations/>
+        <RouteLayer/>
 
         {userLocation && (
           <Marker longitude={userLocation[0]} latitude={userLocation[1]} anchor="center">
@@ -440,7 +443,8 @@ export default function MapPage() {
         </AnimatePresence>
       </Map>
 
-      <div className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 z-10 w-[95%] sm:w-[90%] max-w-xl pointer-events-none px-2">
+      <div
+        className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 z-10 w-[95%] sm:w-[90%] max-w-xl pointer-events-none px-2">
         <GlassPanel
           className="py-2.5 sm:py-3 px-4 sm:px-6 rounded-2xl bg-obsidian border-glass-border flex items-center justify-between shadow-glass">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -456,16 +460,16 @@ export default function MapPage() {
               const isOnline = (now - lastSeen) / 1000 / 60 < 2;
 
               return (
-                <div 
-                  key={u.firebase_uid} 
-                  className="cursor-pointer hover:scale-110 transition-transform relative z-10" 
+                <div
+                  key={u.firebase_uid}
+                  className="cursor-pointer hover:scale-110 transition-transform relative z-10"
                   onClick={() => navigate(`/profile/${u.firebase_uid}`)}
-                  style={{ pointerEvents: 'auto' }}
+                  style={{pointerEvents: 'auto'}}
                   title={`${u.name} (${isOnline ? "Đang trực tuyến" : "Vừa hoạt động"})`}
                 >
-                  <UserBadge 
-                    user={u} 
-                    size={window.innerWidth < 640 ? 32 : 40} 
+                  <UserBadge
+                    user={u}
+                    size={window.innerWidth < 640 ? 32 : 40}
                     showLevel={false}
                     isOnline={isOnline}
                   />
@@ -473,7 +477,8 @@ export default function MapPage() {
               );
             })}
             {activeUsers.length > 10 && (
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-obsidian-soft border-2 border-obsidian flex items-center justify-center text-[10px] text-text-secondary font-black shadow-lg relative z-0">
+              <div
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-obsidian-soft border-2 border-obsidian flex items-center justify-center text-[10px] text-text-secondary font-black shadow-lg relative z-0">
                 +{activeUsers.length - 10}
               </div>
             )}

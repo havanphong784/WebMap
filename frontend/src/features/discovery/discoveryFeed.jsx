@@ -263,7 +263,7 @@ const DiscoveryFeed = () => {
 
       <div className="max-w-4xl mx-auto">
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
             <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="glass-panel overflow-hidden border-glass-border">
@@ -287,7 +287,7 @@ const DiscoveryFeed = () => {
             </SkeletonTheme>
           </div>
         ) : filteredPosts.length > 0 ? (
-          <div className="columns-1 sm:columns-2 gap-x-6">
+          <div className="sm:columns-2 columns-1 gap-x-6">
             <AnimatePresence>
               {filteredPosts.map((post, i) => (
                 <DiscoveryCard
