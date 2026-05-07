@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url TEXT,
     xp INTEGER DEFAULT 0,
     level INTEGER DEFAULT 1,
-    tier VARCHAR(20) DEFAULT 'Scout',
+    tier VARCHAR(20) DEFAULT 'Wanderer',
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     last_seen_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
@@ -65,6 +65,15 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_id);
 
+CREATE TABLE IF NOT EXISTS follows (
+    follower_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
+    followed_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (follower_id, followed_id)
+);
+CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
+CREATE INDEX IF NOT EXISTS idx_follows_followed ON follows(followed_id);
+
 CREATE TABLE IF NOT EXISTS achievements (
     id SERIAL PRIMARY KEY,
     key_name VARCHAR(50) UNIQUE NOT NULL,
@@ -109,40 +118,38 @@ CREATE TABLE IF NOT EXISTS user_daily_tasks (
 );
 CREATE INDEX IF NOT EXISTS idx_user_daily_tasks_date ON user_daily_tasks (user_id, task_date);
 
-
 INSERT INTO achievements (key_name, title_vi, description_vi, xp_reward, icon_name, category, requirement_type, requirement_value, rarity)
 VALUES 
-('first_location', 'Người Tiên Phong', 'Tạo địa điểm đầu tiên trên bản đồ', 100, 'MapPin', 'contribution', 'location_count', 1, 'common'),
-('photographer_5', 'Tay Máy Cừ Khôi', 'Tải lên 5 bức ảnh chất lượng', 150, 'Camera', 'contribution', 'photo_count', 5, 'common'),
-('reviewer_10', 'Nhà Phê Bình', 'Viết 10 bài review chất lượng (trên 10 từ)', 400, 'Star', 'contribution', 'long_review_count', 10, 'rare'),
-('photographer_20', 'Nhiếp Ảnh Gia Chuyên Nghiệp', 'Tải lên 20 bức ảnh chất lượng', 600, 'Camera', 'contribution', 'photo_count', 20, 'epic'),
-('social_50', 'Người Kết Nối', 'Đóng góp 50 bình luận thảo luận', 700, 'MessageCircle', 'social', 'comment_count', 50, 'epic'),
-('like_king_100', 'Ông Hoàng Tương Tác', 'Nhận được 100 lượt thích', 800, 'Heart', 'social', 'like_received_count', 100, 'epic'),
-('master_contributor', 'Kiến Trúc Sư Aether', 'Tạo 30 địa điểm công cộng trên bản đồ', 2000, 'Zap', 'contribution', 'location_count', 30, 'legendary')
-ON CONFLICT (key_name) DO NOTHING;
+('first_location', 'Người Tiên Phong', 'Tạo địa điểm đầu tiên trên bản đồ', 200, 'MapPin', 'contribution', 'location_count', 1, 'common'),
+('location_10', 'Người Mở Đường', 'Đóng góp 10 địa điểm lên bản đồ', 1000, 'Map', 'contribution', 'location_count', 10, 'rare'),
+('location_50', 'Hướng Dẫn Viên', 'Đóng góp 50 địa điểm lên bản đồ', 5000, 'Compass', 'contribution', 'location_count', 50, 'epic'),
+('location_100', 'Bản Đồ Sống', 'Đóng góp 100 địa điểm lên bản đồ', 15000, 'Globe', 'contribution', 'location_count', 100, 'legendary'),
+('photographer_5', 'Tay Máy Cừ Khôi', 'Tải lên 5 bức ảnh', 350, 'Camera', 'contribution', 'photo_count', 5, 'common'),
+('photographer_20', 'Nhiếp Ảnh Gia', 'Tải lên 20 bức ảnh', 1500, 'Camera', 'contribution', 'photo_count', 20, 'rare'),
+('photographer_50', 'Nghệ Sĩ Ánh Sáng', 'Tải lên 50 bức ảnh', 4000, 'Image', 'contribution', 'photo_count', 50, 'epic'),
+('photographer_100', 'Bậc Thầy Nhiếp Ảnh', 'Tải lên 100 bức ảnh', 10000, 'Aperture', 'contribution', 'photo_count', 100, 'legendary'),
+('reviewer_10', 'Nhà Phê Bình', 'Viết 10 bài review chi tiết', 800, 'Star', 'contribution', 'long_review_count', 10, 'rare'),
+('reviewer_50', 'Chuyên Gia Đánh Giá', 'Viết 50 bài review chi tiết', 3000, 'Award', 'contribution', 'long_review_count', 50, 'epic'),
+('reviewer_100', 'Tiếng Nói Uy Tín', 'Viết 100 bài review chi tiết', 8000, 'MessageSquare', 'contribution', 'long_review_count', 100, 'legendary'),
+('social_10', 'Người Dễ Gần', 'Đóng góp 10 bình luận', 500, 'MessageCircle', 'social', 'comment_count', 10, 'common'),
+('social_50', 'Người Kết Nối', 'Đóng góp 50 bình luận', 2000, 'Users', 'social', 'comment_count', 50, 'rare'),
+('social_200', 'Tâm Điểm Cộng Đồng', 'Đóng góp 200 bình luận', 6000, 'Hash', 'social', 'comment_count', 200, 'epic'),
+('like_10', 'Được Yêu Thích', 'Nhận được 10 lượt thích', 500, 'ThumbsUp', 'social', 'like_received_count', 10, 'common'),
+('like_king_100', 'Ông Hoàng Tương Tác', 'Nhận được 100 lượt thích', 3000, 'Heart', 'social', 'like_received_count', 100, 'epic'),
+('like_500', 'Thần Tượng Aether', 'Nhận được 500 lượt thích', 10000, 'Zap', 'social', 'like_received_count', 500, 'legendary')
+ON CONFLICT (key_name) DO UPDATE SET 
+    title_vi = EXCLUDED.title_vi,
+    description_vi = EXCLUDED.description_vi,
+    xp_reward = EXCLUDED.xp_reward,
+    requirement_value = EXCLUDED.requirement_value,
+    rarity = EXCLUDED.rarity;
 
 INSERT INTO daily_tasks (key_name, title_vi, xp_reward, requirement_type, requirement_value)
 VALUES 
-('daily_like', 'Lan tỏa yêu thương', 20, 'like_given_count', 1),
-('daily_comment', 'Tham gia thảo luận', 30, 'comment_count', 1),
-('daily_long_review', 'Review có tâm', 60, 'long_review_count', 1),
-('daily_photo', 'Chia sẻ khoảnh khắc', 50, 'photo_count', 1)
-ON CONFLICT (key_name) DO NOTHING;
-
-CREATE TABLE IF NOT EXISTS follows (
-    follower_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
-    followed_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (follower_id, followed_id)
-);
-CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
-CREATE INDEX IF NOT EXISTS idx_follows_followed ON follows(followed_id);
-  
-CREATE TABLE IF NOT EXISTS follows (
-    follower_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
-    followed_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (follower_id, followed_id)
-);
-CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
-CREATE INDEX IF NOT EXISTS idx_follows_followed ON follows(followed_id);
+('daily_like', 'Lan tỏa yêu thương', 50, 'like_given_count', 1),
+('daily_comment', 'Tham gia thảo luận', 80, 'comment_count', 1),
+('daily_long_review', 'Review có tâm', 200, 'long_review_count', 1),
+('daily_photo', 'Chia sẻ khoảnh khắc', 150, 'photo_count', 1)
+ON CONFLICT (key_name) DO UPDATE SET 
+    xp_reward = EXCLUDED.xp_reward,
+    title_vi = EXCLUDED.title_vi;

@@ -231,10 +231,8 @@ export default function LocationSidebar({location, onClose}) {
                   <span className="text-[13px] font-jakarta font-bold text-text-primary leading-none group-hover/user:text-cyan-glow transition-colors">
                     {displayLocation.user_name || 'Explorer'}
                   </span>
-                  <span className={`text-[8px] font-bold uppercase tracking-widest mt-1.5 ${
-                    level >= 50 ? 'text-sunset' : level >= 10 ? 'text-cyan-glow' : 'text-text-muted'
-                  }`}>
-                    Lvl.{level} {level >= 25 ? 'Pathfinder' : 'Scout'}
+                  <span className={`text-[8px] font-bold uppercase tracking-widest mt-1.5 text-text-secondary`}>
+                    Lvl.{level} {displayLocation.user_tier || 'Wanderer'}
                   </span>
                 </div>
                 {user?.uid && user.uid !== locationOwner.firebase_uid && (

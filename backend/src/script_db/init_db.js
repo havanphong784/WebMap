@@ -19,7 +19,7 @@ const pool = new Pool({
 });
 
 async function setupDatabase() {
-  const sqlPath = path.join(__dirname, 'full_db_setup.sql');
+  const sqlPath = path.join(__dirname, 'db_setup.sql');
   const sql = fs.readFileSync(sqlPath, 'utf8');
 
   try {

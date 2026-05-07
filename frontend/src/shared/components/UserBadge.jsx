@@ -2,7 +2,7 @@ import { memo } from 'react';
 import {motion} from 'framer-motion';
 
 const TIER_CONFIG = {
-  'Scout': {
+  'Wanderer': {
     colors: ['#94a3b8', '#cbd5e1', '#94a3b8'],
     glow: 'rgba(148, 163, 184, 0.3)',
     animate: false
@@ -17,6 +17,16 @@ const TIER_CONFIG = {
     glow: 'rgba(139, 92, 246, 0.5)',
     animate: true
   },
+  'Vanguard': {
+    colors: ['#ff4b2b', '#ff416c', '#ff4b2b'],
+    glow: 'rgba(255, 75, 43, 0.5)',
+    animate: true
+  },
+  'Legend': {
+    colors: ['#fbbf24', '#f59e0b', '#fbbf24'],
+    glow: 'rgba(251, 191, 36, 0.6)',
+    animate: true
+  },
   'Master of Aether': {
     colors: ['#4285F4', '#9b72cb', '#d96570', '#1a73e8'],
     glow: 'rgba(155, 114, 203, 0.7)',
@@ -28,14 +38,16 @@ const TIER_CONFIG = {
 const UserBadge = memo(({user, size = 64, hideLevelBadge = false}) => {
   const {xp = 0, avatar_url, name} = user;
 
-  const level = Math.floor(Math.sqrt(xp / 10)) + 1;
+  const level = Math.floor(Math.sqrt(xp / 100)) + 1;
 
-  let tier = 'Scout';
-  if (level >= 50) tier = 'Master of Aether';
+  let tier = 'Wanderer';
+  if (level >= 100) tier = 'Master of Aether';
+  else if (level >= 75) tier = 'Legend';
+  else if (level >= 50) tier = 'Vanguard';
   else if (level >= 25) tier = 'Pathfinder';
   else if (level >= 10) tier = 'Explorer';
 
-  const config = TIER_CONFIG[tier] || TIER_CONFIG['Scout'];
+  const config = TIER_CONFIG[tier] || TIER_CONFIG['Wanderer'];
   const strokeWidth = size * 0.08;
   const radius = (size - strokeWidth) / 2;
 

@@ -1,29 +1,26 @@
 import pool from "../config/db.js";
 
 const XP_CONFIG = {
-  PHOTO: 15,
-  REVIEW: 10,
-  LONG_REVIEW: 40,
-  LIKE_RECEIVED: 5,
-  LIKE_GIVEN: 5,
-  COMMENT: 10,
-  LOCATION_CREATED: 50
+  PHOTO: 10,
+  REVIEW: 5,
+  LONG_REVIEW: 20,
+  LIKE_RECEIVED: 1,
+  LIKE_GIVEN: 2,
+  COMMENT: 3,
+  LOCATION_CREATED: 30
 };
 
 const TIERS = [
-  {name: "Scout", minLevel: 1, color: "Silver"},
+  {name: "Wanderer", minLevel: 1, color: "Gray"},
   {name: "Explorer", minLevel: 10, color: "Cyan"},
   {name: "Pathfinder", minLevel: 25, color: "Purple"},
-  {name: "Master of Aether", minLevel: 50, color: "Gradient"}
+  {name: "Vanguard", minLevel: 50, color: "Sunset"},
+  {name: "Legend", minLevel: 75, color: "Gold"},
+  {name: "Master of Aether", minLevel: 100, color: "Gradient"}
 ];
 
 export const calculateLevel = (xp) => {
-  // Level = floor(sqrt(xp / 10)) + 1
-  // 0 XP   Lvl 1
-  // 10 XP     Lvl 2
-  // 40 XP   Lvl 3
-  // 90 XP    Lvl 4
-  return Math.floor(Math.sqrt(xp / 10)) + 1;
+  return Math.floor(Math.sqrt(xp / 100)) + 1;
 };
 
 export const addXP = async (userId, action) => {
@@ -34,12 +31,14 @@ export const addXP = async (userId, action) => {
     const result = await pool.query(
       `UPDATE users
        SET xp         = xp + $1,
-           level      = floor(sqrt((xp + $1) / 10)) + 1,
+           level      = floor(sqrt((xp + $1) / 100)) + 1,
            tier       = CASE
-                            WHEN floor(sqrt((xp + $1) / 10)) + 1 >= 50 THEN 'Master of Aether'
-                            WHEN floor(sqrt((xp + $1) / 10)) + 1 >= 25 THEN 'Pathfinder'
-                            WHEN floor(sqrt((xp + $1) / 10)) + 1 >= 10 THEN 'Explorer'
-                            ELSE 'Scout'
+                            WHEN floor(sqrt((xp + $1) / 100)) + 1 >= 100 THEN 'Master of Aether'
+                            WHEN floor(sqrt((xp + $1) / 100)) + 1 >= 75 THEN 'Legend'
+                            WHEN floor(sqrt((xp + $1) / 100)) + 1 >= 50 THEN 'Vanguard'
+                            WHEN floor(sqrt((xp + $1) / 100)) + 1 >= 25 THEN 'Pathfinder'
+                            WHEN floor(sqrt((xp + $1) / 100)) + 1 >= 10 THEN 'Explorer'
+                            ELSE 'Wanderer'
                END,
            updated_at = CURRENT_TIMESTAMP
        WHERE firebase_uid = $2 RETURNING xp, level, tier`,
@@ -107,9 +106,6 @@ export const updateAchievementProgress = async (userId, action) => {
   }
 };
 
-/**
- * Updates progress for daily tasks
- */
 export const updateDailyTaskProgress = async (userId, action) => {
   const actionToType = {
     'PHOTO': 'photo_count',
@@ -160,21 +156,20 @@ export const updateDailyTaskProgress = async (userId, action) => {
   }
 };
 
-/**
- * Helper to add XP for achievements/tasks (bypass recursive checks)
- */
 const addAchievementXP = async (userId, xpToAdd, reason) => {
   if (!xpToAdd) return;
   try {
     await pool.query(
       `UPDATE users
        SET xp         = xp + $1,
-           level      = floor(sqrt((xp + $1) / 10)) + 1,
+           level      = floor(sqrt((xp + $1) / 100)) + 1,
            tier       = CASE
-                            WHEN floor(sqrt((xp + $1) / 10)) + 1 >= 50 THEN 'Master of Aether'
-                            WHEN floor(sqrt((xp + $1) / 10)) + 1 >= 25 THEN 'Pathfinder'
-                            WHEN floor(sqrt((xp + $1) / 10)) + 1 >= 10 THEN 'Explorer'
-                            ELSE 'Scout'
+                            WHEN floor(sqrt((xp + $1) / 100)) + 1 >= 100 THEN 'Master of Aether'
+                            WHEN floor(sqrt((xp + $1) / 100)) + 1 >= 75 THEN 'Legend'
+                            WHEN floor(sqrt((xp + $1) / 100)) + 1 >= 50 THEN 'Vanguard'
+                            WHEN floor(sqrt((xp + $1) / 100)) + 1 >= 25 THEN 'Pathfinder'
+                            WHEN floor(sqrt((xp + $1) / 100)) + 1 >= 10 THEN 'Explorer'
+                            ELSE 'Wanderer'
                END,
            updated_at = CURRENT_TIMESTAMP
        WHERE firebase_uid = $2`,
@@ -186,9 +181,6 @@ const addAchievementXP = async (userId, xpToAdd, reason) => {
   }
 };
 
-/**
- * Get unread achievements/tasks count
- */
 export const getUnreadGamificationCount = async (userId) => {
   try {
     const achCount = await pool.query(
@@ -206,9 +198,6 @@ export const getUnreadGamificationCount = async (userId) => {
   }
 };
 
-/**
- * Mark all as seen
- */
 export const markAllAsSeen = async (userId) => {
   try {
     await pool.query("UPDATE user_achievements SET is_seen = TRUE WHERE user_id = $1", [userId]);
