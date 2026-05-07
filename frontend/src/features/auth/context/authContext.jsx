@@ -19,7 +19,7 @@ export const AuthProvider = ({children}) => {
 
   const syncWithBackend = async (firebaseUser) => {
     try {
-      const token = await firebaseUser.getIdToken(true); // Force refresh to get latest profile updates
+      const token = await firebaseUser.getIdToken(true);
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: {
@@ -115,13 +115,13 @@ export const AuthProvider = ({children}) => {
 
   return (
     <AuthContext.Provider value={{
-      user, 
-      loading, 
-      logout, 
-      loginWithEmail, 
-      registerWithEmail, 
-      resetPassword, 
-      unreadAchievements, 
+      user,
+      loading,
+      logout,
+      loginWithEmail,
+      registerWithEmail,
+      resetPassword,
+      unreadAchievements,
       fetchUnreadCount,
       setUnreadAchievements
     }}>

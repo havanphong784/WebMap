@@ -1,19 +1,17 @@
-import { lazy, Suspense } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import {lazy, Suspense, useEffect} from 'react';
+import {Route, Routes, useLocation} from 'react-router-dom';
+import {AnimatePresence} from 'framer-motion';
+import BottomNav from "./shared/components/layout/bottomNav.jsx";
+import ProtectedRoute from "./shared/components/layout/protectedRoute.jsx";
+import {useAuthStore} from "./features/auth/context/authContext.jsx";
+import {useSocialStore} from "./features/map/store/useSocialStore.jsx";
+import {useNotificationStore} from "./features/notifications/store/useNotificationStore.jsx";
 
 const MapPage = lazy(() => import("./features/map/mapPage.jsx"));
 const DiscoveryFeed = lazy(() => import("./features/discovery/discoveryFeed.jsx"));
 const ProfilePage = lazy(() => import("./features/profile/profilePage.jsx"));
 const Login = lazy(() => import("./features/auth/loginPage.jsx"));
 const NotificationsPage = lazy(() => import("./features/notifications/notificationsPage.jsx"));
-
-import BottomNav from "./shared/components/layout/bottomNav.jsx";
-import ProtectedRoute from "./shared/components/layout/protectedRoute.jsx";
-import { useAuthStore } from "./features/auth/context/authContext.jsx";
-import { useSocialStore } from "./features/map/store/useSocialStore.jsx";
-import { useNotificationStore } from "./features/notifications/store/useNotificationStore.jsx";
-import { useEffect } from "react";
 
 const LoadingFallback = () => (
   <div className="h-screen w-full flex items-center justify-center bg-obsidian text-cyan-glow">
@@ -27,20 +25,17 @@ const LoadingFallback = () => (
 function App() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
-  const { user } = useAuthStore();
-  const { sendHeartbeat } = useSocialStore();
-  const { fetchNotifications } = useNotificationStore();
+  const {user} = useAuthStore();
+  const {sendHeartbeat} = useSocialStore();
+  const {fetchNotifications} = useNotificationStore();
 
   useEffect(() => {
     if (user?.uid) {
       sendHeartbeat();
-      // Fetch initial notifications when app loads and user is available
       fetchNotifications(user.uid, true);
-
-      // Heartbeat interval (45s)
-      const heartbeatInterval = setInterval(sendHeartbeat, 45000);
-      
-      // Polling for notifications (15s) to ensure accurate and real-time feel
+      // 1 phút
+      const heartbeatInterval = setInterval(sendHeartbeat, 60000);
+      // 15s lấy thông báo 1 lần
       const notifInterval = setInterval(() => {
         fetchNotifications(user.uid, true);
       }, 15000);
@@ -53,42 +48,43 @@ function App() {
   }, [user?.uid]);
 
   return (
-    <div className="min-h-screen bg-obsidian text-white selection:bg-cyan-glow selection:text-obsidian overflow-x-hidden">
-      <AnimatePresence mode="wait">
-        <Suspense fallback={<LoadingFallback />}>
+    <div
+      className="min-h-screen bg-obsidian text-white selection:bg-cyan-glow selection:text-obsidian overflow-x-hidden">
+      <Suspense fallback={<LoadingFallback/>}>
+        <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<MapPage />} />
+            <Route path="/login" element={<Login/>}/>
+            <Route path="/" element={<MapPage/>}/>
 
             <Route path="/discover" element={
               <ProtectedRoute>
-                <DiscoveryFeed />
+                <DiscoveryFeed/>
               </ProtectedRoute>
-            } />
+            }/>
 
             <Route path="/notifications" element={
               <ProtectedRoute>
-                <NotificationsPage />
+                <NotificationsPage/>
               </ProtectedRoute>
-            } />
+            }/>
 
             <Route path="/profile/:uid" element={
               <ProtectedRoute>
-                <ProfilePage />
+                <ProfilePage/>
               </ProtectedRoute>
-            } />
+            }/>
 
             <Route path="/profile" element={
               <ProtectedRoute>
-                <ProfilePage />
+                <ProfilePage/>
               </ProtectedRoute>
-            } />
+            }/>
 
-            <Route path="*" element={<MapPage />} />
+            <Route path="*" element={<MapPage/>}/>
           </Routes>
-        </Suspense>
-      </AnimatePresence>
-      {!isLoginPage && <BottomNav />}
+        </AnimatePresence>
+      </Suspense>
+      {!isLoginPage && <BottomNav/>}
     </div>
   );
 }

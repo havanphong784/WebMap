@@ -1,16 +1,17 @@
-import { useEffect, useState } from "react";
-import { signInWithPopup } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
-import { auth, googleProvider } from "../../config/firebase";
-import { useAuthStore } from "./context/authContext.jsx";
-import { AnimatePresence, motion } from "framer-motion";
-import { EyeIcon, EyeOffIcon, MapIcon, PowerIcon, PrivateIcon, UserIcon } from "../../shared/components/common/icons.jsx";
+import {useEffect, useState} from "react";
+import {signInWithPopup} from "firebase/auth";
+import {useLocation, useNavigate} from "react-router-dom";
+import {auth, googleProvider} from "../../config/firebase";
+import {useAuthStore} from "./context/authContext.jsx";
+import {AnimatePresence, motion} from "framer-motion";
+import {EyeIcon, EyeOffIcon, MapIcon, PowerIcon, PrivateIcon, UserIcon} from "../../shared/components/common/icons.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { user, loading, loginWithEmail, registerWithEmail, resetPassword } = useAuthStore();
+  const location = useLocation();
+  const {user, loading, loginWithEmail, registerWithEmail, resetPassword} = useAuthStore();
 
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
@@ -18,21 +19,28 @@ export default function Login() {
   const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
-  const [authStatus, setAuthStatus] = useState({ type: '', message: '' });
+  const [authStatus, setAuthStatus] = useState({type: '', message: ''});
 
   useEffect(() => {
     if (user && !loading) {
-      navigate("/", { replace: true });
+      const from = location.state?.from || "/";
+      const pathname = from?.pathname ?? '/';
+      const search = from?.search ?? '';
+      const hash = from?.hash ?? '';
+      const candidate = `${pathname}${search}${hash}`;
+      const safePath = candidate.startsWith('/') ? candidate : '/';
+
+      navigate(safePath, {replace: true});
     }
   }, [user, loading, navigate]);
 
   const handleGoogleLogin = async () => {
-    setAuthStatus({ type: '', message: '' });
+    setAuthStatus({type: '', message: ''});
     try {
       const result = await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error(error);
-      setAuthStatus({ type: 'error', message: "Đăng nhập Google thất bại: " + error.code });
+      setAuthStatus({type: 'error', message: "Đăng nhập Google thất bại: " + error.code});
     }
   };
 
@@ -40,13 +48,13 @@ export default function Login() {
     e.preventDefault();
     if (!email || !password) return;
 
-    setAuthStatus({ type: '', message: '' });
+    setAuthStatus({type: '', message: ''});
     setIsAuthLoading(true);
     try {
       let result;
       if (isRegister) {
         if (!name) {
-          setAuthStatus({ type: 'error', message: "Vui lòng nhập họ tên" });
+          setAuthStatus({type: 'error', message: "Vui lòng nhập họ tên"});
           setIsAuthLoading(false);
           return;
         }
@@ -60,7 +68,7 @@ export default function Login() {
       if (error.code === 'auth/user-not-found') msg = "Email không tồn tại";
       if (error.code === 'auth/wrong-password') msg = "Mật khẩu không chính xác";
       if (error.code === 'auth/email-already-in-use') msg = "Email này đã được đăng ký";
-      setAuthStatus({ type: 'error', message: msg });
+      setAuthStatus({type: 'error', message: msg});
     } finally {
       setIsAuthLoading(false);
     }
@@ -68,16 +76,16 @@ export default function Login() {
 
   const handleResetPassword = async () => {
     if (!email) {
-      setAuthStatus({ type: 'error', message: "Vui lòng nhập email trước để nhận link." });
+      setAuthStatus({type: 'error', message: "Vui lòng nhập email trước để nhận link."});
       return;
     }
-    setAuthStatus({ type: '', message: '' });
+    setAuthStatus({type: '', message: ''});
     try {
       await resetPassword(email);
-      setAuthStatus({ type: 'success', message: "Link đặt lại mật khẩu đã được gửi vào email." });
+      setAuthStatus({type: 'success', message: "Link đặt lại mật khẩu đã được gửi vào email."});
     } catch (error) {
       console.error(error);
-      setAuthStatus({ type: 'error', message: "Lỗi gửi mail: " + error.code });
+      setAuthStatus({type: 'error', message: "Lỗi gửi mail: " + error.code});
     }
   };
 
@@ -87,21 +95,20 @@ export default function Login() {
         className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-glow/10 rounded-full blur-[120px] animate-pulse"></div>
       <div
         className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-sunset/10 rounded-full blur-[120px] animate-pulse"
-        style={{ animationDelay: '2s' }}></div>
-
+        style={{animationDelay: '2s'}}></div>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{opacity: 0, y: 20}}
+        animate={{opacity: 1, y: 0}}
         className="z-10 w-[95%] max-w-lg"
       >
         <GlassPanel
           className="p-8 sm:p-12 flex flex-col items-center text-center border-glass-border bg-white/80 shadow-glass rounded-[40px]">
           <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
+            initial={{scale: 0.8}}
+            animate={{scale: 1}}
             className="w-16 h-16 bg-cyan-glow/20 rounded-2xl flex items-center justify-center mb-6 shadow-neon border border-cyan-glow/30"
           >
-            <MapIcon size={32} className="text-cyan-glow" />
+            <MapIcon size={32} className="text-cyan-glow"/>
           </motion.div>
 
           <h1 className="text-4xl font-jakarta font-black tracking-tighter text-text-primary mb-2">
@@ -115,16 +122,16 @@ export default function Login() {
             <AnimatePresence>
               {isRegister && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
-                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  initial={{opacity: 0, height: 0, marginBottom: 0}}
+                  animate={{opacity: 1, height: 'auto', marginBottom: 16}}
+                  exit={{opacity: 0, height: 0, marginBottom: 0}}
                   className="w-full text-left overflow-hidden"
                 >
                   <label className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] ml-4 mb-2 block">Họ
                     và tên</label>
                   <div className="relative group">
                     <UserIcon size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-cyan-glow transition-colors" />
+                              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-cyan-glow transition-colors"/>
                     <input
                       type="text"
                       placeholder="Nhập tên của bạn..."
@@ -143,7 +150,7 @@ export default function Login() {
                 Email</label>
               <div className="relative group">
                 <UserIcon size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-cyan-glow transition-colors" />
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-cyan-glow transition-colors"/>
                 <input
                   type="email"
                   placeholder="name@example.com"
@@ -171,7 +178,7 @@ export default function Login() {
               </div>
               <div className="relative group">
                 <PrivateIcon size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-cyan-glow transition-colors" />
+                             className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-cyan-glow transition-colors"/>
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
@@ -186,7 +193,7 @@ export default function Login() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-cyan-glow transition-colors"
                 >
-                  {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                  {showPassword ? <EyeOffIcon size={18}/> : <EyeIcon size={18}/>}
                 </button>
               </div>
             </div>
@@ -194,11 +201,11 @@ export default function Login() {
             <AnimatePresence>
               {authStatus.message && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  initial={{opacity: 0, y: -10}}
+                  animate={{opacity: 1, y: 0}}
+                  exit={{opacity: 0, y: -10}}
                   className={`p-3 rounded-xl text-[11px] font-bold text-center uppercase tracking-wider ${authStatus.type === 'error' ? 'bg-sunset/10 text-sunset border border-sunset/20' : 'bg-cyan-glow/10 text-cyan-glow border border-cyan-glow/20'
-                    }`}
+                  }`}
                 >
                   {authStatus.message}
                 </motion.div>
@@ -250,7 +257,7 @@ export default function Login() {
       </motion.div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 opacity-20">
-        <PowerIcon size={14} className="text-cyan-glow" />
+        <PowerIcon size={14} className="text-cyan-glow"/>
         <span className="text-[10px] font-bold tracking-[0.5em] text-white uppercase">Geo-Spatial Connection</span>
       </div>
     </div>

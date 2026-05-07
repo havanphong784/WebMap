@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CloseIcon, PinIcon, PlusIcon, RouteIcon, SpinnerIcon } from "../../../shared/components/common/icons.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
-import Skeleton from "../../../shared/components/common/skeleton.jsx";
+import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 
 export default function ClickedMarker({ point, setPoint }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -84,10 +84,16 @@ export default function ClickedMarker({ point, setPoint }) {
                   </div>
 
                   <div className="text-[12px] font-bold text-text-primary mb-5 leading-tight line-clamp-2">
-                    {!point.address
-                      ? <div className="space-y-1"><Skeleton className="text-text-muted h-4 italic animate-pulse" />
-                        <Skeleton className="text-text-muted italic animate-pulse" /></div>
-                      : (point.address?.display_name || "Không xác định được địa chỉ")}
+                    {!point.address ? (
+                      <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
+                        <div className="space-y-1">
+                          <Skeleton height={14} width="100%" />
+                          <Skeleton height={14} width="80%" />
+                        </div>
+                      </SkeletonTheme>
+                    ) : (
+                      point.address?.display_name || "Không xác định được địa chỉ"
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-2.5">

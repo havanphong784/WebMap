@@ -3,7 +3,7 @@ import {memo, useState} from "react";
 import {motion} from "framer-motion";
 import { StarIcon } from "../../../shared/components/common/icons.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
-import Skeleton from "../../../shared/components/common/skeleton.jsx";
+import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 
 const LocationCard = memo(({location, onClick}) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -41,7 +41,9 @@ const LocationCard = memo(({location, onClick}) => {
             {location.image_url && (
               <div className="overflow-hidden rounded-xl p-0 mb-2 border border-glass-border aspect-video relative group">
                 {!imageLoaded && (
-                  <Skeleton width="100%" height="100%" className="rounded-xl" />
+                  <SkeletonTheme baseColor="rgba(0,0,0,0.05)" highlightColor="rgba(0,0,0,0.1)">
+                    <Skeleton width="100%" height="100%" containerClassName="w-full h-full" borderRadius={12} />
+                  </SkeletonTheme>
                 )}
                 <img
                   src={location.image_url}

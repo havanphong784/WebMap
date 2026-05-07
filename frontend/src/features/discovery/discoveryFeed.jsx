@@ -14,7 +14,7 @@ import {
   SearchIcon,
   TrendingIcon
 } from "../../shared/components/common/icons.jsx";
-import Skeleton from "../../shared/components/common/skeleton.jsx";
+import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import UserBadge from "../../shared/components/UserBadge.jsx";
 
 const DiscoveryCard = ({post, index, navigate, onLike}) => {
@@ -41,7 +41,7 @@ const DiscoveryCard = ({post, index, navigate, onLike}) => {
     >
       <div className="relative overflow-hidden rounded-3xl">
         {!imageLoaded && (
-          <Skeleton width="100%" height="300px" className="rounded-3xl"/>
+          <Skeleton width="100%" height={300} borderRadius={24}/>
         )}
         {post.image_url ? (
           <img
@@ -51,11 +51,13 @@ const DiscoveryCard = ({post, index, navigate, onLike}) => {
             className={`w-full rounded-3xl grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ${imageLoaded ? 'opacity-100 block' : 'opacity-0 absolute inset-0'}`}
           />
         ) : (
-          <div className="w-full h-64 bg-obsidian-soft/30 flex flex-col items-center justify-center gap-3 rounded-3xl" onMouseEnter={() => setImageLoaded(true)}>
-             <div className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center">
-                <PinIcon size={20} className="text-text-dim/40"/>
-             </div>
-             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-text-dim/50">Không có ảnh</span>
+          <div className="w-full h-64 bg-obsidian-soft/30 flex flex-col items-center justify-center gap-3 rounded-3xl"
+               onMouseEnter={() => setImageLoaded(true)}>
+            <div
+              className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center">
+              <PinIcon size={20} className="text-text-dim/40"/>
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-text-dim/50">Không có ảnh</span>
           </div>
         )}
         <div
@@ -63,7 +65,7 @@ const DiscoveryCard = ({post, index, navigate, onLike}) => {
         </div>
 
         <div className="absolute top-4 left-4 right-4 flex items-center gap-2 z-10">
-          <UserBadge user={postUser} size={32} hideLevelBadge={true} />
+          <UserBadge user={postUser} size={32} hideLevelBadge={true}/>
           <div className="flex flex-col">
             <span
               className="text-[10px] font-bold text-white uppercase tracking-wider drop-shadow-md leading-none">{post.user_name || 'Aether User'}</span>
@@ -192,7 +194,7 @@ const DiscoveryFeed = () => {
           className="cursor-pointer shrink-0"
         >
           {user ? (
-            <UserBadge user={user} size={48} hideLevelBadge={true} />
+            <UserBadge user={user} size={48} hideLevelBadge={true}/>
           ) : (
             <div
               className="w-12 h-12 rounded-full border-2 border-dashed border-glass-border flex items-center justify-center text-text-dim">
@@ -209,7 +211,8 @@ const DiscoveryFeed = () => {
             className={`pb-4 text-sm font-jakarta font-black uppercase tracking-[0.2em] relative transition-all duration-300 ${feedType === 'global' ? 'text-cyan-glow' : 'text-text-muted hover:text-text-primary'}`}
           >
             Cộng đồng
-            {feedType === 'global' && <motion.div layoutId="feedTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-glow shadow-neon"/>}
+            {feedType === 'global' && <motion.div layoutId="feedTab"
+                                                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-glow shadow-neon"/>}
           </button>
           {user && (
             <button
@@ -217,7 +220,8 @@ const DiscoveryFeed = () => {
               className={`pb-4 text-sm font-jakarta font-black uppercase tracking-[0.2em] relative transition-all duration-300 ${feedType === 'following' ? 'text-sunset' : 'text-text-muted hover:text-text-primary'}`}
             >
               Đang theo dõi
-              {feedType === 'following' && <motion.div layoutId="feedTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-sunset shadow-sunset"/>}
+              {feedType === 'following' && <motion.div layoutId="feedTab"
+                                                       className="absolute bottom-0 left-0 right-0 h-0.5 bg-sunset shadow-sunset"/>}
             </button>
           )}
         </div>
@@ -229,7 +233,7 @@ const DiscoveryFeed = () => {
           </h1>
         </div>
         <p className="text-text-secondary text-sm font-medium">
-          {feedType === 'global' 
+          {feedType === 'global'
             ? 'Những địa điểm được cộng đồng Aether săn đón nhất.'
             : 'Những địa điểm mới nhất từ những người bạn theo dõi.'}
           {searchQuery && <span className="text-cyan-glow ml-2">Đang tìm: "{searchQuery}"</span>}
@@ -259,26 +263,28 @@ const DiscoveryFeed = () => {
 
       <div className="max-w-4xl mx-auto">
         {isLoading ? (
-          <div className="columns-1 sm:columns-2 gap-6 space-y-6">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="break-inside-avoid glass-panel rounded-3xl border-glass-border overflow-hidden p-4 flex flex-col gap-4"
-                style={{height: `${320 + (i % 3) * 60}px`}}
-              >
-                <div className="flex-1 min-h-0 flex flex-col">
-                  <Skeleton width="100%" height="100%" className="flex-1 rounded-2xl"/>
-                </div>
-                <div className="shrink-0 space-y-3">
-                  <Skeleton width="60%" height="1rem"/>
-                  <Skeleton width="90%" height="1.75rem"/>
-                  <div className="flex justify-between items-center pt-1">
-                    <Skeleton width="35%" height="2rem" className="rounded-lg"/>
-                    <Skeleton width="25%" height="2rem" className="rounded-lg"/>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="glass-panel overflow-hidden border-glass-border">
+                  <Skeleton height={200}/>
+                  <div className="p-5 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <Skeleton width={120} height={16}/>
+                      <Skeleton width={40} height={16}/>
+                    </div>
+                    <Skeleton width="100%" height={24}/>
+                    <Skeleton width="60%" height={12}/>
+                    <div className="flex gap-2 pt-2">
+                      <Skeleton circle width={32} height={32}/>
+                      <div className="flex-1">
+                        <Skeleton width={80} height={10}/>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </SkeletonTheme>
           </div>
         ) : filteredPosts.length > 0 ? (
           <div className="columns-1 sm:columns-2 gap-x-6">

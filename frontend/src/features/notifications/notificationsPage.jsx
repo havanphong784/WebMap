@@ -1,13 +1,12 @@
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../auth/context/authContext.jsx";
+import {motion} from "framer-motion";
+import {useNavigate} from "react-router-dom";
+import {useAuthStore} from "../auth/context/authContext.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
-import { CommentIcon, LikeIcon, MapIcon, PinIcon, FollowIcon, CheckIcon } from "../../shared/components/common/icons.jsx";
-import ActionButton from "../../shared/components/common/actionButton.jsx";
-import { useNotificationStore } from "./store/useNotificationStore.jsx";
-import { useEffect } from "react";
-import { formatFullTime } from "../../shared/utils/dateUtils.js";
-import Skeleton from "../../shared/components/common/skeleton.jsx";
+import {CheckIcon, CommentIcon, FollowIcon, LikeIcon, MapIcon, PinIcon} from "../../shared/components/common/icons.jsx";
+import {useNotificationStore} from "./store/useNotificationStore.jsx";
+import {useEffect} from "react";
+import {formatFullTime} from "../../shared/utils/dateUtils.js";
+import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import UserBadge from "../../shared/components/UserBadge.jsx";
 
 const typeConfig = {
@@ -45,8 +44,8 @@ const typeConfig = {
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const { notifications, fetchNotifications, markRead, markAllRead, unreadCount, loading } = useNotificationStore();
+  const {user} = useAuthStore();
+  const {notifications, fetchNotifications, markRead, markAllRead, unreadCount, loading} = useNotificationStore();
 
   useEffect(() => {
     if (user?.uid) {
@@ -56,24 +55,13 @@ export default function NotificationsPage() {
 
   const formatTime = (dateStr) => formatFullTime(dateStr);
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center gap-6">
-        <MapIcon size={48} className="text-cyan-glow opacity-30" />
-        <p className="text-zinc-500 font-jakarta font-bold uppercase tracking-widest text-sm text-center">
-          Đăng nhập để xem thông báo
-        </p>
-        <ActionButton onClick={() => navigate('/login')}>Đăng nhập ngay</ActionButton>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-map-bg pb-32 overflow-y-auto no-scrollbar">
       <div className="sticky top-0 z-10 bg-obsidian/90 backdrop-blur-xl border-b border-glass-border px-6 py-5">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-jakarta font-black tracking-tight text-text-primary uppercase italic">Thông báo</h1>
+            <h1 className="text-2xl font-jakarta font-black tracking-tight text-text-primary uppercase italic">Thông
+              báo</h1>
             {unreadCount > 0 && (
               <p className="text-cyan-glow text-[10px] font-black mt-1 uppercase tracking-widest opacity-80">
                 {unreadCount} thông báo mới
@@ -82,12 +70,12 @@ export default function NotificationsPage() {
           </div>
           {unreadCount > 0 && (
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{scale: 1.05}}
+              whileTap={{scale: 0.95}}
               onClick={() => markAllRead(user.uid)}
               className="flex items-center gap-2 px-3 py-1.5 glass-panel bg-white/10 border-glass-border hover:bg-cyan-glow/10 hover:border-cyan-glow/30 transition-all group shrink-0"
             >
-              <CheckIcon size={12} className="text-cyan-glow group-hover:scale-125 transition-transform" />
+              <CheckIcon size={12} className="text-cyan-glow group-hover:scale-125 transition-transform"/>
               <span className="text-text-primary text-[9px] font-black uppercase tracking-widest whitespace-nowrap">
                 Đọc tất cả
               </span>
@@ -98,28 +86,30 @@ export default function NotificationsPage() {
 
       <div className="max-w-2xl mx-auto px-6 pt-6 space-y-3">
         {loading ? (
-          [...Array(6)].map((_, i) => (
-            <div key={i} className="p-5 flex items-start gap-4 glass-panel border-glass-border">
-              <Skeleton circle width="3.5rem" height="3.5rem" className="shrink-0" />
-              <div className="flex-1 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Skeleton width="4rem" height="0.75rem" />
-                  <Skeleton width="6rem" height="0.75rem" />
+          <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="p-5 flex items-start gap-4 glass-panel border-glass-border">
+                <Skeleton circle width={56} height={56} className="shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Skeleton width={60} height={12} />
+                    <Skeleton width={100} height={12} />
+                  </div>
+                  <Skeleton width="85%" height={20} />
+                  <Skeleton width="45%" height={24} borderRadius={8} />
                 </div>
-                <Skeleton width="80%" height="1.25rem" />
-                <Skeleton width="40%" height="1.5rem" className="rounded-lg" />
               </div>
-            </div>
-          ))
+            ))}
+          </SkeletonTheme>
         ) : notifications.map((notif, i) => {
           const config = typeConfig[notif.type] || typeConfig.LIKE;
           const Icon = config.icon;
           return (
             <motion.div
               key={notif.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
+              initial={{opacity: 0, x: -20}}
+              animate={{opacity: 1, x: 0}}
+              transition={{delay: i * 0.05}}
             >
               <GlassPanel
                 className={`p-5 flex items-start gap-4 border-glass-border cursor-pointer hover:border-cyan-glow/30 transition-all duration-300 relative overflow-hidden ${!notif.is_read ? 'bg-cyan-glow/[0.04]' : ''}`}
@@ -128,12 +118,12 @@ export default function NotificationsPage() {
                   if (notif.type === 'FOLLOW') {
                     navigate(`/profile/${notif.sender_id}`);
                   } else {
-                    navigate('/', { state: { focusLocation: { lat: notif.lat, lng: notif.lng, id: notif.location_id } } });
+                    navigate('/', {state: {focusLocation: {lat: notif.lat, lng: notif.lng, id: notif.location_id}}});
                   }
                 }}
               >
                 {!notif.is_read && (
-                  <div className="absolute top-0 left-0 w-1 h-full bg-cyan-glow shadow-neon" />
+                  <div className="absolute top-0 left-0 w-1 h-full bg-cyan-glow shadow-neon"/>
                 )}
 
                 <div className="relative shrink-0 flex items-center justify-center">
@@ -145,7 +135,8 @@ export default function NotificationsPage() {
                     }}
                     size={48}
                   />
-                  <div className={`absolute -bottom-1 -right-1 p-1.5 rounded-lg border backdrop-blur-md z-30 ${config.bg}`}>
+                  <div
+                    className={`absolute -bottom-1 -right-1 p-1.5 rounded-lg border backdrop-blur-md z-30 ${config.bg}`}>
                     <Icon
                       size={12}
                       className={`${config.color} drop-shadow-md`}
@@ -166,14 +157,16 @@ export default function NotificationsPage() {
                   </div>
 
                   <p className="text-[13px] text-text-primary leading-snug font-medium">
-                    <span className="font-black text-cyan-glow uppercase tracking-tight">{notif.sender_name || 'Người dùng'}</span>{' '}
+                    <span
+                      className="font-black text-cyan-glow uppercase tracking-tight">{notif.sender_name || 'Người dùng'}</span>{' '}
                     <span className="text-text-secondary opacity-90 italic">{notif.message}</span>
                   </p>
 
                   {notif.type !== 'FOLLOW' && (
                     <div
                       className="mt-2.5 py-1 px-3 bg-white/[0.03] rounded-lg border border-glass-border inline-flex items-center gap-2 group-hover:border-cyan-glow/30 transition-colors">
-                      <span className="text-[10px] font-black text-text-muted uppercase tracking-widest truncate max-w-[200px]">
+                      <span
+                        className="text-[10px] font-black text-text-muted uppercase tracking-widest truncate max-w-[200px]">
                         📍 {notif.location_name || 'Địa điểm'}
                       </span>
                     </div>
@@ -186,7 +179,7 @@ export default function NotificationsPage() {
 
         {!loading && notifications.length === 0 && (
           <div className="text-center py-40 glass-panel border-glass-border rounded-3xl">
-            <MapIcon size={48} className="text-text-dim mx-auto mb-4 opacity-20" />
+            <MapIcon size={48} className="text-text-dim mx-auto mb-4 opacity-20"/>
             <p className="text-text-secondary font-jakarta font-bold uppercase tracking-widest text-sm">
               Chưa có thông báo nào
             </p>

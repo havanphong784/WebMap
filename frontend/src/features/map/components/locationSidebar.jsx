@@ -7,21 +7,21 @@ import {apiClient} from "../../../shared/api/apiClient.js";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import {
+  CheckIcon,
   CloseIcon,
   CommentIcon,
   DateIcon,
   HashIcon,
   LikeIcon,
   PinIcon,
+  PlusIcon,
   RouteIcon,
   SendIcon,
   ShareIcon,
-  TagIcon,
-  PlusIcon,
-  CheckIcon
+  TagIcon
 } from "../../../shared/components/common/icons.jsx";
 import {parseDBDate} from "../../../shared/utils/dateUtils.js";
-import Skeleton from "../../../shared/components/common/skeleton.jsx";
+import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
 
 export default function LocationSidebar({location, onClose}) {
@@ -47,7 +47,7 @@ export default function LocationSidebar({location, onClose}) {
 
   const handleOpenProfile = (uid) => {
     if (!uid) return;
-    onClose(); 
+    onClose();
     navigate(`/profile/${uid}`);
   };
 
@@ -113,7 +113,10 @@ export default function LocationSidebar({location, onClose}) {
     }
     setIsFollowLoading(true);
     try {
-      const res = await apiClient.post('/follows/toggle', { follower_id: user.uid, followed_id: displayLocation.user_id });
+      const res = await apiClient.post('/follows/toggle', {
+        follower_id: user.uid,
+        followed_id: displayLocation.user_id
+      });
       if (res.success) {
         setIsFollowing(res.data.followed);
         showToast(res.data.followed ? '✓ Đã theo dõi' : '✓ Đã bỏ theo dõi');
@@ -164,7 +167,8 @@ export default function LocationSidebar({location, onClose}) {
 
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"></div>
 
-        <div className="absolute -top-40 -left-40 w-80 h-80 bg-cyan-glow/5 blur-[120px] rounded-full pointer-events-none animate-pulse"></div>
+        <div
+          className="absolute -top-40 -left-40 w-80 h-80 bg-cyan-glow/5 blur-[120px] rounded-full pointer-events-none animate-pulse"></div>
 
         <div className="relative p-4 shrink-0">
           <div className="relative h-56 rounded-[1.8rem] overflow-hidden shadow-lg border border-black/5 group/img">
@@ -182,7 +186,8 @@ export default function LocationSidebar({location, onClose}) {
                 />
               ) : (
                 <div className="w-full h-full bg-black/[0.03] flex flex-col items-center justify-center gap-3">
-                  <div className="w-16 h-16 rounded-full bg-black/[0.02] border border-black/5 flex items-center justify-center">
+                  <div
+                    className="w-16 h-16 rounded-full bg-black/[0.02] border border-black/5 flex items-center justify-center">
                     <PinIcon size={24} className="text-text-dim/40"/>
                   </div>
                   <span className="text-[10px] font-jakarta font-black uppercase tracking-[0.2em] text-text-dim/50">Không có ảnh</span>
@@ -190,7 +195,8 @@ export default function LocationSidebar({location, onClose}) {
               )}
             </motion.div>
 
-            <div className="absolute inset-0 bg-obsidian/10 group-hover/img:bg-transparent transition-colors duration-500"></div>
+            <div
+              className="absolute inset-0 bg-obsidian/10 group-hover/img:bg-transparent transition-colors duration-500"></div>
 
             <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-10">
               <motion.button
@@ -224,11 +230,12 @@ export default function LocationSidebar({location, onClose}) {
               onClick={() => handleOpenProfile(locationOwner.firebase_uid)}
             >
               <div className="relative">
-                <UserBadge user={locationOwner} size={36} hideLevelBadge={true} />
+                <UserBadge user={locationOwner} size={36} hideLevelBadge={true}/>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex flex-col">
-                  <span className="text-[13px] font-jakarta font-bold text-text-primary leading-none group-hover/user:text-cyan-glow transition-colors">
+                  <span
+                    className="text-[13px] font-jakarta font-bold text-text-primary leading-none group-hover/user:text-cyan-glow transition-colors">
                     {displayLocation.user_name || 'Explorer'}
                   </span>
                   <span className={`text-[8px] font-bold uppercase tracking-widest mt-1.5 text-text-secondary`}>
@@ -240,17 +247,17 @@ export default function LocationSidebar({location, onClose}) {
                     onClick={handleToggleFollow}
                     disabled={isFollowLoading}
                     className={`w-6 h-6 flex items-center justify-center rounded-full border shadow-sm transition-all duration-300 shrink-0 ${
-                      isFollowing 
-                        ? 'bg-white border-glass-border text-text-primary hover:bg-white hover:scale-110' 
+                      isFollowing
+                        ? 'bg-white border-glass-border text-text-primary hover:bg-white hover:scale-110'
                         : 'bg-cyan-glow border-cyan-glow/50 text-white hover:bg-cyan-glow/80 hover:scale-110 shadow-neon-sm'
                     }`}
                   >
                     {isFollowLoading ? (
                       <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"/>
                     ) : isFollowing ? (
-                      <CheckIcon size={12} strokeWidth={3} />
+                      <CheckIcon size={12} strokeWidth={3}/>
                     ) : (
-                      <PlusIcon size={12} strokeWidth={3} />
+                      <PlusIcon size={12} strokeWidth={3}/>
                     )}
                   </button>
                 )}
@@ -390,22 +397,24 @@ export default function LocationSidebar({location, onClose}) {
 
             <div className="space-y-6 pb-2">
               {loadingComments ? (
-                <div className="space-y-6">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="flex gap-3">
-                      <Skeleton circle width="2.5rem" height="2.5rem" className="shrink-0"/>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex justify-between">
-                          <Skeleton width="40%" height="1rem"/>
-                          <Skeleton width="20%" height="0.75rem"/>
+                <div className="space-y-4">
+                  <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="flex gap-2.5">
+                        <Skeleton circle width={32} height={32}/>
+                        <div className="flex-1">
+                          <div className="flex justify-between mb-1">
+                            <Skeleton width={80} height={10}/>
+                            <Skeleton width={40} height={10}/>
+                          </div>
+                          <Skeleton height={48} borderRadius={12}/>
                         </div>
-                        <Skeleton width="100%" height="3rem" className="rounded-xl rounded-tl-none"/>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </SkeletonTheme>
                 </div>
               ) : comments.length > 0 ? (
-                comments.map((c, i) => (
+                comments.map((c) => (
                   <motion.div
                     key={c.id}
                     initial={{opacity: 0}}
@@ -416,7 +425,8 @@ export default function LocationSidebar({location, onClose}) {
                     <UserBadge user={c} size={32}/>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[11px] font-bold text-text-primary truncate mr-2 group-hover:text-cyan-glow transition-colors">{c.name}</span>
+                        <span
+                          className="text-[11px] font-bold text-text-primary truncate mr-2 group-hover:text-cyan-glow transition-colors">{c.name}</span>
                         <span className="text-[7px] text-text-muted font-bold uppercase shrink-0">
                           {parseDBDate(c.created_at).toLocaleDateString('vi-VN')}
                         </span>

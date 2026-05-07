@@ -8,7 +8,7 @@ import {ArrowIcon, LikeIcon, PhotoIcon, PinIcon, PowerIcon, StarIcon} from "../.
 import UserBadge from "../../shared/components/UserBadge.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
-import Skeleton from "../../shared/components/common/skeleton.jsx";
+import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import AchievementList from "./components/AchievementList.jsx";
 
 export default function ProfilePage() {
@@ -136,7 +136,9 @@ export default function ProfilePage() {
             className="relative"
           >
             {loading ? (
-              <Skeleton circle width="9rem" height="9rem" className="border-4 border-map-bg"/>
+              <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
+                <Skeleton circle width={144} height={144} className="border-4 border-map-bg shadow-2xl" />
+              </SkeletonTheme>
             ) : (
               <UserBadge user={profileUser} size={144}/>
             )}
@@ -149,11 +151,13 @@ export default function ProfilePage() {
             className="text-center mt-6 w-full max-w-sm"
           >
             {loading ? (
-              <div className="flex flex-col items-center gap-3">
-                <Skeleton width="12rem" height="2.5rem"/>
-                <Skeleton width="10rem" height="1rem"/>
-                <Skeleton width="8rem" height="1.5rem" className="rounded-full mt-2"/>
-              </div>
+              <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
+                <div className="flex flex-col items-center gap-3">
+                  <Skeleton width={180} height={36} />
+                  <Skeleton width={140} height={16} />
+                  <Skeleton width={100} height={20} borderRadius={20} className="mt-2" />
+                </div>
+              </SkeletonTheme>
             ) : (
               <>
                 <h1
@@ -193,13 +197,15 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-8 sm:mt-10 max-w-2xl mx-auto">
           {loading ? (
-            [...Array(3)].map((_, i) => (
-              <GlassPanel key={i} className="py-4 px-2 flex flex-col items-center gap-2 border-white/5 bg-white/5">
-                <Skeleton circle width="1.25rem" height="1.25rem"/>
-                <Skeleton width="2rem" height="1.5rem"/>
-                <Skeleton width="3rem" height="0.5rem"/>
-              </GlassPanel>
-            ))
+            <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
+              {[...Array(3)].map((_, i) => (
+                <GlassPanel key={i} className="py-4 px-2 flex flex-col items-center gap-2 border-white/5 bg-white/5">
+                  <Skeleton circle width={20} height={20} />
+                  <Skeleton width={32} height={20} />
+                  <Skeleton width={48} height={8} />
+                </GlassPanel>
+              ))}
+            </SkeletonTheme>
           ) : stats.map((stat, i) => (
             <motion.div
               key={stat.label}
@@ -258,11 +264,13 @@ export default function ProfilePage() {
             <>
               {loading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="glass-panel rounded-3xl border-white/5 overflow-hidden p-0 space-y-0 h-64">
-                      <Skeleton width="100%" height="100%"/>
-                    </div>
-                  ))}
+                  <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="glass-panel rounded-3xl border-white/5 overflow-hidden p-0 h-64">
+                        <Skeleton width="100%" height="100%" />
+                      </div>
+                    ))}
+                  </SkeletonTheme>
                 </div>
               ) : userLocations.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
