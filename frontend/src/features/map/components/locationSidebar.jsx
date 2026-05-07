@@ -18,6 +18,7 @@ import {
   RouteIcon,
   SendIcon,
   ShareIcon,
+  SpinnerIcon,
   TagIcon
 } from "../../../shared/components/common/icons.jsx";
 import {parseDBDate} from "../../../shared/utils/dateUtils.js";
@@ -35,6 +36,7 @@ export default function LocationSidebar({location, onClose}) {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [toast, setToast] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
@@ -130,12 +132,19 @@ export default function LocationSidebar({location, onClose}) {
 
   const handleSendComment = async (e) => {
     e.preventDefault();
-    if (!commentText.trim() || !user) return;
+    if (!commentText.trim() || !user || isSubmittingComment) return;
 
-    const res = await postComment(location.id, user.uid, commentText);
-    if (res?.success) {
-      setCommentText("");
-      fetchComments();
+    setIsSubmittingComment(true);
+    try {
+      const res = await postComment(location.id, user.uid, commentText);
+      if (res?.success) {
+        setCommentText("");
+        await fetchComments();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmittingComment(false);
     }
   };
 
@@ -267,16 +276,18 @@ export default function LocationSidebar({location, onClose}) {
             <motion.div
               initial={{x: 10, opacity: 0}}
               animate={{x: 0, opacity: 1}}
-              className="flex gap-1.5"
+              className="flex gap-2"
             >
               <div
-                className="px-2 py-0.5 rounded-md glass-panel border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[7px] font-black uppercase tracking-wider">
+                className="px-2.5 py-1 rounded-full border border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[8px] font-black uppercase tracking-widest shadow-neon-sm">
                 {displayLocation.category}
               </div>
-              <div
-                className="px-2 py-0.5 rounded-md glass-panel border-glass-border bg-glass-white text-text-muted text-[7px] font-black uppercase tracking-wider">
-                {displayLocation.is_public ? 'Public' : 'Private'}
-              </div>
+              {!displayLocation.is_public && (
+                <div
+                  className="px-2.5 py-1 rounded-full border border-glass-border bg-glass-white text-text-muted text-[8px] font-black uppercase tracking-widest">
+                  Private
+                </div>
+              )}
             </motion.div>
           </div>
 
@@ -326,41 +337,25 @@ export default function LocationSidebar({location, onClose}) {
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div
-              className="flex gap-3 items-start p-3 glass-panel border-glass-border bg-white/10 rounded-xl group hover:bg-white/20 transition-colors">
-              <PinIcon size={14} className="text-cyan-glow shrink-0 mt-0.5"/>
-              <div className="min-w-0">
-                <h4 className="text-[7px] font-black text-text-muted uppercase tracking-wider mb-0.5">Địa chỉ</h4>
-                <p
-                  className="text-[11px] text-text-primary font-bold leading-tight truncate">{displayLocation.address}</p>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3 text-text-secondary">
+              <div className="w-8 h-8 rounded-xl bg-cyan-glow/5 border border-cyan-glow/10 flex items-center justify-center shrink-0">
+                <PinIcon size={14} className="text-cyan-glow"/>
               </div>
+              <p className="text-[12px] font-medium leading-tight truncate">{displayLocation.address}</p>
             </div>
 
-            <div
-              className="flex gap-3 items-start p-3 glass-panel border-glass-border bg-white/10 rounded-xl group hover:bg-white/20 transition-colors">
-              <DateIcon size={14} className="text-sunset shrink-0 mt-0.5"/>
-              <div className="min-w-0">
-                <h4 className="text-[7px] font-black text-text-muted uppercase tracking-wider mb-0.5">Ngày đăng</h4>
-                <p className="text-[11px] text-text-primary font-bold leading-tight">
-                  {parseDBDate(displayLocation.created_at).toLocaleDateString('vi-VN')}
-                </p>
+            <div className="flex items-center gap-3 text-text-dim">
+              <div className="w-8 h-8 rounded-xl bg-sunset/5 border border-sunset/10 flex items-center justify-center shrink-0">
+                <DateIcon size={14} className="text-sunset"/>
               </div>
+              <p className="text-[12px] font-medium">
+                Đã đăng vào {parseDBDate(displayLocation.created_at).toLocaleDateString('vi-VN')}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 p-3.5 glass-panel border-glass-border bg-white/20 rounded-xl">
-            <div className="flex-1 flex flex-col gap-0.5 border-r border-glass-border">
-              <span className="text-[8px] font-black text-text-muted uppercase tracking-widest">Vĩ độ</span>
-              <span
-                className="text-[14px] font-mono text-cyan-glow font-bold">{Number(displayLocation.lat).toFixed(6)}°</span>
-            </div>
-            <div className="flex-1 flex flex-col gap-0.5 pl-4">
-              <span className="text-[8px] font-black text-text-muted uppercase tracking-widest">Kinh độ</span>
-              <span
-                className="text-[14px] font-mono text-cyan-glow font-bold">{Number(displayLocation.lng).toFixed(6)}°</span>
-            </div>
-          </div>
+          {/* Removed Lat/Lng block to reduce clutter */}
 
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -387,9 +382,16 @@ export default function LocationSidebar({location, onClose}) {
                     placeholder="Gửi tin nhắn..."
                     className="bg-transparent border-none outline-none flex-1 text-[12px] text-text-primary placeholder-text-dim py-2.5 font-medium"
                   />
-                  <button type="submit" disabled={!commentText.trim()}
-                          className="text-cyan-glow disabled:text-zinc-800 transition-all hover:scale-110 active:scale-90">
-                    <SendIcon size={18} className="drop-shadow-neon"/>
+                  <button 
+                    type="submit" 
+                    disabled={!commentText.trim() || isSubmittingComment}
+                    className="text-cyan-glow disabled:text-zinc-800 transition-all hover:scale-110 active:scale-90"
+                  >
+                    {isSubmittingComment ? (
+                      <SpinnerIcon size={18} className="animate-spin" />
+                    ) : (
+                      <SendIcon size={18} className="drop-shadow-neon"/>
+                    )}
                   </button>
                 </div>
               </motion.form>
@@ -453,7 +455,7 @@ export default function LocationSidebar({location, onClose}) {
           <div
             className="absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-map-bg/80 to-transparent pointer-events-none"></div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 sm:gap-4 items-stretch">
             <ActionButton
               loading={routeLoading}
               onClick={() => {
@@ -461,25 +463,24 @@ export default function LocationSidebar({location, onClose}) {
                   fetchRoute([pos.coords.longitude, pos.coords.latitude], [location.lng, location.lat]);
                 });
               }}
-              className="flex-[3] !py-3 gap-3 shadow-neon rounded-xl! group/btn overflow-hidden relative"
+              className="flex-1 sm:flex-[3] !py-3.5 gap-3 shadow-neon rounded-2xl! group/btn overflow-hidden relative"
             >
               <div
                 className="absolute inset-0 bg-linear-to-r from-white/0 via-white/5 to-white/0 -translate-x-full group-hover/btn:animate-[shimmer_2s_infinite]"></div>
-              <RouteIcon size={16}
-                         className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform"/>
-              <span className="uppercase text-[12px] font-black">Chỉ đường</span>
+              <RouteIcon size={18}
+                         className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform text-cyan-glow"/>
+              <span className="uppercase text-[13px] font-black tracking-widest">Chỉ đường</span>
             </ActionButton>
 
             <motion.button
               whileHover={{scale: 1.05, y: -2}}
               whileTap={{scale: 0.95}}
               onClick={() => toggleLike(displayLocation.id, user?.uid)}
-              className={`flex-1 flex items-center justify-center rounded-xl glass-panel border-glass-border transition-all duration-500 ${displayLocation.is_liked ? 'bg-sunset/10 text-sunset border-sunset/20 shadow-sunset' : 'text-text-muted hover:text-text-primary hover:bg-glass-white'}`}
+              className={`w-14 sm:w-auto sm:px-6 flex items-center justify-center rounded-2xl glass-panel border-glass-border transition-all duration-500 ${displayLocation.is_liked ? 'bg-sunset/10 text-sunset border-sunset/20 shadow-sunset' : 'text-text-muted hover:text-text-primary hover:bg-glass-white'}`}
             >
-              <LikeIcon size={20} fill={displayLocation.is_liked ? "currentColor" : "none"}
+              <LikeIcon size={24} fill={displayLocation.is_liked ? "currentColor" : "none"}
                         className={displayLocation.is_liked ? "drop-shadow-[0_0_8px_rgba(255,75,43,0.3)]" : ""}/>
             </motion.button>
-
           </div>
         </div>
       </GlassPanel>

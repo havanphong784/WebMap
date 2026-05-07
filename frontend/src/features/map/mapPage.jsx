@@ -393,7 +393,7 @@ export default function MapPage() {
             onChange={handlePhotoUpload}
           />
 
-          <div className="flex flex-col bg-obsidian gap-2 glass-panel p-2 rounded-2xl border-glass-border">
+          <div className="hidden sm:flex flex-col bg-obsidian gap-2 glass-panel p-2 rounded-2xl border-glass-border shadow-glass">
             <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={zoomIn}>
               <PlusIcon size={22} className="text-text-primary"/>
             </ActionButton>
