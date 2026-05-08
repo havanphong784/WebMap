@@ -11,6 +11,7 @@ import commentRoutes from "./routes/commentRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import achievementRoutes from "./routes/achievementRoutes.js";
 import followRoutes from "./routes/followRoutes.js";
+import weatherRoutes from "./routes/weatherRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +32,7 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/achievements", achievementRoutes);
 app.use("/api/follows", followRoutes);
+app.use("/api/weather", weatherRoutes);
 
 app.get("/health", (req, res) => {
   res.json({message: "Server Backend đang chạy !"});

@@ -38,7 +38,14 @@ import {
   Eye,
   EyeOff,
   Check,
-  UserPlus
+  UserPlus,
+  Cloud,
+  Sun,
+  Wind,
+  Droplets,
+  CloudRain,
+  CloudLightning,
+  Snowflake
 } from 'lucide-react';
 
 export {
@@ -81,6 +88,13 @@ export {
   Eye as EyeIcon,
   EyeOff as EyeOffIcon,
   Check as CheckIcon,
-  UserPlus as FollowIcon
+  UserPlus as FollowIcon,
+  Cloud as CloudIcon,
+  Sun as SunIcon,
+  Wind as WindIcon,
+  Droplets as DropletsIcon,
+  CloudRain as RainIcon,
+  CloudLightning as LightningIcon,
+  Snowflake as SnowIcon
 };
 

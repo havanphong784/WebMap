@@ -205,3 +205,14 @@
 .mapboxgl-popup-tip {
     display: none !important;
 }
+
+/* Weather Animations */
+@keyframes rain-fall {
+    0% { transform: translateY(-100px) rotate(15deg); }
+    100% { transform: translateY(110vh) rotate(15deg); }
+}
+
+@keyframes cloud-float {
+    from { background-position: 0% 0%; }
+    to { background-position: 100% 100%; }
+}

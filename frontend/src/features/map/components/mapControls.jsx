@@ -1,6 +1,7 @@
 import { memo, useRef } from "react";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import {
+  CloudIcon,
   EyeIcon,
   LocateIcon,
   MinusIcon,
@@ -19,7 +20,9 @@ const MapControls = memo(({
   setViewMode, 
   onZoomIn, 
   onZoomOut,
-  fileInputRef
+  fileInputRef,
+  isVisible,
+  onToggleWeather
 }) => {
   return (
     <div className="absolute right-4 top-1/2 -translate-y-1/2 sm:right-6 z-100 flex flex-col gap-3 sm:gap-4">
@@ -30,6 +33,15 @@ const MapControls = memo(({
         title={viewMode === 'full' ? "Chế độ Thu nhỏ" : "Chế độ Đầy đủ"}
       >
         {viewMode === 'full' ? <PinIcon size={22} className="text-cyan-glow"/> : <EyeIcon size={22} className="text-text-primary"/>}
+      </ActionButton>
+
+      <ActionButton
+        variant="icon"
+        onClick={onToggleWeather}
+        className={isVisible ? "bg-cyan-glow/20 border-cyan-glow" : "bg-obsidian"}
+        title="Bật/Tắt Thời tiết"
+      >
+        <CloudIcon size={22} className={isVisible ? "text-cyan-glow" : "text-text-dim"} />
       </ActionButton>
 
       <ActionButton

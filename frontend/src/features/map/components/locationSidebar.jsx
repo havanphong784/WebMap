@@ -19,7 +19,8 @@ import {
   SendIcon,
   ShareIcon,
   SpinnerIcon,
-  TagIcon
+  TagIcon,
+  CloudIcon
 } from "../../../shared/components/common/icons.jsx";
 import {parseDBDate} from "../../../shared/utils/dateUtils.js";
 import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
@@ -40,6 +41,8 @@ export default function LocationSidebar({location, onClose}) {
   const [toast, setToast] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [localWeather, setLocalWeather] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
   const scrollRef = useRef(null);
 
   const showToast = (msg) => {
@@ -106,6 +109,23 @@ export default function LocationSidebar({location, onClose}) {
     };
     fetchFollowStatus();
   }, [user?.uid, displayLocation?.user_id]);
+
+  useEffect(() => {
+    if (location) {
+      const fetchLocalWeather = async () => {
+        setWeatherLoading(true);
+        try {
+          const res = await apiClient.get(`/weather?lat=${location.lat}&lng=${location.lng}`);
+          if (res.success) setLocalWeather(res.data);
+        } catch (e) {
+          console.error("Lỗi sidebar weather:", e);
+        } finally {
+          setWeatherLoading(false);
+        }
+      };
+      fetchLocalWeather();
+    }
+  }, [location]);
 
   const handleToggleFollow = async (e) => {
     e.stopPropagation();
@@ -380,6 +400,17 @@ export default function LocationSidebar({location, onClose}) {
                 Đã đăng vào {parseDBDate(displayLocation.created_at).toLocaleDateString('vi-VN')}
               </p>
             </div>
+
+            {localWeather && (
+              <div className="flex items-center gap-3 text-cyan-glow animate-in fade-in slide-in-from-left-2">
+                <div className="w-8 h-8 rounded-xl bg-cyan-glow/5 border border-cyan-glow/10 flex items-center justify-center shrink-0">
+                  <CloudIcon size={14} className="text-cyan-glow" />
+                </div>
+                <p className="text-[12px] font-bold lowercase first-letter:uppercase">
+                  {Math.round(localWeather.main.temp)}°C - {localWeather.weather[0].description}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-6">
