@@ -39,9 +39,11 @@ const DiscoveryCard = memo(({post, index, navigate, onLike}) => {
       className="break-inside-avoid relative group cursor-pointer glass-panel rounded-3xl border-glass-border overflow-hidden hover:border-cyan-glow/20 transition-all duration-500 mb-6"
       onClick={() => navigate("/", {state: {focusLocation: post}})}
     >
-      <div className="relative overflow-hidden rounded-3xl">
+      <div className="relative overflow-hidden rounded-3xl aspect-[4/5]">
         {!imageLoaded && (
-          <Skeleton width="100%" height={300} borderRadius={24}/>
+          <div className="absolute inset-0">
+            <Skeleton width="100%" height="100%" borderRadius={24}/>
+          </div>
         )}
         {post.image_url ? (
           <img
@@ -50,10 +52,10 @@ const DiscoveryCard = memo(({post, index, navigate, onLike}) => {
             loading="lazy"
             decoding="async"
             onLoad={() => setImageLoaded(true)}
-            className={`w-full rounded-3xl grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ${imageLoaded ? 'opacity-100 block' : 'opacity-0 absolute inset-0'}`}
+            className={`w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ${imageLoaded ? 'opacity-100 block' : 'opacity-0 absolute inset-0'}`}
           />
         ) : (
-          <div className="w-full h-64 bg-obsidian-soft/30 flex flex-col items-center justify-center gap-3 rounded-3xl"
+          <div className="w-full h-full bg-obsidian-soft/30 flex flex-col items-center justify-center gap-3 rounded-3xl"
                onMouseEnter={() => setImageLoaded(true)}>
             <div
               className="w-12 h-12 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center">

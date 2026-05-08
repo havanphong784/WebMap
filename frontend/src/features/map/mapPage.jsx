@@ -117,9 +117,9 @@ export default function MapPage() {
       flyToLocation(lng, lat, 17);
 
       if (locationId) {
-        const found = locations.find(l => String(l.id) === locationId);
-        if (found) {
-          setActiveLocation(found);
+        const detail = await fetchLocationDetail(locationId, user?.uid);
+        if (detail) {
+          setActiveLocation(detail);
           setInfoClicked(null);
           return;
         }
@@ -131,7 +131,7 @@ export default function MapPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [isMapReady, routerLocation.search, flyToLocation, locations]);
+  }, [isMapReady, routerLocation.search, flyToLocation, fetchLocationDetail, user?.uid]);
 
   useEffect(() => {
     const coordinates = routeData?.coordinates;
@@ -276,6 +276,8 @@ export default function MapPage() {
   const mapCanvas = useMemo(() => (
     <Map ref={mapRef}
       mapStyle={colorfull}
+      minZoom={5}
+      maxZoom={18}
       onLoad={() => {
         setIsMapReady(true);
         handleMapChange();
@@ -345,7 +347,12 @@ export default function MapPage() {
         {activeLocation && (
           <LocationSidebar
             location={activeLocation}
-            onClose={() => setActiveLocation(null)}
+            onClose={() => {
+              setActiveLocation(null);
+              if (routerLocation.search) {
+                navigate('/', { replace: true });
+              }
+            }}
           />
         )}
       </AnimatePresence>

@@ -61,16 +61,18 @@ export const createLocationEntry = async (req, res) => {
         }
       }
 
-      // Notify followers
-      const followers = await getFollowers(saved.user_id);
-      for (const f of followers) {
-        await createNotification({
-          recipientId: f.firebase_uid,
-          senderId: saved.user_id,
-          type: "NEW_POST",
-          message: `đã đăng một địa điểm mới: ${saved.name}`,
-          locationId: saved.id
-        });
+      // Notify followers ONLY if public
+      if (saved.is_public) {
+        const followers = await getFollowers(saved.user_id);
+        for (const f of followers) {
+          await createNotification({
+            recipientId: f.firebase_uid,
+            senderId: saved.user_id,
+            type: "NEW_POST",
+            message: `đã đăng một địa điểm mới: ${saved.name}`,
+            locationId: saved.id
+          });
+        }
       }
     }
 

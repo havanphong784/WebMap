@@ -303,7 +303,7 @@ export default function ProfilePage() {
                           <button
                             onClick={(e) => handleDeleteLocation(e, loc.id)}
                             disabled={deletingId === loc.id}
-                            className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-sunset/80 hover:bg-sunset text-white p-2 rounded-xl text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm disabled:opacity-50"
+                            className="absolute top-4 left-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 bg-sunset/90 sm:bg-sunset/80 hover:bg-sunset text-white p-2.5 sm:p-2 rounded-xl text-[10px] font-bold uppercase tracking-wider backdrop-blur-md sm:backdrop-blur-sm disabled:opacity-50 z-20"
                           >
                             {deletingId === loc.id ? '...' : 'Xóa'}
                           </button>
