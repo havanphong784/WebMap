@@ -49,7 +49,7 @@ function App() {
         clearInterval(notifInterval);
       };
     }
-  }, [user?.uid]);
+  }, [user?.uid, sendHeartbeat, fetchNotifications]);
 
   return (
     <div

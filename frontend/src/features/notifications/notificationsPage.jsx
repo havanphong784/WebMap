@@ -4,7 +4,7 @@ import {useAuthStore} from "../auth/context/authContext.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import {CheckIcon, CommentIcon, FollowIcon, LikeIcon, MapIcon, PinIcon} from "../../shared/components/common/icons.jsx";
 import {useNotificationStore} from "./store/useNotificationStore.jsx";
-import {useEffect} from "react";
+import {useCallback, useEffect, useMemo} from "react";
 import {formatFullTime} from "../../shared/utils/dateUtils.js";
 import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import UserBadge from "../../shared/components/UserBadge.jsx";
@@ -53,7 +53,7 @@ export default function NotificationsPage() {
     }
   }, [user, fetchNotifications]);
 
-  const formatTime = (dateStr) => formatFullTime(dateStr);
+  const formatTime = useCallback((dateStr) => formatFullTime(dateStr), []);
 
   return (
     <div className="min-h-screen bg-map-bg pb-32 overflow-y-auto no-scrollbar">

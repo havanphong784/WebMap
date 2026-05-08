@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {memo, useCallback, useEffect, useMemo, useState} from "react";
 import {AnimatePresence, motion} from "framer-motion";
 import {useNavigate} from "react-router-dom";
 import {useAuthStore} from "../auth/context/authContext.jsx";
@@ -17,7 +17,7 @@ import {
 import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import UserBadge from "../../shared/components/UserBadge.jsx";
 
-const DiscoveryCard = ({post, index, navigate, onLike}) => {
+const DiscoveryCard = memo(({post, index, navigate, onLike}) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const postUser = {
@@ -115,7 +115,9 @@ const DiscoveryCard = ({post, index, navigate, onLike}) => {
       </div>
     </motion.div>
   );
-};
+});
+
+DiscoveryCard.displayName = "DiscoveryCard";
 
 const DiscoveryFeed = () => {
   const navigate = useNavigate();
@@ -152,23 +154,23 @@ const DiscoveryFeed = () => {
     }
   }, [fetchTrending, fetchByTag, fetchFollowing, activeCategory, user?.uid, feedType]);
 
-  const categories = ['All', ...tags];
+  const categories = useMemo(() => ['All', ...tags], [tags]);
 
-  const handleToggleLike = (e, post) => {
+  const handleToggleLike = useCallback((e, post) => {
     e.stopPropagation();
     if (!user) {
       navigate('/login');
       return;
     }
     toggleLike(post.id, user.uid);
-  };
+  }, [user, navigate, toggleLike]);
 
   const currentLocationsList = feedType === 'global' ? trendingLocations : followingLocations;
 
-  const filteredPosts = currentLocationsList.filter(p => {
+  const filteredPosts = useMemo(() => currentLocationsList.filter(p => {
     const matchSearch = !searchQuery || p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.address?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchSearch;
-  });
+  }), [currentLocationsList, searchQuery]);
 
   return (
     <div className="min-h-screen bg-map-bg pt-4 sm:pt-6 pb-32 px-4 sm:px-6 overflow-y-auto no-scrollbar">

@@ -1,9 +1,10 @@
 import {useEffect, useState} from "react";
 import {useAuthStore} from "../../auth/context/authContext.jsx";
 import {useLocationStore} from "../store/useLocationsStore.jsx";
-import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
+import {getDownloadURL, ref, uploadBytesResumable} from "firebase/storage";
 import {storage} from "../../../config/firebase.js";
 import {getAddress} from "../utils/geocoding.js";
+import {compressImage} from "../../../shared/utils/imageUtils.js";
 import {
   CafeIcon,
   CloseIcon,
@@ -48,10 +49,11 @@ export default function LocationFormModal({point, onClose}) {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     if (point.imageFile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setImageFile(point.imageFile);
       setPreviewUrl(URL.createObjectURL(point.imageFile));
     }
@@ -123,13 +125,40 @@ export default function LocationFormModal({point, onClose}) {
     if (!user) return addToast("Vui lòng đăng nhập!", "error");
 
     setIsUploading(true);
+    setUploadProgress(0);
     let finalImageUrl = null;
 
     try {
       if (imageFile) {
-        const imageRef = ref(storage, `locations/${user.uid}/${Date.now()}_${imageFile.name}`);
-        await uploadBytes(imageRef, imageFile);
-        finalImageUrl = await getDownloadURL(imageRef);
+        setIsCompressing(true);
+        const compressedFile = await compressImage(imageFile);
+        setIsCompressing(false);
+        
+        const imageRef = ref(storage, `locations/${user.uid}/${Date.now()}.webp`);
+        const metadata = {
+          contentType: 'image/webp',
+          cacheControl: 'public,max-age=31536000',
+        };
+
+        const uploadTask = uploadBytesResumable(imageRef, compressedFile, metadata);
+
+        await new Promise((resolve, reject) => {
+          uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadProgress(Math.round(progress));
+            },
+            (error) => {
+              console.error("Upload error:", error);
+              reject(error);
+            },
+            async () => {
+              finalImageUrl = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve();
+            }
+          );
+        });
       }
 
       await addLocation({
@@ -152,6 +181,8 @@ export default function LocationFormModal({point, onClose}) {
       addToast("Có lỗi xảy ra, vui lòng thử lại!", "error");
     } finally {
       setIsUploading(false);
+      setIsCompressing(false);
+      setUploadProgress(0);
     }
   };
 
@@ -385,12 +416,30 @@ export default function LocationFormModal({point, onClose}) {
               <ActionButton
                 type="submit"
                 disabled={isLoading || isUploading}
-                className="flex-1 !py-4 gap-2 rounded-xl"
+                className="flex-1 !py-4 gap-2 rounded-xl relative overflow-hidden group"
               >
+                {isUploading && !isCompressing && (
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${uploadProgress}%` }}
+                    transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+                    className="absolute inset-0 bg-white/20 pointer-events-none"
+                  />
+                )}
+                
                 {isLoading || isUploading ? (
-                  <SpinnerIcon size={18} className="animate-spin"/>
-                ) : <SendIcon size={18}/>}
-                <span className="uppercase tracking-widest text-xs">Đăng Review</span>
+                  <div className="flex items-center gap-2 z-10">
+                    <SpinnerIcon size={18} className="animate-spin text-white"/>
+                    <span className="uppercase tracking-widest text-[10px] font-black">
+                      {isCompressing ? 'Đang nén ảnh...' : isUploading ? `Đang tải... ${uploadProgress}%` : 'Đang lưu...'}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 z-10">
+                    <SendIcon size={18}/>
+                    <span className="uppercase tracking-widest text-xs">Đăng Review</span>
+                  </div>
+                )}
               </ActionButton>
             </div>
           </form>

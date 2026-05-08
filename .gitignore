@@ -15,6 +15,7 @@ yarn-error.log*
 # Thư mục của trình soạn thảo code
 .vscode/
 .idea/
+.gemini/
 skills/
 
 *.md

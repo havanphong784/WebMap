@@ -1,29 +1,30 @@
+import { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { NavLink } from 'react-router-dom';
 import { useAuthStore } from "../../../features/auth/context/authContext.jsx";
 import { MapIcon, DiscoverIcon, NotificationIcon, UserIcon } from "../common/icons.jsx";
 import { useNotificationStore } from "../../../features/notifications/store/useNotificationStore.jsx";
 
-const BottomNav = () => {
+const BottomNav = memo(() => {
   const { user, unreadAchievements } = useAuthStore();
   const { unreadCount } = useNotificationStore();
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { icon: MapIcon, path: '/', label: 'Bản đồ' },
     { icon: DiscoverIcon, path: '/discover', label: 'Khám phá' },
-    { 
-      icon: NotificationIcon, 
-      path: '/notifications', 
+    {
+      icon: NotificationIcon,
+      path: '/notifications',
       label: 'Thông báo',
-      badge: unreadCount > 0 ? unreadCount : null 
+      badge: unreadCount > 0 ? unreadCount : null
     },
-    { 
-      icon: UserIcon, 
-      path: user ? `/profile/${user.uid}` : '/login', 
+    {
+      icon: UserIcon,
+      path: user ? `/profile/${user.uid}` : '/login',
       label: user ? 'Hồ sơ' : 'Đăng nhập',
       badge: unreadAchievements > 0 ? unreadAchievements : null
     },
-  ];
+  ], [user, unreadCount, unreadAchievements]);
 
   return (
     <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[1000] w-[95%] sm:w-[80%] max-w-lg">
@@ -41,7 +42,7 @@ const BottomNav = () => {
               <>
                 <item.icon size={20} className={isActive ? 'drop-shadow-[0_0_8px_rgba(0,245,255,0.5)]' : 'transition-transform group-hover:scale-110'} />
                 {item.badge && (
-                  <motion.span 
+                  <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     className="absolute top-1 right-2 w-4 h-4 bg-sunset text-white text-[9px] font-black rounded-full flex items-center justify-center border border-obsidian shadow-sunset">
@@ -64,7 +65,9 @@ const BottomNav = () => {
       </nav>
     </div>
   );
-};
+});
+
+BottomNav.displayName = "BottomNav";
 
 export default BottomNav;
 

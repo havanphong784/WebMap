@@ -1,3 +1,4 @@
+import {memo} from "react";
 import {motion} from "framer-motion";
 import {CheckIcon, DiscoverIcon, PhotoIcon, StarIcon} from "../../../shared/components/common/icons.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
@@ -44,7 +45,7 @@ const rarityStyles = {
   }
 };
 
-export default function AchievementList({achievements, dailyTasks, loading}) {
+const AchievementList = memo(function AchievementList({achievements, dailyTasks, loading}) {
   if (loading) return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
       {[1, 2, 3, 4].map(i => (
@@ -199,4 +200,8 @@ export default function AchievementList({achievements, dailyTasks, loading}) {
       </section>
     </div>
   );
-}
+});
+
+AchievementList.displayName = "AchievementList";
+
+export default AchievementList;

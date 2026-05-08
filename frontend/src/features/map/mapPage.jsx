@@ -319,8 +319,6 @@ export default function MapPage() {
     locations,
   ]);
 
-  console.log("render")
-
   return (
     <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
       {mapCanvas}

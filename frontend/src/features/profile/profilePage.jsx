@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
 import {useAuthStore} from "../auth/context/authContext.jsx";
 import {useLocationStore} from "../map/store/useLocationsStore.jsx";
@@ -63,20 +63,20 @@ export default function ProfilePage() {
     fetchProfileData();
   }, [fetchProfileData]);
 
-  const handleToggleFollow = async () => {
+  const handleToggleFollow = useCallback(async () => {
     if (!currentUser) return navigate('/login');
     setIsFollowLoading(true);
     try {
       const res = await apiClient.post('/follows/toggle', { follower_id: currentUser.uid, followed_id: uid });
       if (res.success) setIsFollowing(res.data.followed);
     } catch (err) {
-      console.error("Lỗi toggle follow", err);
+      console.error(err);
     } finally {
       setIsFollowLoading(false);
     }
-  };
+  }, [currentUser, uid, navigate]);
 
-  const handleDeleteLocation = async (e, locId) => {
+  const handleDeleteLocation = useCallback(async (e, locId) => {
     e.stopPropagation();
     if (!window.confirm('Bạn có chắc muốn xóa địa điểm này?')) return;
     setDeletingId(locId);
@@ -87,13 +87,19 @@ export default function ProfilePage() {
     } finally {
       setDeletingId(null);
     }
-  };
+  }, [removeLocation, currentUser?.uid]);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login', {replace: true});
   };
 
+
+  const stats = useMemo(() => [
+    {label: 'Bài viết', value: profileUser?.total_posts || 0, icon: PhotoIcon},
+    {label: 'Kinh nghiệm', value: profileUser?.xp || 0, icon: StarIcon},
+    {label: 'Lượt thích', value: profileUser?.total_likes_received || 0, icon: LikeIcon, color: 'text-sunset'},
+  ], [profileUser?.total_posts, profileUser?.xp, profileUser?.total_likes_received]);
 
   if (!loading && !profileUser) return (
     <div className="min-h-screen bg-map-bg flex flex-col items-center justify-center space-y-6">
@@ -104,11 +110,6 @@ export default function ProfilePage() {
   );
 
   const isOwnProfile = currentUser?.uid === uid;
-  const stats = [
-    {label: 'Bài viết', value: profileUser?.total_posts || 0, icon: PhotoIcon},
-    {label: 'Kinh nghiệm', value: profileUser?.xp || 0, icon: StarIcon},
-    {label: 'Lượt thích', value: profileUser?.total_likes_received || 0, icon: LikeIcon, color: 'text-sunset'},
-  ];
 
   return (
     <div className="min-h-screen bg-map-bg text-text-primary pb-32">

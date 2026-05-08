@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Marker } from "react-map-gl/maplibre";
-import LocationFormModal from "./locationFormModal.jsx";
+const LocationFormModal = lazy(() => import("./locationFormModal.jsx"));
 import { useLocationStore } from "../store/useLocationsStore.jsx";
 import { AnimatePresence, motion } from "framer-motion";
 import { CloseIcon, PinIcon, PlusIcon, RouteIcon, SpinnerIcon } from "../../../shared/components/common/icons.jsx";
@@ -20,11 +20,9 @@ export default function ClickedMarker({ point, setPoint }) {
     }
   }, [point]);
 
-  if (!point) return null;
-
-  const handleGetDirections = (e) => {
+  const handleGetDirections = useCallback((e) => {
     e.stopPropagation();
-    if (routeLoading) return;
+    if (routeLoading || !point) return;
 
     const end = [point.lng, point.lat];
 
@@ -43,12 +41,13 @@ export default function ClickedMarker({ point, setPoint }) {
       },
       (error) => {
         setRouteLoading(false);
-        console.error("Lỗi định vị:", error);
         addToast("Không thể lấy vị trí của bạn. Vui lòng cho phép truy cập vị trí.", "error");
       },
       { timeout: 5000, enableHighAccuracy: true }
     );
-  };
+  }, [point, routeLoading, userLocation, fetchRoute, setPoint, setRouteLoading, addToast]);
+
+  if (!point) return null;
 
   return (
     <>
@@ -127,13 +126,15 @@ export default function ClickedMarker({ point, setPoint }) {
       </Marker>
 
       {isFormOpen && (
-        <LocationFormModal
-          point={point}
-          onClose={() => {
-            setIsFormOpen(false);
-            setPoint(null);
-          }}
-        />
+        <Suspense fallback={null}>
+          <LocationFormModal
+            point={point}
+            onClose={() => {
+              setIsFormOpen(false);
+              setPoint(null);
+            }}
+          />
+        </Suspense>
       )}
     </>
   );
