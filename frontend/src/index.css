@@ -111,6 +111,27 @@
     transition: all 0.3s ease;
 }
 
+@utility page-shell {
+    min-height: 100vh;
+    background-color: var(--color-map-bg);
+    color: var(--color-text-primary);
+    padding-bottom: 8rem;
+    overflow-y: auto;
+}
+
+@utility page-container {
+    width: 100%;
+    max-width: 64rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+    .page-container {
+        padding-inline: 1.5rem;
+    }
+}
+
 @utility no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -215,4 +236,4 @@
 @keyframes cloud-float {
     from { background-position: 0% 0%; }
     to { background-position: 100% 100%; }
-}
+}

@@ -4,45 +4,23 @@ import LocationCard from "./locationCard.jsx";
 const MapMarkers = memo(({ locations, viewMode, onLocationClick, zoom }) => {
   if (zoom < 13) return null;
 
-  // Hàm tính khoảng cách giữa 2 điểm (mét) - Thuật toán Haversine
-  const getDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Bán kính Trái đất tính bằng mét
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
-
-  // Gom nhóm các địa điểm trong bán kính 5m
+  // Gom nhóm các địa điểm trong bán kính ~11m bằng grid-based clustering O(N)
   const groupedLocations = useMemo(() => {
-    const groups = [];
-    
+    const grid = new Map();
+    const PRECISION = 0.0001; // ~11m tại xích đạo
+
     locations.forEach(loc => {
-      let added = false;
-      // Duyệt qua các nhóm đã tạo để tìm điểm gần nhất
-      for (let group of groups) {
-        const dist = getDistance(
-          Number(loc.lat), Number(loc.lng), 
-          Number(group[0].lat), Number(group[0].lng)
-        );
-        
-        if (dist <= 10) { // Nếu khoảng cách <= 10m thì gom vào nhóm
-          group.push(loc);
-          added = true;
-          break;
-        }
+      const latIdx = Math.round(Number(loc.lat) / PRECISION);
+      const lngIdx = Math.round(Number(loc.lng) / PRECISION);
+      const key = `${latIdx},${lngIdx}`;
+
+      if (!grid.has(key)) {
+        grid.set(key, []);
       }
-      
-      if (!added) {
-        groups.push([loc]);
-      }
+      grid.get(key).push(loc);
     });
 
-    return groups;
+    return Array.from(grid.values());
   }, [locations]);
 
   return groupedLocations.slice(0, 80).map((group) => {

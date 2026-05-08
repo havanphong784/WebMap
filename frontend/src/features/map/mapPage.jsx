@@ -64,12 +64,14 @@ export default function MapPage() {
   const {user} = useAuthStore();
   const [currentZoom, setCurrentZoom] = useState(13);
   const [activeLocation, setActiveLocation] = useState(null);
-  const {fetchLocationDetail} = useLocationStore();
+  const fetchLocationDetail = useLocationStore(state => state.fetchLocationDetail);
   const [isLocating, setIsLocating] = useState(false);
   const [isExtractingPhoto, setIsExtractingPhoto] = useState(false);
   const fileInputRef = useRef(null);
   const clickThrottleRef = useRef(false);
-  const {fetchWeather, isVisible, toggleVisibility} = useWeatherStore();
+  const fetchWeather = useWeatherStore(state => state.fetchWeather);
+  const isVisible = useWeatherStore(state => state.isVisible);
+  const toggleVisibility = useWeatherStore(state => state.toggleVisibility);
 
   const flyToLocation = useCallback((lng, lat, zoom = 16, duration = 1600) => {
     if (!mapRef.current) return;

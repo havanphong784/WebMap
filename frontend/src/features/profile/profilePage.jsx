@@ -112,7 +112,7 @@ export default function ProfilePage() {
   const isOwnProfile = currentUser?.uid === uid;
 
   return (
-    <div className="min-h-screen bg-map-bg text-text-primary pb-32">
+    <div className="page-shell text-text-primary">
       <div className="relative h-64 w-full overflow-hidden">
         <motion.img
           initial={{scale: 1.2}}

@@ -2,45 +2,14 @@ import {motion} from "framer-motion";
 import {useNavigate} from "react-router-dom";
 import {useAuthStore} from "../auth/context/authContext.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
-import {CheckIcon, CommentIcon, FollowIcon, LikeIcon, MapIcon, PinIcon} from "../../shared/components/common/icons.jsx";
+import {CheckIcon, MapIcon} from "../../shared/components/common/icons.jsx";
 import {useNotificationStore} from "./store/useNotificationStore.jsx";
-import {useCallback, useEffect, useMemo} from "react";
+import {useCallback, useEffect} from "react";
 import {formatFullTime} from "../../shared/utils/dateUtils.js";
 import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import UserBadge from "../../shared/components/UserBadge.jsx";
-
-const typeConfig = {
-  LIKE: {
-    icon: LikeIcon,
-    color: 'text-white',
-    bg: 'bg-pink-500 border-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.4)]',
-    label: 'THÍCH'
-  },
-  COMMENT: {
-    icon: CommentIcon,
-    color: 'text-white',
-    bg: 'bg-cyan-glow border-cyan-glow/50 shadow-[0_0_15px_rgba(0,243,255,0.4)]',
-    label: 'BÌNH LUẬN'
-  },
-  DISCOVERY: {
-    icon: PinIcon,
-    color: 'text-emerald',
-    bg: 'bg-emerald/20 border-emerald/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]',
-    label: 'KHÁM PHÁ'
-  },
-  FOLLOW: {
-    icon: FollowIcon,
-    color: 'text-white',
-    bg: 'bg-sunset border-sunset/50 shadow-[0_0_15px_rgba(255,75,43,0.4)]',
-    label: 'THEO DÕI'
-  },
-  NEW_POST: {
-    icon: MapIcon,
-    color: 'text-purple-400',
-    bg: 'bg-purple-500/20 border-purple-500/40 shadow-[0_0_10px_rgba(168,85,247,0.3)]',
-    label: 'BÀI VIẾT MỚI'
-  },
-};
+import PageShell from "../../shared/components/layout/pageShell.jsx";
+import {notificationTypeConfig} from "./config/notificationTypeConfig.js";
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
@@ -56,7 +25,7 @@ export default function NotificationsPage() {
   const formatTime = useCallback((dateStr) => formatFullTime(dateStr), []);
 
   return (
-    <div className="min-h-screen bg-map-bg pb-32 overflow-y-auto no-scrollbar">
+    <PageShell>
       <div className="sticky top-0 z-10 bg-obsidian/90 backdrop-blur-xl border-b border-glass-border px-6 py-5">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div>
@@ -102,7 +71,7 @@ export default function NotificationsPage() {
             ))}
           </SkeletonTheme>
         ) : notifications.map((notif, i) => {
-          const config = typeConfig[notif.type] || typeConfig.LIKE;
+          const config = notificationTypeConfig[notif.type] || notificationTypeConfig.LIKE;
           const Icon = config.icon;
           return (
             <motion.div
@@ -186,6 +155,6 @@ export default function NotificationsPage() {
           </div>
         )}
       </div>
-    </div>
+    </PageShell>
   );
 }
