@@ -1,8 +1,8 @@
-import {useMemo} from "react";
+import {useMemo, memo} from "react";
 import {Layer, Source} from "react-map-gl/maplibre";
 import { useLocationStore } from "../store/useLocationsStore.jsx";
 
-export default function ClusterLocations() {
+const ClusterLocations = memo(() => {
   const locations = useLocationStore(state => state.locations);
 
   const geoJsonData = useMemo(() => ({
@@ -65,5 +65,9 @@ export default function ClusterLocations() {
       />
     </Source>
   );
-}
+});
+
+ClusterLocations.displayName = "ClusterLocations";
+
+export default ClusterLocations;
 

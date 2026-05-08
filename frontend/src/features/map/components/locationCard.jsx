@@ -1,9 +1,9 @@
-import {Marker} from "react-map-gl/maplibre";
-import {memo, useState} from "react";
-import {AnimatePresence, motion} from "framer-motion";
-import {StarIcon} from "../../../shared/components/common/icons.jsx";
+import { Marker } from "react-map-gl/maplibre";
+import { memo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { StarIcon } from "../../../shared/components/common/icons.jsx";
 
-const LocationCard = memo(({location, onClick, viewMode = 'mini'}) => {
+const LocationCard = memo(({ location, onClick, viewMode = 'mini' }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -14,7 +14,7 @@ const LocationCard = memo(({location, onClick, viewMode = 'mini'}) => {
       longitude={Number(location.lng)}
       latitude={Number(location.lat)}
       anchor="bottom"
-      style={{zIndex: isExpanded ? 100 : 1}}
+      style={{ zIndex: isHovered ? 2000 : (isExpanded ? 100 : 1) }}
       onClick={(e) => {
         e.originalEvent.stopPropagation();
         onClick(location);
@@ -29,7 +29,7 @@ const LocationCard = memo(({location, onClick, viewMode = 'mini'}) => {
         }}
         className="relative cursor-pointer"
       >
-        <motion.v
+        <motion.div
           layout
           initial={false}
           animate={{
@@ -60,7 +60,7 @@ const LocationCard = memo(({location, onClick, viewMode = 'mini'}) => {
                 </>
               ) : (
                 <div className="w-full h-full bg-cyan-glow/10 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 bg-cyan-glow rounded-full shadow-neon animate-pulse"/>
+                  <div className="w-1.5 h-1.5 bg-cyan-glow rounded-full shadow-neon animate-pulse" />
                 </div>
               )}
             </div>
@@ -68,10 +68,10 @@ const LocationCard = memo(({location, onClick, viewMode = 'mini'}) => {
             <AnimatePresence>
               {isExpanded && (
                 <motion.div
-                  initial={{opacity: 0, y: 10}}
-                  animate={{opacity: 1, y: 0}}
-                  exit={{opacity: 0, y: 5}}
-                  transition={{duration: 0.3}}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 5 }}
+                  transition={{ duration: 0.3 }}
                   className="px-1"
                 >
                   <h4
@@ -82,7 +82,7 @@ const LocationCard = memo(({location, onClick, viewMode = 'mini'}) => {
                     <div className="flex items-center gap-0.5">
                       {[...Array(5)].map((_, i) => (
                         <StarIcon key={i} size={9}
-                                  className={i < location.rating ? "text-text-primary fill-text-primary" : "text-white/10"}/>
+                          className={i < location.rating ? "text-text-primary fill-text-primary" : "text-white/10"} />
                       ))}
                     </div>
                     <span
@@ -98,8 +98,8 @@ const LocationCard = memo(({location, onClick, viewMode = 'mini'}) => {
           <div className={`
             absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-obsidian border-b border-r border-glass-border rotate-45 transition-opacity duration-300
             ${isExpanded ? 'opacity-100' : 'opacity-0'}
-          `}/>
-        </motion.v>
+          `} />
+        </motion.div>
 
         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 flex items-center justify-center">
           <div className="w-2 h-2 bg-cyan-glow rounded-full shadow-neon ring-4 ring-cyan-glow/10"></div>

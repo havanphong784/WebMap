@@ -1,7 +1,8 @@
 import { Layer, Source } from "react-map-gl/maplibre";
 import { useLocationStore } from "../store/useLocationsStore.jsx";
+import { memo } from "react";
 
-export default function RouteLayer() {
+const RouteLayer = memo(() => {
   const routeData = useLocationStore(state => state.routeData);
 
   if (!routeData) return null;
@@ -27,5 +28,9 @@ export default function RouteLayer() {
       />
     </Source>
   );
-}
+});
+
+RouteLayer.displayName = "RouteLayer";
+
+export default RouteLayer;
 
