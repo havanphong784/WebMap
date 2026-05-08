@@ -1,5 +1,5 @@
 import {AnimatePresence, motion} from "framer-motion";
-import {useCallback, useEffect, useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useLocationStore} from "../store/useLocationsStore.jsx";
 import {useAuthStore} from "../../auth/context/authContext.jsx";
@@ -36,13 +36,12 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
-  const [loadingComments, setLoadingComments] = useState(false);
+  const [loadingComments, setLoadingComments] = useState(true);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [toast, setToast] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [localWeather, setLocalWeather] = useState(null);
-  const [weatherLoading, setWeatherLoading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollRef = useRef(null);
 
@@ -63,10 +62,10 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
   };
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/?lat=${location.lat}&lng=${location.lng}&locationId=${location.id}`;
+    const shareUrl = `${window.location.origin}/?lat=${displayLocation.lat}&lng=${displayLocation.lng}&locationId=${displayLocation.id}`;
     const shareData = {
-      title: location.name,
-      text: `Khám phá địa điểm "${location.name}" trên Aether Geo!`,
+      title: displayLocation.name,
+      text: `Khám phá địa điểm "${displayLocation.name}" trên Aether Geo!`,
       url: shareUrl,
     };
     try {
@@ -84,24 +83,32 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
     }
   };
 
-  const fetchComments = useCallback(async (silent = false) => {
-    if (!location?.id) return;
-    if (!silent) setLoadingComments(true);
-    try {
-      const result = await apiClient.get(`/comments/${location.id}/comments`);
-      if (result.success) setComments(result.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingComments(false);
-    }
-  }, [location]);
-
   useEffect(() => {
-    if (displayLocation?.id) {
-      fetchComments();
-    }
-  }, [fetchComments, displayLocation?.id]);
+    if (!displayLocation?.id) return;
+
+    let cancelled = false;
+
+    const loadComments = async () => {
+      try {
+        const result = await apiClient.get(`/comments/${displayLocation.id}/comments`);
+        if (!cancelled && result.success) {
+          setComments(result.data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) {
+          setLoadingComments(false);
+        }
+      }
+    };
+
+    loadComments();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [displayLocation?.id]);
 
   useEffect(() => {
     const fetchFollowStatus = async () => {
@@ -119,14 +126,11 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
   useEffect(() => {
     if (displayLocation?.lat && displayLocation?.lng) {
       const fetchLocalWeather = async () => {
-        setWeatherLoading(true);
         try {
           const res = await apiClient.get(`/weather?lat=${displayLocation.lat}&lng=${displayLocation.lng}`);
           if (res.success) setLocalWeather(res.data);
         } catch (e) {
           console.error("Lỗi sidebar weather:", e);
-        } finally {
-          setWeatherLoading(false);
         }
       };
       fetchLocalWeather();
@@ -182,9 +186,12 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
     setIsSubmittingComment(true);
 
     try {
-      const res = await postComment(location.id, user.uid, content);
+      const res = await postComment(displayLocation.id, user.uid, content);
       if (res?.success) {
-        fetchComments(true);
+        const refreshRes = await apiClient.get(`/comments/${displayLocation.id}/comments`);
+        if (refreshRes.success) {
+          setComments(refreshRes.data);
+        }
       } else {
         setComments(prev => prev.filter(c => c.id !== tempId));
         setCommentText(content);

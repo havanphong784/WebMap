@@ -1,5 +1,6 @@
 import pool from "../config/db.js";
 import { addXP } from "./gamificationService.js";
+import { createNotification } from "./notificationService.js";
 
 export const listComments = async (locationId) => {
   const query = `
@@ -14,9 +15,18 @@ export const listComments = async (locationId) => {
 };
 
 export const createComment = async ({locationId, userId, content}) => {
+  if (!locationId || !userId) {
+    throw new Error("Thiếu thông tin comment");
+  }
+
+  const normalizedContent = typeof content === "string" ? content.trim() : "";
+  if (!normalizedContent) {
+    throw new Error("Nội dung bình luận không được để trống");
+  }
+
   const result = await pool.query(
     "INSERT INTO comments (user_id, location_id, content) VALUES ($1, $2, $3) RETURNING *",
-    [userId, locationId, content]
+    [userId, locationId, normalizedContent]
   );
 
   try {
@@ -24,12 +34,11 @@ export const createComment = async ({locationId, userId, content}) => {
     if (locInfo.rows.length > 0) {
       const ownerId = locInfo.rows[0].user_id;
       if (ownerId !== userId) {
-        const {createNotification} = await import("./notificationService.js");
         await createNotification({
           recipientId: ownerId,
           senderId: userId,
           type: 'COMMENT',
-          message: `đã bình luận: "${content.substring(0, 30)}${content.length > 30 ? '...' : ''}"`,
+          message: `đã bình luận: "${normalizedContent.substring(0, 30)}${normalizedContent.length > 30 ? '...' : ''}"`,
           locationId: locationId
         });
       }

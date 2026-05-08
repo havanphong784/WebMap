@@ -122,7 +122,14 @@ export const useLocationStore = create((set) => ({
   setRouteLoading: (routeLoading) => set({routeLoading}),
 
   fetchRoute: async (start, end) => {
-    if (!start || !end || !start[0] || !end[0]) {
+    const isValidPoint = (point) => (
+      Array.isArray(point) &&
+      point.length >= 2 &&
+      Number.isFinite(Number(point[0])) &&
+      Number.isFinite(Number(point[1]))
+    );
+
+    if (!isValidPoint(start) || !isValidPoint(end)) {
       console.error("Tọa độ không hợp lệ:", {start, end});
       return;
     }
@@ -167,7 +174,9 @@ export const useLocationStore = create((set) => ({
             ? {
               ...loc,
               is_liked: result.action === 'liked',
-              likes_count: result.action === 'liked' ? Number(loc.likes_count || 0) + 1 : Number(loc.likes_count || 0) - 1
+              likes_count: result.action === 'liked'
+                ? Number(loc.likes_count || 0) + 1
+                : Math.max(0, Number(loc.likes_count || 0) - 1)
             }
             : loc
         );
@@ -175,7 +184,8 @@ export const useLocationStore = create((set) => ({
         set((state) => ({
           locations: updateLoc(state.locations),
           trendingLocations: updateLoc(state.trendingLocations),
-          followingLocations: updateLoc(state.followingLocations)
+          followingLocations: updateLoc(state.followingLocations),
+          userLocations: updateLoc(state.userLocations)
         }));
       }
     } catch (err) {
@@ -188,12 +198,17 @@ export const useLocationStore = create((set) => ({
       const result = await apiClient.post(`/comments/${locationId}/comments`, {user_id: userId, content});
 
       if (result.success) {
+        const updateLoc = (list) => list.map(loc =>
+          loc.id === locationId
+            ? {...loc, comments_count: Number(loc.comments_count || 0) + 1}
+            : loc
+        );
+
         set((state) => ({
-          locations: state.locations.map(loc =>
-            loc.id === locationId
-              ? {...loc, comments_count: Number(loc.comments_count || 0) + 1}
-              : loc
-          )
+          locations: updateLoc(state.locations),
+          trendingLocations: updateLoc(state.trendingLocations),
+          followingLocations: updateLoc(state.followingLocations),
+          userLocations: updateLoc(state.userLocations)
         }));
       }
       return result;

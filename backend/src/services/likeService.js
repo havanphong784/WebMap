@@ -2,6 +2,10 @@ import pool from "../config/db.js";
 import {addXP} from "./gamificationService.js";
 
 export const toggleLike = async ({userId, locationId}) => {
+  if (!userId || !locationId) {
+    throw new Error("Thiếu user hoặc location");
+  }
+
   const check = await pool.query(
     "SELECT * FROM likes WHERE user_id = $1 AND location_id = $2",
     [userId, locationId]
@@ -13,8 +17,6 @@ export const toggleLike = async ({userId, locationId}) => {
       [userId, locationId]
     );
 
-    handleLikeXP(locationId, userId, "UNLIKE_RECEIVED");
-
     return {action: "unliked"};
   }
 
@@ -24,7 +26,7 @@ export const toggleLike = async ({userId, locationId}) => {
   );
 
   await addXP(userId, "LIKE_GIVEN");
-  handleLikeXP(locationId, userId, "LIKE_RECEIVED");
+  await handleLikeXP(locationId, userId, "LIKE_RECEIVED");
 
   return {action: "liked"};
 };
