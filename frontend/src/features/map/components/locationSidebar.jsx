@@ -7,8 +7,10 @@ import {apiClient} from "../../../shared/api/apiClient.js";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import {
+  ArrowIcon,
   CheckIcon,
   CloseIcon,
+  CloudIcon,
   CommentIcon,
   DateIcon,
   HashIcon,
@@ -19,20 +21,18 @@ import {
   SendIcon,
   ShareIcon,
   SpinnerIcon,
-  TagIcon,
-  CloudIcon
+  StarIcon,
+  TagIcon
 } from "../../../shared/components/common/icons.jsx";
 import {parseDBDate} from "../../../shared/utils/dateUtils.js";
 import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
 
-export default function LocationSidebar({location, onClose}) {
+export default function LocationSidebar({location, onAddReview, onClose}) {
   const {user} = useAuthStore();
   const navigate = useNavigate();
   const locations = useLocationStore(state => state.locations);
   const {fetchRoute, routeLoading, toggleLike, postComment} = useLocationStore();
-
-  const displayLocation = locations.find(l => l.id === location?.id) || location;
 
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
@@ -43,7 +43,13 @@ export default function LocationSidebar({location, onClose}) {
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [localWeather, setLocalWeather] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const scrollRef = useRef(null);
+
+  const group = location?.group || [];
+  const hasGroup = group.length > 1;
+  const currentDisplay = hasGroup ? group[currentIndex] : (locations.find(l => l.id === location?.id) || location);
+  const displayLocation = currentDisplay;
 
   const showToast = (msg) => {
     setToast(msg);
@@ -92,10 +98,10 @@ export default function LocationSidebar({location, onClose}) {
   }, [location]);
 
   useEffect(() => {
-    if (location) {
+    if (displayLocation?.id) {
       fetchComments();
     }
-  }, [fetchComments, location]);
+  }, [fetchComments, displayLocation?.id]);
 
   useEffect(() => {
     const fetchFollowStatus = async () => {
@@ -111,11 +117,11 @@ export default function LocationSidebar({location, onClose}) {
   }, [user?.uid, displayLocation?.user_id]);
 
   useEffect(() => {
-    if (location) {
+    if (displayLocation?.lat && displayLocation?.lng) {
       const fetchLocalWeather = async () => {
         setWeatherLoading(true);
         try {
-          const res = await apiClient.get(`/weather?lat=${location.lat}&lng=${location.lng}`);
+          const res = await apiClient.get(`/weather?lat=${displayLocation.lat}&lng=${displayLocation.lng}`);
           if (res.success) setLocalWeather(res.data);
         } catch (e) {
           console.error("Lỗi sidebar weather:", e);
@@ -125,7 +131,7 @@ export default function LocationSidebar({location, onClose}) {
       };
       fetchLocalWeather();
     }
-  }, [location]);
+  }, [displayLocation?.lat, displayLocation?.lng]);
 
   const handleToggleFollow = async (e) => {
     e.stopPropagation();
@@ -228,9 +234,10 @@ export default function LocationSidebar({location, onClose}) {
         <div className="relative p-4 shrink-0">
           <div className="relative h-56 rounded-[1.8rem] overflow-hidden shadow-lg border border-black/5 group/img">
             <motion.div
-              initial={{scale: 1.1}}
-              animate={{scale: 1}}
-              transition={{duration: 1.5, ease: "easeOut"}}
+              key={displayLocation.id}
+              initial={{scale: 1.1, opacity: 0}}
+              animate={{scale: 1, opacity: 1}}
+              transition={{duration: 0.8, ease: "easeOut"}}
               className="w-full h-full"
             >
               {displayLocation.image_url ? (
@@ -250,6 +257,35 @@ export default function LocationSidebar({location, onClose}) {
               )}
             </motion.div>
 
+            {hasGroup && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentIndex(prev => (prev - 1 + group.length) % group.length);
+                  }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 text-black backdrop-blur-xl border border-white/10 hover:border-cyan-glow/40 hover:bg-obsidian/60 hover:scale-110 transition-all active:scale-95 z-20 group/nav shadow-2xl"
+                >
+                  <ArrowIcon size={14} className="rotate-180 group-hover/nav:-translate-x-0.5 transition-transform"/>
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentIndex(prev => (prev + 1) % group.length);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 text-black backdrop-blur-xl border border-white/10 hover:border-cyan-glow/40 hover:bg-obsidian/60 hover:scale-110 transition-all active:scale-95 z-20 group/nav shadow-2xl"
+                >
+                  <ArrowIcon size={14} className="group-hover/nav:translate-x-0.5 transition-transform"/>
+                </button>
+
+                <div
+                  className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-2xl border border-white/5 text-[9px] font-black text-black tracking-[0.3em] uppercase z-20 shadow-xl">
+                  {currentIndex + 1} / {group.length}
+                </div>
+              </>
+            )}
+
             <div
               className="absolute inset-0 bg-obsidian/10 group-hover/img:bg-transparent transition-colors duration-500"></div>
 
@@ -258,7 +294,7 @@ export default function LocationSidebar({location, onClose}) {
                 whileHover={{scale: 1.1, rotate: 90}}
                 whileTap={{scale: 0.9}}
                 onClick={onClose}
-                className="p-2 glass-panel !rounded-lg border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
+                className="p-2 glass-panel rounded-lg! border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
               >
                 <CloseIcon size={14}/>
               </motion.button>
@@ -355,7 +391,7 @@ export default function LocationSidebar({location, onClose}) {
               {displayLocation.tags.map(tag => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/[0.04] border border-glass-border text-text-muted hover:bg-cyan-glow/5 hover:border-cyan-glow/20 hover:text-cyan-glow transition-all duration-300 text-[10px] font-bold cursor-default"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/4 border border-glass-border text-text-muted hover:bg-cyan-glow/5 hover:border-cyan-glow/20 hover:text-cyan-glow transition-all duration-300 text-[10px] font-bold cursor-default"
                 >
                   <HashIcon size={8}/>
                   {tag}
@@ -403,8 +439,9 @@ export default function LocationSidebar({location, onClose}) {
 
             {localWeather && (
               <div className="flex items-center gap-3 text-cyan-glow animate-in fade-in slide-in-from-left-2">
-                <div className="w-8 h-8 rounded-xl bg-cyan-glow/5 border border-cyan-glow/10 flex items-center justify-center shrink-0">
-                  <CloudIcon size={14} className="text-cyan-glow" />
+                <div
+                  className="w-8 h-8 rounded-xl bg-cyan-glow/5 border border-cyan-glow/10 flex items-center justify-center shrink-0">
+                  <CloudIcon size={14} className="text-cyan-glow"/>
                 </div>
                 <p className="text-[12px] font-bold lowercase first-letter:uppercase">
                   {Math.round(localWeather.main.temp)}°C - {localWeather.weather[0].description}
@@ -509,9 +546,19 @@ export default function LocationSidebar({location, onClose}) {
         <div
           className="p-4 border-t border-glass-border-bright bg-white/90 backdrop-blur-3xl space-y-4 shrink-0 relative">
           <div
-            className="absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-map-bg/80 to-transparent pointer-events-none"></div>
+            className="absolute inset-x-0 -top-6 h-6 bg-linear-to-t from-map-bg/80 to-transparent pointer-events-none"></div>
 
-          <div className="flex gap-3 sm:gap-4 items-stretch">
+          <div className="flex gap-3 sm:gap-4 items-stretch pt-2">
+            <ActionButton
+              onClick={() => onAddReview()}
+              className="flex-1 bg-sunset/5! !border-sunset/20 text-sunset! hover:bg-sunset/10! shadow-sunset-sm rounded-2xl! !py-3.5 group/review-btn"
+            >
+              <div
+                className="absolute inset-0 bg-sunset opacity-0 group-hover/review-btn:opacity-5 transition-opacity"/>
+              <StarIcon size={18} className="fill-current drop-shadow-sunset"/>
+              <span className="hidden sm:inline uppercase text-[12px] font-black tracking-widest">Review</span>
+            </ActionButton>
+
             <ActionButton
               loading={routeLoading}
               onClick={() => {
@@ -519,7 +566,7 @@ export default function LocationSidebar({location, onClose}) {
                   fetchRoute([pos.coords.longitude, pos.coords.latitude], [location.lng, location.lat]);
                 });
               }}
-              className="flex-1 sm:flex-[3] !py-3.5 gap-3 shadow-neon rounded-2xl! group/btn overflow-hidden relative"
+              className="flex-1 sm:flex-2 py-3.5! gap-3 shadow-neon rounded-2xl! group/btn overflow-hidden relative"
             >
               <div
                 className="absolute inset-0 bg-linear-to-r from-white/0 via-white/5 to-white/0 -translate-x-full group-hover/btn:animate-[shimmer_2s_infinite]"></div>

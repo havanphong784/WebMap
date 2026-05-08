@@ -37,12 +37,10 @@ const WeatherEffects = () => {
               />
             ))}
 
-            {/* Hiệu ứng sương mù khi mưa to */}
             <div className="absolute inset-0 bg-cyan-glow/[0.03] backdrop-blur-[0.1px]"/>
           </motion.div>
         )}
 
-        {/* Hiệu ứng Mây trôi (Enhanced Clouds) */}
         {isCloudy && (
           <motion.div
             key="cloud-effect-layer"
@@ -57,8 +55,8 @@ const WeatherEffects = () => {
           />
         )}
 
-        {/* Vignette - Nhấn mạnh vào trung tâm */}
-        <div key="vignette-effect" className={`absolute inset-0 transition-shadow duration-1000 shadow-[inset_0_0_200px_rgba(0,0,0,0.4)]`}/>
+        <div key="vignette-effect"
+             className={`absolute inset-0 transition-shadow duration-1000 shadow-[inset_0_0_200px_rgba(0,0,0,0.4)]`}/>
       </AnimatePresence>
     </div>
   );

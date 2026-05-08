@@ -364,6 +364,15 @@ export default function MapPage() {
         {activeLocation && (
           <LocationSidebar
             location={activeLocation}
+            onAddReview={() => {
+              setInfoClicked({
+                lng: activeLocation.lng,
+                lat: activeLocation.lat,
+                address: activeLocation.address,
+                autoOpenForm: true
+              });
+              setActiveLocation(null);
+            }}
             onClose={() => {
               setActiveLocation(null);
               if (routerLocation.search) {
