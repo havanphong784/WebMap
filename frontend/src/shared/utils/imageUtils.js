@@ -2,12 +2,14 @@ import imageCompression from 'browser-image-compression';
 
 export const compressImage = async (file) => {
   const options = {
-    maxSizeMB: 0.8,
-    maxWidthOrHeight: 1920,
+    maxSizeMB: 0.3, // Even smaller for instant feel
+    maxWidthOrHeight: 1280, // Optimized for mobile cards
     useWebWorker: true,
     fileType: 'image/webp',
-    initialQuality: 0.85,
+    initialQuality: 0.7, // Focused on speed
   };
+
+
 
   try {
     const compressedFile = await imageCompression(file, options);

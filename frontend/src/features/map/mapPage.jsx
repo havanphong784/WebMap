@@ -58,11 +58,9 @@ export default function MapPage() {
   }, [setUserLocation, setAccuracy]);
 
   const fetchLocations = useLocationStore(state => state.fetchLocations);
-  const locations = useLocationStore(state => state.locations);
   const routeData = useLocationStore(state => state.routeData);
   const setRouteData = useLocationStore(state => state.setRouteData);
   const {user} = useAuthStore();
-  const [currentZoom, setCurrentZoom] = useState(13);
   const [activeLocation, setActiveLocation] = useState(null);
   const fetchLocationDetail = useLocationStore(state => state.fetchLocationDetail);
   const [isLocating, setIsLocating] = useState(false);
@@ -73,7 +71,7 @@ export default function MapPage() {
   const isVisible = useWeatherStore(state => state.isVisible);
   const toggleVisibility = useWeatherStore(state => state.toggleVisibility);
 
-  const flyToLocation = useCallback((lng, lat, zoom = 16, duration = 1600) => {
+  const flyToLocation = useCallback((lng, lat, zoom = 17, duration = 1600) => {
     if (!mapRef.current) return;
 
     mapRef.current.flyTo({
@@ -107,7 +105,7 @@ export default function MapPage() {
     const timer = setTimeout(() => {
       fetchDetail();
       setInfoClicked(null);
-      flyToLocation(lng, lat, 17);
+      flyToLocation(lng, lat, 16);
     }, 100);
 
     return () => clearTimeout(timer);
@@ -122,7 +120,7 @@ export default function MapPage() {
     if (Number.isNaN(lat) || Number.isNaN(lng)) return;
 
     const timer = setTimeout(async () => {
-      flyToLocation(lng, lat, 17);
+      flyToLocation(lng, lat, 16);
 
       if (locationId) {
         const detail = await fetchLocationDetail(locationId, user?.uid);
@@ -176,14 +174,14 @@ export default function MapPage() {
     setActiveLocation(null);
     setRouteData(null);
     const {lng, lat} = e.lngLat;
-    flyToLocation(lng, lat, 15);
+    flyToLocation(lng, lat, 16);
     setInfoClicked({lng, lat, address: {display_name: "Đang xác định vị trí..."}});
     const diachi = await getAddress(lat, lng);
     setInfoClicked({lng, lat, address: diachi});
   }, [flyToLocation, setRouteData]);
 
   const handleSearchSelect = useCallback(async (lng, lat, addressName) => {
-    flyToLocation(lng, lat, 15);
+    flyToLocation(lng, lat, 16);
     setInfoClicked({lng, lat, address: {display_name: addressName}});
     const diachi = await getAddress(lat, lng);
     setInfoClicked({lng, lat, address: diachi});
@@ -192,7 +190,7 @@ export default function MapPage() {
   const debouncedFetch = useRef(
     debounce((uid, bounds) => {
       fetchLocations(uid, bounds);
-    }, 200)
+    }, 300)
   ).current;
 
   const handleMapChange = useCallback(() => {
@@ -201,9 +199,6 @@ export default function MapPage() {
       if (!map) return;
 
       const bounds = map.getBounds();
-      const zoom = map.getZoom();
-
-      setCurrentZoom(zoom);
       debouncedFetch(user?.uid, bounds);
 
       if (isVisible) {
@@ -315,25 +310,21 @@ export default function MapPage() {
       <RouteLayer/>
       <UserMarker/>
       <MapMarkers
-        locations={locations}
         viewMode={markerViewMode}
         onLocationClick={handleLocationClick}
-        zoom={currentZoom}/>
+        activeLocation={activeLocation}
+      />
     </Map>
   ), [
     handleMapChange,
     handleClick,
     markerViewMode,
     handleLocationClick,
-    handlePhotoUpload,
-    zoomIn,
-    zoomOut,
     infoClicked,
-    handleSearchSelect,
-    currentZoom,
-    locations,
+    activeLocation,
     isVisible
   ]);
+
 
   return (
     <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">

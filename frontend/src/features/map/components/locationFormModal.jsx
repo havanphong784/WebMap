@@ -52,17 +52,29 @@ export default function LocationFormModal({point, onClose}) {
   const [isCompressing, setIsCompressing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const [compressedFile, setCompressedFile] = useState(null);
+
   useEffect(() => {
-    if (point.imageFile) {
-      setImageFile(point.imageFile);
-      setPreviewUrl(URL.createObjectURL(point.imageFile));
-    }
+    const processImage = async () => {
+      if (point.imageFile) {
+        setImageFile(point.imageFile);
+        setPreviewUrl(URL.createObjectURL(point.imageFile));
+        
+        // Start background compression immediately
+        setIsCompressing(true);
+        const result = await compressImage(point.imageFile);
+        setCompressedFile(result);
+        setIsCompressing(false);
+      }
+    };
+    processImage();
+
     return () => {
       if (previewUrl && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [point.imageFile, previewUrl]);
+  }, [point.imageFile]);
 
   useEffect(() => {
     const updateAddress = async () => {
@@ -106,7 +118,7 @@ export default function LocationFormModal({point, onClose}) {
     setTags(prev => prev.filter(t => t !== tagToRemove));
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -116,8 +128,14 @@ export default function LocationFormModal({point, onClose}) {
       return;
     }
 
-    if (file) setPreviewUrl(URL.createObjectURL(file));
+    setPreviewUrl(URL.createObjectURL(file));
     setImageFile(file);
+    
+    // Background compression for manually selected image
+    setIsCompressing(true);
+    const result = await compressImage(file);
+    setCompressedFile(result);
+    setIsCompressing(false);
   };
 
   const handleSave = async (e) => {
@@ -130,9 +148,15 @@ export default function LocationFormModal({point, onClose}) {
 
     try {
       if (imageFile) {
-        setIsCompressing(true);
-        const compressedFile = await compressImage(imageFile);
-        setIsCompressing(false);
+        let fileToUpload = compressedFile;
+        
+        // If compression isn't done yet, wait for it or just compress now
+        if (!fileToUpload) {
+          setIsCompressing(true);
+          fileToUpload = await compressImage(imageFile);
+          setCompressedFile(fileToUpload);
+          setIsCompressing(false);
+        }
         
         const imageRef = ref(storage, `locations/${user.uid}/${Date.now()}.webp`);
         const metadata = {
@@ -140,7 +164,7 @@ export default function LocationFormModal({point, onClose}) {
           cacheControl: 'public,max-age=31536000',
         };
 
-        const uploadTask = uploadBytesResumable(imageRef, compressedFile, metadata);
+        const uploadTask = uploadBytesResumable(imageRef, fileToUpload, metadata);
 
         await new Promise((resolve, reject) => {
           uploadTask.on(
@@ -185,6 +209,7 @@ export default function LocationFormModal({point, onClose}) {
       setUploadProgress(0);
     }
   };
+
 
   const categories = [
     {value: "restaurant", label: "Nhà hàng", icon: FoodIcon},

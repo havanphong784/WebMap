@@ -7,8 +7,9 @@ import exifr from 'exifr';
  */
 export const extractGPS = async (file) => {
   try {
+    // Only extract GPS data, much faster than full EXIF scan
     const output = await exifr.gps(file);
-    if (output && output.latitude && output.longitude) {
+    if (output && typeof output.latitude === 'number' && typeof output.longitude === 'number') {
       return {
         lat: output.latitude,
         lng: output.longitude
@@ -20,3 +21,4 @@ export const extractGPS = async (file) => {
     return null;
   }
 };
+

@@ -1,5 +1,5 @@
-import {useMemo, memo} from "react";
-import {Layer, Source} from "react-map-gl/maplibre";
+import { useMemo, memo } from "react";
+import { Layer, Source } from "react-map-gl/maplibre";
 import { useLocationStore } from "../store/useLocationsStore.jsx";
 
 const ClusterLocations = memo(() => {
@@ -9,11 +9,12 @@ const ClusterLocations = memo(() => {
     type: 'FeatureCollection',
     features: locations.map(loc => ({
       type: 'Feature',
-      geometry: {type: 'Point', coordinates: [Number(loc.lng), Number(loc.lat)]},
+      geometry: { type: 'Point', coordinates: [Number(loc.lng), Number(loc.lat)] },
       properties: {
         id: loc.id,
         name: loc.name,
-        category: loc.category
+        category: loc.category,
+        rating: loc.rating || 5
       }
     }))
   }), [locations]);
@@ -26,18 +27,42 @@ const ClusterLocations = memo(() => {
       type="geojson"
       data={geoJsonData}
       cluster={true}
-      clusterMaxZoom={14}
-      clusterRadius={40}
+      clusterMaxZoom={13}
+      clusterRadius={50}
     >
       <Layer
         id="clusters"
         type="circle"
         filter={['has', 'point_count']}
         paint={{
-          'circle-color': ['step', ['get', 'point_count'], '#51bbd6', 10, '#f1f075', 50, '#f28cb1'],
-          'circle-radius': ['step', ['get', 'point_count'], 20, 10, 30, 50, 40],
+          'circle-color': [
+            'step',
+            ['get', 'point_count'],
+            '#06b6d4', // Cyan 500
+            5,
+            '#0891b2', // Cyan 600
+            15,
+            '#0e7490'  // Cyan 700
+          ],
+          'circle-radius': [
+            'step',
+            ['get', 'point_count'],
+            18,
+            5,
+            24,
+            15,
+            30
+          ],
           'circle-stroke-width': 2,
-          'circle-stroke-color': '#fff'
+          'circle-stroke-color': 'rgba(255,255,255,0.2)',
+          'circle-blur': 0.1,
+          'circle-opacity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            13.5, 1,
+            14, 0 // Hide clusters at zoom 14
+          ]
         }}
       />
 
@@ -47,22 +72,69 @@ const ClusterLocations = memo(() => {
         filter={['has', 'point_count']}
         layout={{
           'text-field': '{point_count_abbreviated}',
+          'text-font': ['Open Sans Bold'],
           'text-size': 12
         }}
+        paint={{
+          'text-color': '#ffffff',
+          'text-opacity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            13.5, 1,
+            14, 0 // Hide cluster count at zoom 14
+          ]
+        }}
       />
+
 
       <Layer
         id="unclustered-point"
         type="circle"
-        maxzoom={14}
         filter={['!', ['has', 'point_count']]}
         paint={{
-          'circle-color': '#10b981',
-          'circle-radius': 8,
+          'circle-color': '#06b6d4',
+          'circle-radius': 6,
           'circle-stroke-width': 2,
-          'circle-stroke-color': '#fff'
+          'circle-stroke-color': '#fff',
+          'circle-opacity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            13, 1,
+            14, 0 // Hide circles at zoom 14 when images appear
+          ]
         }}
       />
+
+      <Layer
+        id="unclustered-label"
+        type="symbol"
+        filter={['!', ['has', 'point_count']]}
+        minzoom={13}
+        layout={{
+          'text-field': ['get', 'name'],
+          'text-font': ['Open Sans Regular'],
+          'text-size': 10,
+          'text-offset': [0, 1.5],
+          'text-anchor': 'top',
+          'text-max-width': 8
+        }}
+        paint={{
+          'text-color': '#ffffff',
+          'text-halo-color': 'rgba(0,0,0,0.8)',
+          'text-halo-width': 1,
+          'text-opacity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            13, 0,
+            13.5, 1,
+            14, 0 // Hide labels at zoom 14 when images appear
+          ]
+        }}
+      />
+
     </Source>
   );
 });
@@ -70,4 +142,5 @@ const ClusterLocations = memo(() => {
 ClusterLocations.displayName = "ClusterLocations";
 
 export default ClusterLocations;
+
 

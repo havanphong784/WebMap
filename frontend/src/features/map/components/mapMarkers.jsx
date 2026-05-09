@@ -1,44 +1,62 @@
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState, useEffect } from "react";
 import LocationCard from "./locationCard.jsx";
+import { useLocationStore } from "../store/useLocationsStore.jsx";
+import { useMap } from "react-map-gl/maplibre";
 
-const MapMarkers = memo(({ locations, viewMode, onLocationClick, zoom }) => {
-  if (zoom < 13) return null;
+const MapMarkers = memo(({ viewMode, onLocationClick, activeLocation }) => {
+  const locations = useLocationStore(state => state.locations);
+  const { current: map } = useMap();
+  const [zoom, setZoom] = useState(map?.getZoom() || 13);
 
-  // Gom nhóm các địa điểm trong bán kính ~11m bằng grid-based clustering O(N)
-  const groupedLocations = useMemo(() => {
-    const grid = new Map();
-    const PRECISION = 0.0001; // ~11m tại xích đạo
+  useEffect(() => {
+    if (!map) return;
+    const onMove = () => setZoom(map.getZoom());
+    map.on('move', onMove);
+    return () => map.off('move', onMove);
+  }, [map]);
 
-    locations.forEach(loc => {
-      const latIdx = Math.round(Number(loc.lat) / PRECISION);
-      const lngIdx = Math.round(Number(loc.lng) / PRECISION);
-      const key = `${latIdx},${lngIdx}`;
-
-      if (!grid.has(key)) {
-        grid.set(key, []);
-      }
-      grid.get(key).push(loc);
-    });
-
-    return Array.from(grid.values());
-  }, [locations]);
-
-  return groupedLocations.slice(0, 80).map((group) => {
-    const representative = group[0];
-    
+  const activeMarker = useMemo(() => {
+    if (!activeLocation || zoom < 13) return null;
     return (
       <LocationCard
-        key={representative.id}
-        location={representative}
-        count={group.length}
-        allInGroup={group}
+        key={`active-${activeLocation.id}`}
+        location={activeLocation}
+        onClick={onLocationClick}
+        viewMode="full"
+      />
+    );
+  }, [activeLocation, onLocationClick, zoom]);
+
+  const otherMarkers = useMemo(() => {
+    if (zoom < 14.0) return [];
+
+    const filtered = locations
+      .filter(loc => loc.id !== activeLocation?.id)
+      .slice(0, 15);
+
+    return filtered.map((loc) => (
+      <LocationCard
+        key={loc.id}
+        location={loc}
         onClick={onLocationClick}
         viewMode={viewMode}
       />
-    );
-  });
+    ));
+  }, [locations, activeLocation?.id, onLocationClick, viewMode, zoom]);
+
+  if (zoom < 13 && !activeLocation) return null;
+
+
+  return (
+    <>
+      {otherMarkers}
+      {activeMarker}
+    </>
+  );
 });
 
 MapMarkers.displayName = "MapMarkers";
 
 export default MapMarkers;
+
+

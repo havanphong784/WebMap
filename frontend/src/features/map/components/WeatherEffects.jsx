@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {useWeatherStore} from '../store/useWeatherStore.jsx';
 import {AnimatePresence, motion} from 'framer-motion';
 
 const WeatherEffects = () => {
-  const {weather, isVisible, activeLayer} = useWeatherStore();
+  const {weather, isVisible} = useWeatherStore();
+
+  // Stable random values for rain drops to prevent recalculation and re-renders
+  const rainDrops = useMemo(() => {
+    return [...Array(25)].map((_, i) => ({
+      left: `${(i * 7 + Math.random() * 5) % 100}%`,
+      delay: `${Math.random() * 2}s`,
+      duration: `${0.4 + Math.random() * 0.3}s`,
+      height: `${15 + Math.random() * 25}px`
+    }));
+  }, []);
 
   if (!isVisible || !weather) return null;
 
@@ -22,22 +32,21 @@ const WeatherEffects = () => {
             exit={{opacity: 0}}
             className="absolute inset-0"
           >
-            {[...Array(30)].map((_, i) => (
+            {rainDrops.map((drop, i) => (
               <div
                 key={`rain-drop-${i}`}
-                className="absolute bg-linear-to-b from-transparent via-cyan-700/40 to-cyan-glow/60 w-[1.5px] rounded-full"
+                className="absolute bg-linear-to-b from-transparent via-cyan-500/30 to-cyan-400/50 w-[1px] rounded-full"
                 style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `-150px`,
-                  height: `${10 + Math.random() * 30}px`,
-                  filter: 'blur(0.1px)',
-                  animation: `rain-fall ${0.3 + Math.random() * 0.4}s linear infinite`,
-                  animationDelay: `${Math.random() * 2}s`
+                  left: drop.left,
+                  top: `-100px`,
+                  height: drop.height,
+                  animation: `rain-fall ${drop.duration} linear infinite`,
+                  animationDelay: drop.delay
                 }}
               />
             ))}
-
-            <div className="absolute inset-0 bg-cyan-glow/[0.03] backdrop-blur-[0.1px]"/>
+            {/* Removed backdrop-blur as it's too expensive on mobile */}
+            <div className="absolute inset-0 bg-cyan-900/5"/>
           </motion.div>
         )}
 
@@ -45,21 +54,22 @@ const WeatherEffects = () => {
           <motion.div
             key="cloud-effect-layer"
             initial={{opacity: 0}}
-            animate={{opacity: 0.4}}
+            animate={{opacity: 0.3}}
             exit={{opacity: 0}}
             className="absolute inset-0"
             style={{
-              background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 70%)',
-              animation: 'cloud-float 20s linear infinite'
+              background: 'radial-gradient(circle at 50% 20%, rgba(255,255,255,0.05) 0%, transparent 70%)',
+              animation: 'cloud-float 30s linear infinite'
             }}
           />
         )}
 
         <div key="vignette-effect"
-             className={`absolute inset-0 transition-shadow duration-1000 shadow-[inset_0_0_200px_rgba(0,0,0,0.4)]`}/>
+             className="absolute inset-0 shadow-[inset_0_0_150px_rgba(0,0,0,0.3)] pointer-events-none"/>
       </AnimatePresence>
     </div>
   );
 };
+
 
 export default WeatherEffects;
