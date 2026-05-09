@@ -7,9 +7,11 @@ import {
 } from "../../../shared/components/common/icons.jsx";
 import Skeleton from "react-loading-skeleton";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
+import { isMobile } from "../../../shared/utils/deviceUtils.js";
 
 const DiscoveryCard = memo(({post, index, navigate, onLike}) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const mobile = isMobile();
 
   const postUser = {
     firebase_uid: post.user_id,
@@ -22,11 +24,11 @@ const DiscoveryCard = memo(({post, index, navigate, onLike}) => {
 
   return (
     <motion.div
-      layout
-      initial={{opacity: 0, y: 20}}
+      layout={!mobile}
+      initial={!mobile ? {opacity: 0, y: 20} : {opacity: 1}}
       animate={{opacity: 1, y: 0}}
-      exit={{opacity: 0, scale: 0.95}}
-      transition={{delay: index * 0.04}}
+      exit={!mobile ? {opacity: 0, scale: 0.95} : {}}
+      transition={!mobile ? {delay: index * 0.04} : {duration: 0.2}}
       className="break-inside-avoid relative group cursor-pointer glass-panel rounded-3xl border-glass-border overflow-hidden hover:border-cyan-glow/20 transition-all duration-500 mb-6"
       onClick={() => navigate("/", {state: {focusLocation: post}})}
     >
@@ -74,7 +76,7 @@ const DiscoveryCard = memo(({post, index, navigate, onLike}) => {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <motion.button
-                whileTap={{scale: 0.8}}
+                whileTap={!mobile ? {scale: 0.8} : {}}
                 onClick={(e) => onLike(e, post)}
                 className={`flex items-center gap-1.5 glass-panel py-1.5 px-3 border transition-all duration-300 ${post.is_liked ? "border-sunset/30 bg-sunset/10" : "border-glass-border bg-glass-white"}`}
               >

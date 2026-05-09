@@ -1,5 +1,6 @@
 import { memo } from 'react';
-import {motion} from 'framer-motion';
+import { motion } from 'framer-motion';
+import { isMobile } from '../utils/deviceUtils.js';
 
 const TIER_CONFIG = {
   'Wanderer': {
@@ -35,8 +36,9 @@ const TIER_CONFIG = {
   }
 };
 
-const UserBadge = memo(({user, size = 64, hideLevelBadge = false}) => {
+const UserBadge = memo(({user, size = 64, hideLevelBadge = false, isOnline = false}) => {
   const {xp = 0, avatar_url, name} = user;
+  const mobile = isMobile();
 
   const level = Math.floor(Math.sqrt(xp / 100)) + 1;
 
@@ -55,8 +57,13 @@ const UserBadge = memo(({user, size = 64, hideLevelBadge = false}) => {
   const svgSize = size + bleed * 2;
 
   return (
-    <div className="relative inline-block group" style={{width: size, height: size}}>
-      {config.animate && (
+    <motion.div 
+      className="relative inline-block group" 
+      style={{width: size, height: size}}
+      whileHover={!mobile ? { scale: 1.1 } : {}}
+      whileTap={mobile ? { scale: 0.95 } : {}}
+    >
+      {config.animate && !mobile && (
         <div
           className="absolute rounded-full opacity-40 blur-md animate-pulse"
           style={{
@@ -111,7 +118,7 @@ const UserBadge = memo(({user, size = 64, hideLevelBadge = false}) => {
             fill="none"
             stroke={`url(#grad-${tier.replace(/\s+/g, '-')})`}
             strokeWidth={strokeWidth}
-            filter="url(#glow)"
+            filter={!mobile ? "url(#glow)" : undefined}
             style={{
               transition: 'stroke 0.5s ease',
             }}
@@ -125,7 +132,7 @@ const UserBadge = memo(({user, size = 64, hideLevelBadge = false}) => {
               fill="none"
               stroke="white"
               strokeWidth={strokeWidth * 0.2}
-              className="animate-pulse opacity-30"
+              className={!mobile ? "animate-pulse opacity-30" : "opacity-30"}
             />
           )}
         </g>
@@ -147,7 +154,7 @@ const UserBadge = memo(({user, size = 64, hideLevelBadge = false}) => {
           <img
             src={avatar_url}
             alt={name}
-            className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500"
+            className={`w-full h-full object-cover grayscale-[0.2] transition-all duration-500 ${!mobile ? "group-hover:grayscale-0" : ""}`}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-white font-bold"
@@ -159,29 +166,23 @@ const UserBadge = memo(({user, size = 64, hideLevelBadge = false}) => {
 
       {!hideLevelBadge && (
         <div
-          className="absolute -bottom-1 -left-1 z-30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+          className="absolute bottom-0 left-0 z-30 flex items-center justify-center transition-transform duration-300"
           style={{
-            width: size * 0.35,
-            height: size * 0.32,
-            filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.6))`
+            width: size * 0.4,
+            height: size * 0.4,
+            transform: 'translate(-15%, 15%)',
+            filter: `drop-shadow(0 4px 8px rgba(0,0,0,0.8))`
           }}
         >
-          <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full">
-            <path
-              d="M50 5 L95 27.5 L95 72.5 L50 95 L5 72.5 L5 27.5 Z"
-              fill="#0A0A0A"
-              stroke={config.colors[0]}
-              strokeWidth="12"
-              className={config.animate ? "animate-pulse" : ""}
-              style={{
-                filter: `drop-shadow(0 0 8px ${config.glow})`,
-                strokeOpacity: 1
-              }}
-            />
-          </svg>
+          <div className="absolute inset-0 rounded-full bg-obsidian-soft border-2 border-glass-border-bright shadow-lg backdrop-blur-md"
+               style={{ 
+                 borderColor: isOnline ? "#22c55e" : config.colors[0],
+                 boxShadow: !mobile ? `0 0 10px ${isOnline ? "rgba(34,197,94,0.4)" : config.glow}` : undefined
+               }}
+          />
           <span
             className="relative z-10 text-white font-black italic tracking-tighter"
-            style={{fontSize: size * 0.14}}
+            style={{fontSize: size * 0.16}}
           >
             {level}
           </span>
@@ -190,14 +191,24 @@ const UserBadge = memo(({user, size = 64, hideLevelBadge = false}) => {
 
       {user.hasNotification && (
         <motion.div
-          initial={{scale: 0}}
+          initial={!mobile ? {scale: 0} : {scale: 1}}
           animate={{scale: 1}}
           className="absolute -top-1 -right-1 w-4 h-4 bg-sunset rounded-full z-40 border-2 border-obsidian shadow-sunset"
           style={{width: size * 0.25, height: size * 0.25}}
         />
       )}
 
-    </div>
+      {!mobile && (
+        <style dangerouslySetInnerHTML={{
+          __html: `
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `
+        }}/>
+      )}
+    </motion.div>
   );
 });
 

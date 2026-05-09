@@ -3,8 +3,11 @@ import {useWeatherStore} from "../store/useWeatherStore.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import {CloudIcon, DropletsIcon, SunIcon, WindIcon} from "../../../shared/components/common/icons.jsx";
 
+import { isMobile } from "../../../shared/utils/deviceUtils.js";
+
 const WeatherWidget = () => {
   const {weather, isLoading, isVisible, activeLayer, setActiveLayer} = useWeatherStore();
+  const mobile = isMobile();
 
   if (!isVisible || !weather) return null;
 
@@ -30,7 +33,7 @@ const WeatherWidget = () => {
         initial={{opacity: 0, x: -20}}
         animate={{opacity: 1, x: 0}}
         exit={{opacity: 0, x: -20}}
-        className="fixed top-24 left-4 z-[1000] flex flex-col items-start gap-2.5 pointer-events-none"
+        className={`fixed ${mobile ? 'top-20' : 'top-24'} left-4 z-[1000] flex flex-col items-start gap-2 sm:gap-2.5 pointer-events-none`}
       >
         <GlassPanel
           className="p-3 sm:p-4 border-glass-border-bright bg-white/95 backdrop-blur-2xl rounded-[2.2rem] pointer-events-auto flex items-center gap-4 shadow-glass ring-1 ring-black/5">
@@ -49,16 +52,16 @@ const WeatherWidget = () => {
             </div>
           </div>
 
-          <div className="h-8 w-px bg-black/5 mx-1 hidden sm:block"></div>
+          <div className="h-8 w-px bg-black/5 mx-1"></div>
 
-          <div className="hidden sm:flex items-center gap-4 pr-1">
-            <div className="flex flex-col items-center gap-0.5">
-              <WindIcon size={12} className="text-text-dim"/>
-              <span className="text-[9px] font-bold text-text-primary">{wind.speed}m/s</span>
+          <div className="flex items-center gap-3 sm:gap-4 pr-1">
+            <div className="flex flex-col items-center gap-0.5 min-w-[30px]">
+              <WindIcon size={10} className="text-text-dim sm:w-3 sm:h-3"/>
+              <span className="text-[8px] sm:text-[9px] font-bold text-text-primary">{wind.speed}m/s</span>
             </div>
-            <div className="flex flex-col items-center gap-0.5">
-              <DropletsIcon size={12} className="text-text-dim"/>
-              <span className="text-[9px] font-bold text-text-primary">{main.humidity}%</span>
+            <div className="flex flex-col items-center gap-0.5 min-w-[30px]">
+              <DropletsIcon size={10} className="text-text-dim sm:w-3 sm:h-3"/>
+              <span className="text-[8px] sm:text-[9px] font-bold text-text-primary">{main.humidity}%</span>
             </div>
           </div>
         </GlassPanel>

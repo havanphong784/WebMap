@@ -4,6 +4,7 @@ import ChatbotAnimation from './chatbotAnimation.jsx';
 import GlassPanel from '../../../shared/components/common/glassPanel.jsx';
 import {CloseIcon, SendIcon, SparklesIcon} from '../../../shared/components/common/icons.jsx';
 import eveSpritesheet from '../styles/eve/spritesheet.webp';
+import { isMobile } from '../../../shared/utils/deviceUtils.js';
 
 const MapChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,6 +22,7 @@ const MapChatbot = () => {
   const [isTopHalf, setIsTopHalf] = useState(false);
   const [isLeftHalf, setIsLeftHalf] = useState(false);
   const isDragging = useRef(false);
+  const mobile = useRef(isMobile()).current;
 
   // New Animation Row Mapping (0-indexed)
   const ROWS = {
@@ -37,7 +39,7 @@ const MapChatbot = () => {
 
   // Random Idle Behavior: Look around occasionally
   useEffect(() => {
-    if (isOpen || isDragging.current) return;
+    if (isOpen || isDragging.current || mobile) return;
 
     const idleTimer = setInterval(() => {
       if (Math.random() > 0.7) {
@@ -51,6 +53,7 @@ const MapChatbot = () => {
 
   // Listen to general map activity (Look around when user interacts with screen)
   useEffect(() => {
+    if (mobile) return;
     const handleMapActivity = () => {
       if (!isOpen && !isDragging.current && activeRow === ROWS.STARTUP) {
         setActiveRow(ROWS.LOOK_AROUND);
@@ -115,6 +118,7 @@ const MapChatbot = () => {
     <div ref={constraintsRef} className="fixed inset-0 pointer-events-none z-[4000]">
       {/* Draggable Anchor */}
       <motion.div
+        animate={!mobile}
         ref={botRef}
         drag
         dragConstraints={constraintsRef}
@@ -137,14 +141,14 @@ const MapChatbot = () => {
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{
+              animate={!mobile ? {opacity: 1, scale: 1, y: 0, x: 0, filter: 'blur(0px)'} : {}}
+              initial={!mobile ? {
                 opacity: 0,
                 scale: 0.8,
                 y: isTopHalf ? 30 : -30,
                 x: isLeftHalf ? -30 : 30,
                 filter: 'blur(10px)'
-              }}
-              animate={{opacity: 1, scale: 1, y: 0, x: 0, filter: 'blur(0px)'}}
+              } : {}}
               exit={{opacity: 0, scale: 0.8, y: isTopHalf ? 30 : -30, x: isLeftHalf ? -30 : 30, filter: 'blur(10px)'}}
               transition={{type: 'spring', damping: 25, stiffness: 350}}
               className="absolute w-[320px] sm:w-[380px] z-50"
@@ -215,8 +219,8 @@ const MapChatbot = () => {
                   {messages.map((msg, idx) => (
                     <motion.div
                       key={idx}
-                      initial={{opacity: 0, x: msg.role === 'user' ? 20 : -20, y: 10}}
-                      animate={{opacity: 1, x: 0, y: 0}}
+                      animate={!mobile}
+                      initial={!mobile ? {opacity: 0, x: msg.role === 'user' ? 20 : -20, y: 10} : {}}
                       className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
@@ -280,7 +284,8 @@ const MapChatbot = () => {
 
         {/* Trigger Button */}
         <motion.button
-          whileHover={{scale: 1.15}}
+          animate={!mobile}
+          whileHover={!mobile ? {scale: 1.15} : {}}
           whileTap={{scale: 0.9}}
           onClick={toggleOpen}
           className={`relative w-20 h-20 flex items-center justify-center transition-all duration-500 group ${

@@ -10,6 +10,7 @@ import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
 import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import AchievementList from "./components/AchievementList.jsx";
+import { isMobile } from "../../shared/utils/deviceUtils.js";
 
 export default function ProfilePage() {
   const {uid: uidParam} = useParams();
@@ -26,6 +27,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('posts'); // 'posts' or 'achievements'
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const mobile = useMemo(() => isMobile(), []);
 
   useEffect(() => {
     if (!uid) {
@@ -115,8 +117,8 @@ export default function ProfilePage() {
     <div className="page-shell text-text-primary">
       <div className="relative h-64 w-full overflow-hidden">
         <motion.img
-          initial={{scale: 1.2}}
-          animate={{scale: 1}}
+          initial={!mobile ? {scale: 1.2} : {}}
+          animate={!mobile}
           src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200"
           className="w-full h-full object-cover grayscale-[0.3]"
           alt="cover"
@@ -132,8 +134,8 @@ export default function ProfilePage() {
       <div className="px-4 sm:px-6 -mt-16 sm:-mt-20 relative z-10">
         <div className="flex flex-col items-center">
           <motion.div
-            initial={{y: 20, opacity: 0}}
-            animate={{y: 0, opacity: 1}}
+            initial={!mobile ? {y: 20, opacity: 0} : {}}
+            animate={!mobile}
             className="relative"
           >
             {loading ? (
@@ -146,8 +148,8 @@ export default function ProfilePage() {
           </motion.div>
 
           <motion.div
-            initial={{opacity: 0}}
-            animate={{opacity: 1}}
+            initial={!mobile ? {opacity: 0} : {}}
+            animate={!mobile}
             transition={{delay: 0.2}}
             className="text-center mt-6 w-full max-w-sm"
           >
@@ -171,7 +173,7 @@ export default function ProfilePage() {
                   </div>
                   {isOwnProfile ? (
                     <motion.button
-                      whileHover={{scale: 1.05}}
+                      whileHover={!mobile ? {scale: 1.05} : {}}
                       whileTap={{scale: 0.95}}
                       onClick={handleLogout}
                       className="px-4 py-1.5 rounded-full border border-sunset/30 bg-sunset/5 text-sunset text-[10px] font-bold uppercase tracking-widest hover:bg-sunset/10 transition-colors flex items-center gap-2"
@@ -181,7 +183,7 @@ export default function ProfilePage() {
                     </motion.button>
                   ) : (
                     <motion.button
-                      whileHover={{scale: 1.05}}
+                      whileHover={!mobile ? {scale: 1.05} : {}}
                       whileTap={{scale: 0.95}}
                       onClick={handleToggleFollow}
                       disabled={isFollowLoading}
@@ -210,8 +212,8 @@ export default function ProfilePage() {
           ) : stats.map((stat, i) => (
             <motion.div
               key={stat.label}
-              initial={{opacity: 0, y: 20}}
-              animate={{opacity: 1, y: 0}}
+              initial={!mobile ? {opacity: 0, y: 20} : {}}
+              animate={!mobile}
               transition={{delay: 0.3 + (i * 0.1)}}
             >
               <GlassPanel
@@ -233,7 +235,7 @@ export default function ProfilePage() {
               className={`pb-4 text-xs font-jakarta font-black uppercase tracking-[0.2em] relative transition-all duration-300 ${activeTab === 'posts' ? 'text-cyan-glow' : 'text-text-muted hover:text-text-primary'}`}
             >
               Địa điểm ({userLocations.length})
-              {activeTab === 'posts' && <motion.div layoutId="tabLine"
+              {activeTab === 'posts' && <motion.div layoutId={!mobile ? "tabLine" : undefined}
                                                     className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-glow shadow-neon"/>}
             </button>
             <button
@@ -256,7 +258,7 @@ export default function ProfilePage() {
                   <span className="w-1.5 h-1.5 bg-sunset rounded-full shadow-sunset animate-pulse"/>
                 )}
               </div>
-              {activeTab === 'achievements' && <motion.div layoutId="tabLine"
+              {activeTab === 'achievements' && <motion.div layoutId={!mobile ? "tabLine" : undefined}
                                                            className="absolute bottom-0 left-0 right-0 h-0.5 bg-sunset shadow-sunset"/>}
             </button>
           </div>
@@ -278,8 +280,8 @@ export default function ProfilePage() {
                   {userLocations.map((loc, i) => (
                     <motion.div
                       key={loc.id}
-                      initial={{opacity: 0, scale: 0.9}}
-                      whileInView={{opacity: 1, scale: 1}}
+                      initial={!mobile ? {opacity: 0, scale: 0.9} : {}}
+                      whileInView={!mobile ? {opacity: 1, scale: 1} : {}}
                       viewport={{once: true}}
                       transition={{delay: (i % 3) * 0.1}}
                       onClick={() => navigate("/", {state: {focusLocation: loc}})}

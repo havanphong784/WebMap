@@ -45,7 +45,10 @@ const rarityStyles = {
   }
 };
 
+import { isMobile } from "../../../shared/utils/deviceUtils.js";
+
 const AchievementList = memo(function AchievementList({achievements, dailyTasks, loading}) {
+  const mobile = isMobile();
   if (loading) return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
       {[1, 2, 3, 4].map(i => (
@@ -105,8 +108,9 @@ const AchievementList = memo(function AchievementList({achievements, dailyTasks,
 
                 <div className="relative h-1.5 w-full bg-black/5 rounded-full overflow-hidden z-10">
                   <motion.div
-                    initial={{width: 0}}
-                    animate={{width: `${progressPercent}%`}}
+                    initial={!mobile ? {width: 0} : {}}
+                    animate={!mobile ? {width: `${progressPercent}%`} : {}}
+                    style={mobile ? {width: `${progressPercent}%`} : {}}
                     className={`h-full transition-all duration-700 ${task.is_completed ? 'bg-sunset shadow-sunset' : 'bg-cyan-glow/60 shadow-neon'}`}
                   />
                 </div>
@@ -137,7 +141,7 @@ const AchievementList = memo(function AchievementList({achievements, dailyTasks,
             return (
               <motion.div
                 key={ach.id}
-                whileHover={{y: -5}}
+                whileHover={!mobile ? {y: -5} : {}}
                 className="relative"
               >
                 <GlassPanel
@@ -181,8 +185,9 @@ const AchievementList = memo(function AchievementList({achievements, dailyTasks,
                     </div>
                     <div className="h-2 w-full bg-black/10 rounded-full overflow-hidden border border-white/5">
                       <motion.div
-                        initial={{width: 0}}
-                        animate={{width: `${progressPercent}%`}}
+                        initial={!mobile ? {width: 0} : {}}
+                        animate={!mobile ? {width: `${progressPercent}%`} : {}}
+                        style={mobile ? {width: `${progressPercent}%`} : {}}
                         className={`h-full transition-all duration-1000 ${ach.is_unlocked ? `${style.progress} shadow-lg` : 'bg-zinc-700/50'}`}
                       />
                     </div>

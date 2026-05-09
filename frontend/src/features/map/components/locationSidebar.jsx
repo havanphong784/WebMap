@@ -27,8 +27,10 @@ import {
 import {parseDBDate} from "../../../shared/utils/dateUtils.js";
 import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
+import { isMobile } from "../../../shared/utils/deviceUtils.js";
 
 export default function LocationSidebar({location, onAddReview, onClose}) {
+  const mobile = isMobile();
   const {user} = useAuthStore();
   const navigate = useNavigate();
   const locations = useLocationStore(state => state.locations);
@@ -222,10 +224,10 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
   return (
     <motion.div
-      initial={{x: window.innerWidth < 640 ? 0 : "-100%", y: window.innerWidth < 640 ? "100%" : 0, opacity: 0}}
+      initial={mobile ? {y: "100%", opacity: 1} : {x: window.innerWidth < 640 ? 0 : "-100%", y: window.innerWidth < 640 ? "100%" : 0, opacity: 0}}
       animate={{x: 0, y: 0, opacity: 1}}
-      exit={{x: window.innerWidth < 640 ? 0 : "-100%", y: window.innerWidth < 640 ? "100%" : 0, opacity: 0}}
-      transition={{type: "spring", damping: 25, stiffness: 120}}
+      exit={mobile ? {y: "100%"} : {x: window.innerWidth < 640 ? 0 : "-100%", y: window.innerWidth < 640 ? "100%" : 0, opacity: 0}}
+      transition={mobile ? { duration: 0.3 } : {type: "spring", damping: 25, stiffness: 120}}
       className="fixed inset-x-0 bottom-0 sm:inset-y-0 sm:left-0 z-[2000] w-full sm:w-[520px] p-2 sm:p-5 pointer-events-none"
     >
       <GlassPanel
@@ -242,8 +244,8 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
           <div className="relative h-56 rounded-[1.8rem] overflow-hidden shadow-lg border border-black/5 group/img">
             <motion.div
               key={displayLocation.id}
-              initial={{scale: 1.1, opacity: 0}}
-              animate={{scale: 1, opacity: 1}}
+              animate={!mobile}
+              initial={!mobile ? {scale: 1.1, opacity: 0} : {}}
               transition={{duration: 0.8, ease: "easeOut"}}
               className="w-full h-full"
             >
@@ -298,7 +300,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
             <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-10">
               <motion.button
-                whileHover={{scale: 1.1, rotate: 90}}
+                whileHover={!mobile ? {scale: 1.1, rotate: 90} : {}}
                 whileTap={{scale: 0.9}}
                 onClick={onClose}
                 className="p-2 glass-panel rounded-lg! border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
@@ -322,8 +324,8 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
         <div className="px-6 pb-2 relative z-10">
           <div className="flex items-center justify-between mb-4">
             <motion.div
-              initial={{x: -10, opacity: 0}}
-              animate={{x: 0, opacity: 1}}
+              animate={!mobile}
+              initial={!mobile ? {x: -10, opacity: 0} : {}}
               className="flex items-center gap-3 cursor-pointer group/user"
               onClick={() => handleOpenProfile(locationOwner.firebase_uid)}
             >

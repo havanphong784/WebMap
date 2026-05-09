@@ -4,10 +4,12 @@ import { NavLink } from 'react-router-dom';
 import { useAuthStore } from "../../../features/auth/context/authContext.jsx";
 import { MapIcon, DiscoverIcon, NotificationIcon, UserIcon } from "../common/icons.jsx";
 import { useNotificationStore } from "../../../features/notifications/store/useNotificationStore.jsx";
+import { isMobile } from '../../utils/deviceUtils.js';
 
 const BottomNav = memo(() => {
   const { user, unreadAchievements } = useAuthStore();
   const { unreadCount } = useNotificationStore();
+  const mobile = isMobile();
 
   const navItems = useMemo(() => [
     { icon: MapIcon, path: '/', label: 'Bản đồ' },
@@ -43,8 +45,8 @@ const BottomNav = memo(() => {
                 <item.icon size={20} className={isActive ? 'drop-shadow-[0_0_8px_rgba(0,245,255,0.5)]' : 'transition-transform group-hover:scale-110'} />
                 {item.badge && (
                   <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
+                    initial={!mobile ? { scale: 0 } : {}}
+                    animate={!mobile}
                     className="absolute top-1 right-2 w-4 h-4 bg-sunset text-white text-[9px] font-black rounded-full flex items-center justify-center border border-obsidian shadow-sunset">
                     {item.badge > 9 ? '9+' : item.badge}
                   </motion.span>
@@ -54,7 +56,7 @@ const BottomNav = memo(() => {
                 </span>
                 {isActive && (
                   <motion.div
-                    layoutId="activeIndicator"
+                    layoutId={!mobile ? "activeIndicator" : undefined}
                     className="absolute -bottom-1 w-4 h-[2px] bg-cyan-glow rounded-full shadow-neon"
                   />
                 )}

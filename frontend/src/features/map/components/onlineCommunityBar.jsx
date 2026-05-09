@@ -5,11 +5,13 @@ import useWindowSize from "../../../shared/hooks/useWindowSize.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
 import { memo } from "react";
+import { isMobile } from "../../../shared/utils/deviceUtils.js";
 
 const OnlineCommunityBar = memo(() => {
   const navigate = useNavigate();
   const { activeUsers, fetchActiveUsers } = useSocialStore();
   const { width: windowWidth } = useWindowSize();
+  const mobile = isMobile();
 
   useEffect(() => {
     fetchActiveUsers();
@@ -35,7 +37,7 @@ const OnlineCommunityBar = memo(() => {
             return (
               <div
                 key={u.firebase_uid}
-                className="cursor-pointer hover:scale-110 transition-transform relative z-10"
+                className="cursor-pointer relative z-10"
                 onClick={() => navigate(`/profile/${u.firebase_uid}`)}
                 style={{ pointerEvents: "auto" }}
                 title={`${u.name} (${isOnline ? "Đang trực tuyến" : "Vừa hoạt động"})`}

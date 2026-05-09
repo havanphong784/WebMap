@@ -28,6 +28,7 @@ import WeatherLayers from "./components/WeatherLayers.jsx";
 import WeatherEffects from "./components/WeatherEffects.jsx";
 import {useWeatherStore} from "./store/useWeatherStore.jsx";
 import MapChatbot from "../chatbot/components/mapChatbot.jsx";
+import {isMobile} from "../../shared/utils/deviceUtils.js";
 
 
 export default function MapPage() {
@@ -38,7 +39,9 @@ export default function MapPage() {
   const [infoClicked, setInfoClicked] = useState(null);
   const [markerViewMode, setMarkerViewMode] = useState('full');
   const [isMapReady, setIsMapReady] = useState(false);
+  const mobile = useMemo(() => isMobile(), []);
   const addToast = useToastStore(state => state.addToast);
+  const hasAutoLocated = useRef(false);
 
   const setUserLocation = useLocationStore(state => state.setUserLocation);
   const setAccuracy = useLocationStore(state => state.setAccuracy);
@@ -71,6 +74,7 @@ export default function MapPage() {
   const clickThrottleRef = useRef(false);
   const fetchWeather = useWeatherStore(state => state.fetchWeather);
   const isVisible = useWeatherStore(state => state.isVisible);
+  const activeLayer = useWeatherStore(state => state.activeLayer);
   const toggleVisibility = useWeatherStore(state => state.toggleVisibility);
 
   const flyToLocation = useCallback((lng, lat, zoom = 17, duration = 1600) => {
@@ -235,6 +239,13 @@ export default function MapPage() {
     );
   }, [addToast, setUserLocation, setAccuracy]);
 
+  useEffect(() => {
+    if (isMapReady && !hasAutoLocated.current && !routerLocation.state?.focusLocation && !routerLocation.search) {
+      hasAutoLocated.current = true;
+      handleLocateUser();
+    }
+  }, [isMapReady, handleLocateUser, routerLocation]);
+
   const handlePhotoUpload = useCallback(async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -280,7 +291,7 @@ export default function MapPage() {
   const handleLocationClick = useCallback((locData) => {
     setInfoClicked(null);
     setActiveLocation(locData);
-    flyToLocation(locData.lng - 0.001, locData.lat, 16, 2000);
+    flyToLocation(locData.lng, locData.lat, 16, 2000);
   }, [flyToLocation]);
 
   const mapCanvas = useMemo(() => (
@@ -324,7 +335,9 @@ export default function MapPage() {
     handleLocationClick,
     infoClicked,
     activeLocation,
-    isVisible
+    isVisible,
+    activeLayer,
+    mobile
   ]);
 
 

@@ -15,6 +15,7 @@ import {
 import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import UserBadge from "../../shared/components/UserBadge.jsx";
 import DiscoveryCard from "./components/DiscoveryCard.jsx";
+import { isMobile } from "../../shared/utils/deviceUtils.js";
 
 const DiscoveryFeed = () => {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ const DiscoveryFeed = () => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [feedType, setFeedType] = useState('global');
+  const mobile = useMemo(() => isMobile(), []);
 
   useEffect(() => {
     fetchUniqueTags();
@@ -89,7 +91,7 @@ const DiscoveryFeed = () => {
         </GlassPanel>
 
         <motion.div
-          whileHover={{scale: 1.1}}
+          whileHover={!mobile ? {scale: 1.1} : {}}
           whileTap={{scale: 0.9}}
           onClick={() => navigate(user ? `/profile/${user?.uid}` : '/login')}
           className="cursor-pointer shrink-0"
@@ -112,7 +114,7 @@ const DiscoveryFeed = () => {
             className={`pb-4 text-sm font-jakarta font-black uppercase tracking-[0.2em] relative transition-all duration-300 ${feedType === 'global' ? 'text-cyan-glow' : 'text-text-muted hover:text-text-primary'}`}
           >
             Cộng đồng
-            {feedType === 'global' && <motion.div layoutId="feedTab"
+            {feedType === 'global' && <motion.div layoutId={!mobile ? "feedTab" : undefined}
                                                   className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyan-glow shadow-neon"/>}
           </button>
           {user && (
@@ -121,7 +123,7 @@ const DiscoveryFeed = () => {
               className={`pb-4 text-sm font-jakarta font-black uppercase tracking-[0.2em] relative transition-all duration-300 ${feedType === 'following' ? 'text-sunset' : 'text-text-muted hover:text-text-primary'}`}
             >
               Đang theo dõi
-              {feedType === 'following' && <motion.div layoutId="feedTab"
+              {feedType === 'following' && <motion.div layoutId={!mobile ? "feedTab" : undefined}
                                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-sunset shadow-sunset"/>}
             </button>
           )}
@@ -146,7 +148,7 @@ const DiscoveryFeed = () => {
           {categories.map((cat) => (
             <motion.button
               key={cat}
-              whileHover={{y: -2}}
+              whileHover={!mobile ? {y: -2} : {}}
               whileTap={{scale: 0.95}}
               onClick={() => setActiveCategory(cat)}
               className={`
