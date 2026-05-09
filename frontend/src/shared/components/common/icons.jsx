@@ -45,8 +45,10 @@ import {
   Droplets,
   CloudRain,
   CloudLightning,
-  Snowflake
+  Snowflake,
+  Sparkles
 } from 'lucide-react';
+
 
 export {
   Map as MapIcon,
@@ -95,6 +97,8 @@ export {
   Droplets as DropletsIcon,
   CloudRain as RainIcon,
   CloudLightning as LightningIcon,
-  Snowflake as SnowIcon
+  Snowflake as SnowIcon,
+  Sparkles as SparklesIcon
 };
+
 
