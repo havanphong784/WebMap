@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useEffect, useState} from 'react';
 
 /**
- * CodexAnimation - A component to render spritesheet animations
+ * ChatbotAnimation - A component to render spritesheet animations
  * Specifically designed for EVE/Codex style pets.
  */
-const CodexAnimation = ({ 
-  spritesheetPath, 
-  cols = 8, // Max columns in the sheet
-  rows = 9, 
-  frameRate = 120, 
-  size = 128,
-  className = "",
-  activeRow = 0 
-}) => {
+const ChatbotAnimation = ({
+                            spritesheetPath,
+                            cols = 8, // Max columns in the sheet
+                            rows = 9,
+                            frameRate = 120,
+                            size = 128,
+                            className = "",
+                            activeRow = 0
+                          }) => {
   // Mapping of row index to its specific frame count
   const ROW_FRAME_COUNTS = {
     0: 6, // Hàng 1
@@ -43,10 +43,10 @@ const CodexAnimation = ({
   }, [framesInCurrentRow, frameRate]);
 
   return (
-    <div 
+    <div
       className={`overflow-hidden relative ${className}`}
-      style={{ 
-        width: `${size}px`, 
+      style={{
+        width: `${size}px`,
         height: `${size}px`,
         background: `url(${spritesheetPath})`,
         // Scaling must use the total grid size (8 cols x 9 rows)
@@ -59,5 +59,4 @@ const CodexAnimation = ({
 };
 
 
-
-export default CodexAnimation;
+export default ChatbotAnimation;

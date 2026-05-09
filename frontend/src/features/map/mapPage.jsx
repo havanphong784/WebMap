@@ -27,7 +27,7 @@ import WeatherWidget from "./components/WeatherWidget.jsx";
 import WeatherLayers from "./components/WeatherLayers.jsx";
 import WeatherEffects from "./components/WeatherEffects.jsx";
 import {useWeatherStore} from "./store/useWeatherStore.jsx";
-import MapChatbot from "../chatbot/components/MapChatbot.jsx";
+import MapChatbot from "../chatbot/components/mapChatbot.jsx";
 
 
 export default function MapPage() {
@@ -378,7 +378,7 @@ export default function MapPage() {
         )}
       </AnimatePresence>
 
-      <MapChatbot />
+      <MapChatbot/>
     </div>
 
   );
