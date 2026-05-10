@@ -180,104 +180,45 @@ export const reverseGeocode = async (req, res) => {
     return res.status(200).json(geocodingCache.get(cacheKey));
   }
 
-  const fetchWithTimeout = async (url, options, timeout = 3000) => {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
+  const GOONG_API_KEY = process.env.GOONG_API_KEY;
+
+  if (!GOONG_API_KEY || GOONG_API_KEY === 'YOUR_GOONG_API_KEY') {
+    // Fallback if key not set (for development)
+    console.warn("Goong API Key is missing, falling back to public services.");
+  } else {
     try {
-      const response = await fetch(url, { ...options, signal: controller.signal });
-      clearTimeout(id);
-      return response;
+      const response = await fetch(`https://rsapi.goong.io/Geocode?latlng=${lat},${lng}&api_key=${GOONG_API_KEY}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+          const result = {
+            display_name: data.results[0].formatted_address,
+            address: data.results[0].address_components,
+            source: 'goong'
+          };
+          geocodingCache.set(cacheKey, result);
+          return res.status(200).json(result);
+        }
+      }
     } catch (e) {
-      clearTimeout(id);
-      throw e;
+      console.warn("Goong Geocode failed:", e.message);
     }
-  };
-
-  try {
-    const response = await fetchWithTimeout(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-      headers: {
-        'User-Agent': 'AetherMapApp/1.0',
-        'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8'
-      }
-    }, 3000);
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data && !data.error) {
-        geocodingCache.set(cacheKey, data);
-        return res.status(200).json(data);
-      }
-    } else {
-      console.warn(`Nominatim status: ${response.status}`);
-    }
-  } catch (e) {
-    console.warn("Nominatim failed:", e.message);
   }
 
+  // Final fallbacks (Nominatim)
   try {
-    const arcgisUrl = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?f=pjson&location=${lng},${lat}`;
-    const response = await fetchWithTimeout(arcgisUrl, {}, 3000);
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`, {
+      headers: { 'User-Agent': 'AetherMapApp/1.0' }
+    });
     if (response.ok) {
       const data = await response.json();
-      if (data && data.address) {
-        const normalized = {
-          display_name: data.address.LongLabel || data.address.Match_addr || "Địa điểm từ ArcGIS",
-          address: data.address,
-          source: 'arcgis'
-        };
-        geocodingCache.set(cacheKey, normalized);
-        return res.status(200).json(normalized);
-      }
-    } else {
-      console.warn(`ArcGIS status: ${response.status}`);
+      return res.status(200).json(data);
     }
   } catch (e) {
-    console.warn("ArcGIS failed:", e.message);
+    console.error("Geocoding completely failed", e.message);
   }
 
-  try {
-    const response = await fetchWithTimeout(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}`, {}, 3000);
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.features && data.features.length > 0) {
-        const f = data.features[0];
-        const normalized = {
-          display_name: `${f.properties.name || ''} ${f.properties.street || ''} ${f.properties.city || ''} ${f.properties.country || ''}`.trim() || "Địa điểm từ Photon",
-          address: f.properties,
-          source: 'photon'
-        };
-        geocodingCache.set(cacheKey, normalized);
-        return res.status(200).json(normalized);
-      }
-    } else {
-      console.warn(`Photon status: ${response.status}`);
-    }
-  } catch (e) {
-    console.warn("Photon failed:", e.message);
-  }
-
-  try {
-    const response = await fetchWithTimeout(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=vi`, {}, 3000);
-    if (response.ok) {
-      const data = await response.json();
-      const normalized = {
-        display_name: data.locality || data.city || data.principalSubdivision || "Địa điểm từ BigDataCloud",
-        address: { city: data.city, country: data.countryName },
-        source: 'bigdatacloud'
-      };
-      geocodingCache.set(cacheKey, normalized);
-      return res.status(200).json(normalized);
-    } else {
-      console.warn(`BigDataCloud status: ${response.status}`);
-    }
-  } catch (e) {
-    console.warn("BigDataCloud failed:", e.message);
-  }
-
-  res.status(500).json({
-    success: false,
-    message: "Tất cả 4 dịch vụ định vị đều không phản hồi. Có thể do Render IP bị chặn hoặc tọa độ không hợp lệ. Vui lòng thử lại sau giây lát."
-  });
+  res.status(500).json({ success: false, message: "Không thể xác định địa chỉ" });
 };
 
 export const getDirections = async (req, res) => {
@@ -287,44 +228,38 @@ export const getDirections = async (req, res) => {
       return res.status(400).json({ success: false, message: "Thiếu tọa độ bắt đầu hoặc kết thúc" });
     }
 
-    const fetchWithTimeout = async (url, options, timeout = 5000) => {
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeout);
+    const GOONG_API_KEY = process.env.GOONG_API_KEY;
+
+    if (GOONG_API_KEY && GOONG_API_KEY !== 'YOUR_GOONG_API_KEY') {
       try {
-        const response = await fetch(url, { ...options, signal: controller.signal });
-        clearTimeout(id);
-        return response;
+        const url = `https://rsapi.goong.io/Direction?origin=${start}&destination=${end}&vehicle=car&api_key=${GOONG_API_KEY}&geometries=geojson&overview=full`;
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          // Goong Direction returns polylines, we need to normalize to OSRM format for the frontend if needed
+          // or update frontend to handle both. OSRM structure: { routes: [ { geometry: ... } ] }
+          if (data.routes && data.routes.length > 0) {
+            // If Goong returns GeoJSON in the same structure, it works.
+            // Actually Goong's Direction API is very similar to Google's.
+            return res.status(200).json(data);
+          }
+        }
       } catch (e) {
-        clearTimeout(id);
-        throw e;
+        console.warn("Goong Direction failed:", e.message);
       }
-    };
-
-    try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${start};${end}?overview=full&geometries=geojson`;
-      const response = await fetchWithTimeout(url, {
-        headers: { 'User-Agent': 'AetherMapApp/1.0' }
-      }, 5000);
-
-      if (response.ok) {
-        const data = await response.json();
-        return res.status(200).json(data);
-      }
-    } catch (osrmError) {
-      console.warn("OSM Routing failed, trying fallback...", osrmError.message);
     }
 
-    const fallbackUrl = `https://routing.openstreetmap.de/routed-car/route/v1/driving/${start};${end}?overview=full&geometries=geojson`;
-    const fallbackResponse = await fetch(fallbackUrl);
-
-    if (fallbackResponse.ok) {
-      const fallbackData = await fallbackResponse.json();
-      return res.status(200).json(fallbackData);
+    // Fallback to OSRM
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${start.replace(',', '.')};${end.replace(',', '.')}?overview=full&geometries=geojson`;
+    const response = await fetch(osrmUrl);
+    if (response.ok) {
+      const data = await response.json();
+      return res.status(200).json(data);
     }
 
-    res.status(500).json({ success: false, message: "Không thể lấy dữ liệu chỉ đường từ tất cả các nguồn" });
+    res.status(500).json({ success: false, message: "Không thể lấy dữ liệu chỉ đường" });
   } catch (error) {
-    console.error("Lỗi hoàn toàn hệ thống routing:", error);
+    console.error("Lỗi routing:", error);
     res.status(500).json({ success: false, message: "Lỗi Server" });
   }
 };
@@ -336,53 +271,54 @@ export const searchAddress = async (req, res) => {
       return res.status(400).json({ success: false, message: "Thiếu từ khóa tìm kiếm" });
     }
 
-    const fetchWithTimeout = async (url, options, timeout = 4000) => {
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeout);
+    const GOONG_API_KEY = process.env.GOONG_API_KEY;
+
+    if (GOONG_API_KEY && GOONG_API_KEY !== 'YOUR_GOONG_API_KEY') {
       try {
-        const response = await fetch(url, { ...options, signal: controller.signal });
-        clearTimeout(id);
-        return response;
+        const response = await fetch(`https://rsapi.goong.io/Place/AutoComplete?api_key=${GOONG_API_KEY}&input=${encodeURIComponent(q)}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.predictions && data.predictions.length > 0) {
+            // Need to fetch details for each prediction to get lat/lng, or at least for the first one.
+            // But usually Autocomplete returns enough. However, the frontend expects lat/lng.
+            // So we might need to call Place Detail for each or return a modified list.
+            
+            // To be efficient, we'll return the predictions and let the frontend handle selection,
+            // OR we can fetch details for all (limited to 5).
+            const detailedResults = await Promise.all(data.predictions.slice(0, 5).map(async (p) => {
+              const detailRes = await fetch(`https://rsapi.goong.io/Place/Detail?place_id=${p.place_id}&api_key=${GOONG_API_KEY}`);
+              const detailData = await detailRes.json();
+              if (detailData.result) {
+                return {
+                  display_name: p.description,
+                  lat: detailData.result.geometry.location.lat,
+                  lon: detailData.result.geometry.location.lng,
+                  place_id: p.place_id
+                };
+              }
+              return null;
+            }));
+
+            return res.status(200).json(detailedResults.filter(Boolean));
+          }
+        }
       } catch (e) {
-        clearTimeout(id);
-        throw e;
+        console.warn("Goong Search failed:", e.message);
       }
-    };
-
-    try {
-      const response = await fetchWithTimeout(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5`, {
-        headers: {
-          'User-Agent': 'AetherMapApp/1.0',
-          'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8'
-        }
-      }, 4000);
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.length > 0) {
-          return res.status(200).json(data);
-        }
-      }
-    } catch (nominatimError) {
-      console.warn("Search Nominatim failed, trying fallback...", nominatimError.message);
     }
 
-    const fallbackResponse = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5&lang=vi`);
-
-    if (fallbackResponse.ok) {
-      const fallbackData = await fallbackResponse.json();
-      const normalizedData = fallbackData.features.map(f => ({
-        display_name: `${f.properties.name || ''} ${f.properties.street || ''} ${f.properties.city || ''} ${f.properties.country || ''}`.trim(),
-        lat: f.geometry.coordinates[1],
-        lon: f.geometry.coordinates[0],
-        type: f.properties.osm_value
-      }));
-      return res.status(200).json(normalizedData);
+    // Fallback to Nominatim
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5`, {
+      headers: { 'User-Agent': 'AetherMapApp/1.0' }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return res.status(200).json(data);
     }
 
-    res.status(500).json({ success: false, message: "Tìm kiếm thất bại ở tất cả các nguồn" });
+    res.status(500).json({ success: false, message: "Tìm kiếm thất bại" });
   } catch (error) {
-    console.error("Lỗi hoàn toàn hệ thống tìm kiếm:", error);
+    console.error("Lỗi tìm kiếm:", error);
     res.status(500).json({ success: false, message: "Lỗi Server" });
   }
 };

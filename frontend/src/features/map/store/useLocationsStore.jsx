@@ -209,8 +209,15 @@ export const useLocationStore = create((set) => ({
       const startStr = `${start[0]},${start[1]}`;
       const endStr = `${end[0]},${end[1]}`;
       const result = await apiClient.get(`/locations/routing?start=${startStr}&end=${endStr}`);
-      if (result.success !== false && result.code === 'Ok') {
-        set({routeData: result.routes[0].geometry});
+      if (result && result.routes && result.routes.length > 0) {
+        const route = result.routes[0];
+        const geometry = route.geometry || (route.overview_polyline ? route.overview_polyline.points : null);
+        
+        if (geometry) {
+          set({routeData: geometry});
+        } else {
+          throw new Error("No geometry found in route");
+        }
       } else {
         throw new Error(getErrorMessage(result, "Backend routing failed"));
       }

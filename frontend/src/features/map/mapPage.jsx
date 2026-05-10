@@ -1,22 +1,22 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import Map from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import ClickedMarker from "./components/clickedMarker.jsx";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getAddress } from "./utils/geocoding.js";
-import { debounce } from "./utils/performance.js";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {getAddress} from "./utils/geocoding.js";
+import {debounce} from "./utils/performance.js";
 import SearchBox from "./components/searchBox.jsx";
-import { useLocationStore } from "./store/useLocationsStore.jsx";
-import { useAuthStore } from "../auth/context/authStore.js";
+import {useLocationStore} from "./store/useLocationsStore.jsx";
+import {useAuthStore} from "../auth/context/authStore.js";
 import ClusterLocations from "./components/clusterLocations.jsx";
 import LocationSidebar from "./components/locationSidebar.jsx";
 import RouteLayer from "./components/routeLayer.jsx";
-import { AnimatePresence } from 'framer-motion';
-import colorfull from "./style/colorful";
-import { extractGPS } from "./utils/exifUtils.js";
+import {AnimatePresence} from 'framer-motion';
+// import colorfull from "./style/colorful";
+import {extractGPS} from "./utils/exifUtils.js";
 
-import { useToastStore } from "../../shared/components/toast/useToastStore.jsx";
+import {useToastStore} from "../../shared/components/toast/useToastStore.jsx";
 
 import OnlineCommunityBar from "./components/onlineCommunityBar.jsx";
 import MapControls from "./components/mapControls.jsx";
@@ -26,9 +26,9 @@ import MapMarkers from "./components/mapMarkers.jsx";
 import WeatherWidget from "./components/WeatherWidget.jsx";
 import WeatherLayers from "./components/WeatherLayers.jsx";
 import WeatherEffects from "./components/WeatherEffects.jsx";
-import { useWeatherStore } from "./store/useWeatherStore.jsx";
+import {useWeatherStore} from "./store/useWeatherStore.jsx";
 import MapChatbot from "../chatbot/components/mapChatbot.jsx";
-import { isMobile } from "../../shared/utils/deviceUtils.js";
+import {isMobile} from "../../shared/utils/deviceUtils.js";
 import {withNearbyGroup} from "./utils/locationGrouping.js";
 
 
@@ -57,7 +57,7 @@ export default function MapPage() {
       },
       () => {
       },
-      { enableHighAccuracy: true }
+      {enableHighAccuracy: true}
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
@@ -70,7 +70,7 @@ export default function MapPage() {
   const routeError = useLocationStore(state => state.routeError);
   const routeData = useLocationStore(state => state.routeData);
   const setRouteData = useLocationStore(state => state.setRouteData);
-  const { user } = useAuthStore();
+  const {user} = useAuthStore();
   const [activeLocation, setActiveLocation] = useState(null);
   const fetchLocationDetail = useLocationStore(state => state.fetchLocationDetail);
   const [isLocating, setIsLocating] = useState(false);
@@ -93,7 +93,7 @@ export default function MapPage() {
       essential: true,
       padding: withPadding ? {
         left: mobile ? 0 : 460,
-      } : { left: 0, bottom: 0, top: 0, right: 0 }
+      } : {left: 0, bottom: 0, top: 0, right: 0}
     });
   }, [mobile]);
 
@@ -144,9 +144,9 @@ export default function MapPage() {
         }
       }
 
-      setInfoClicked({ lng, lat, address: null });
+      setInfoClicked({lng, lat, address: null});
       const diachi = await getAddress(lat, lng);
-      setInfoClicked({ lng, lat, address: diachi });
+      setInfoClicked({lng, lat, address: diachi});
     }, 300);
 
     return () => clearTimeout(timer);
@@ -164,13 +164,13 @@ export default function MapPage() {
 
     if (activeLocation === null) {
       map.fitBounds(bounds, {
-        padding: { top: 100, bottom: 200, left: 100, right: 100 },
+        padding: {top: 100, bottom: 200, left: 100, right: 100},
         duration: 1200,
         essential: true,
       });
     } else {
       map.fitBounds(bounds, {
-        padding: { top: 100, bottom: 200, left: 400, right: 100 },
+        padding: {top: 100, bottom: 200, left: 400, right: 100},
         duration: 1200,
         essential: true,
       });
@@ -208,18 +208,18 @@ export default function MapPage() {
 
     setActiveLocation(null);
     setRouteData(null);
-    const { lng, lat } = e.lngLat;
+    const {lng, lat} = e.lngLat;
     flyToLocation(lng, lat, 16);
-    setInfoClicked({ lng, lat, address: { display_name: "Đang xác định vị trí..." } });
+    setInfoClicked({lng, lat, address: {display_name: "Đang xác định vị trí..."}});
     const diachi = await getAddress(lat, lng);
-    setInfoClicked({ lng, lat, address: diachi });
+    setInfoClicked({lng, lat, address: diachi});
   }, [flyToLocation, setRouteData, handleLocationClick, locations]);
 
   const handleSearchSelect = useCallback(async (lng, lat, addressName) => {
     flyToLocation(lng, lat, 16);
-    setInfoClicked({ lng, lat, address: { display_name: addressName } });
+    setInfoClicked({lng, lat, address: {display_name: addressName}});
     const diachi = await getAddress(lat, lng);
-    setInfoClicked({ lng, lat, address: diachi });
+    setInfoClicked({lng, lat, address: diachi});
   }, [flyToLocation]);
 
   const debouncedFetch = useRef(
@@ -247,7 +247,7 @@ export default function MapPage() {
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { longitude, latitude, accuracy } = pos.coords;
+        const {longitude, latitude, accuracy} = pos.coords;
         setUserLocation([longitude, latitude]);
         setAccuracy(accuracy);
 
@@ -264,7 +264,7 @@ export default function MapPage() {
         console.error("Lỗi lấy vị trí:", err);
         addToast("Không thể truy cập vị trí của bạn. Vui lòng cấp quyền.", "error");
       },
-      { enableHighAccuracy: true }
+      {enableHighAccuracy: true}
     );
   }, [addToast, setUserLocation, setAccuracy]);
 
@@ -289,9 +289,9 @@ export default function MapPage() {
       const gps = await extractGPS(file);
       if (gps) {
         flyToLocation(gps.lng, gps.lat, 17);
-        setInfoClicked({ lng: gps.lng, lat: gps.lat, address: null, imageFile: file, autoOpenForm: true });
+        setInfoClicked({lng: gps.lng, lat: gps.lat, address: null, imageFile: file, autoOpenForm: true});
         const diachi = await getAddress(gps.lat, gps.lng);
-        setInfoClicked({ lng: gps.lng, lat: gps.lat, address: diachi, imageFile: file, autoOpenForm: true });
+        setInfoClicked({lng: gps.lng, lat: gps.lat, address: diachi, imageFile: file, autoOpenForm: true});
       } else {
         addToast("Ảnh này không chứa thông tin vị trí (GPS metadata).", "error");
       }
@@ -320,29 +320,29 @@ export default function MapPage() {
 
   const mapCanvas = useMemo(() => (
     <Map ref={mapRef}
-      mapStyle={colorfull}
-      minZoom={3}
-      maxZoom={18}
-      onLoad={() => {
-        setIsMapReady(true);
-        handleMapChange();
-      }}
-      onMoveEnd={handleMapChange}
-      mapLib={maplibregl}
-      antialias={true}
-      attributionControl={false}
-      initialViewState={{
-        longitude: 108.249476,
-        latitude: 15.972143,
-        zoom: 13,
-        pitch: 45,
-        bearing: 0
-      }}
-      style={{ width: '100%', height: '100%' }}
-      onClick={handleClick}
-      interactiveLayerIds={['clusters', 'unclustered-point', 'unclustered-label']}
+         mapStyle={`https://tiles.goong.io/assets/goong_map_web.json?api_key=${import.meta.env.VITE_GOONG_API_KEY}`}
+         minZoom={3}
+         maxZoom={18}
+         onLoad={() => {
+           setIsMapReady(true);
+           handleMapChange();
+         }}
+         onMoveEnd={handleMapChange}
+         mapLib={maplibregl}
+         antialias={true}
+         attributionControl={false}
+         initialViewState={{
+           longitude: 108.249476,
+           latitude: 15.972143,
+           zoom: 13,
+           pitch: 45,
+           bearing: 0
+         }}
+         style={{width: '100%', height: '100%'}}
+         onClick={handleClick}
+         interactiveLayerIds={['clusters', 'unclustered-point', 'unclustered-label']}
     >
-      <WeatherLayers />
+      <WeatherLayers/>
       <ClickedMarker
         point={infoClicked}
         setPoint={setInfoClicked}
@@ -353,9 +353,9 @@ export default function MapPage() {
           flyToLocation(savedLocation.lng, savedLocation.lat, 16, 1200, true);
         }}
       />
-      <ClusterLocations />
-      <RouteLayer />
-      <UserMarker />
+      <ClusterLocations/>
+      <RouteLayer/>
+      <UserMarker/>
       <MapMarkers
         viewMode={markerViewMode}
         onLocationClick={handleLocationClick}
@@ -377,10 +377,10 @@ export default function MapPage() {
     <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
       {mapCanvas}
 
-      <WeatherWidget />
-      <WeatherEffects />
+      <WeatherWidget/>
+      <WeatherEffects/>
 
-      <UserProfileButton />
+      <UserProfileButton/>
 
       <MapControls
         onLocate={handleLocateUser}
@@ -396,12 +396,13 @@ export default function MapPage() {
         onToggleWeather={toggleVisibility}
       />
 
-      <SearchBox onSelectLocation={handleSearchSelect} />
+      <SearchBox onSelectLocation={handleSearchSelect}/>
 
-      <OnlineCommunityBar />
+      <OnlineCommunityBar/>
 
       {(mapLoading || mapError || routeError) && (
-        <div className="absolute left-3 top-32 z-[750] max-w-[calc(100%-6rem)] sm:left-6 sm:top-24 sm:max-w-sm pointer-events-none">
+        <div
+          className="absolute left-3 top-32 z-[750] max-w-[calc(100%-6rem)] sm:left-6 sm:top-24 sm:max-w-sm pointer-events-none">
           <div className={`rounded-2xl border px-4 py-3 text-xs font-bold shadow-glass backdrop-blur-2xl ${
             mapError || routeError
               ? 'border-sunset/25 bg-white/95 text-sunset'
@@ -428,14 +429,14 @@ export default function MapPage() {
             onClose={() => {
               setActiveLocation(null);
               if (routerLocation.search) {
-                navigate('/', { replace: true });
+                navigate('/', {replace: true});
               }
             }}
           />
         )}
       </AnimatePresence>
 
-      <MapChatbot />
+      <MapChatbot/>
     </div>
 
   );
