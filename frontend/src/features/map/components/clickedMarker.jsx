@@ -1,7 +1,9 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useState } from "react";
 import { Marker } from "react-map-gl/maplibre";
 const LocationFormModal = lazy(() => import("./locationFormModal.jsx"));
 import { useLocationStore } from "../store/useLocationsStore.jsx";
+import { useAuthStore } from "../../auth/context/authContext.jsx";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { CloseIcon, PinIcon, PlusIcon, RouteIcon, SpinnerIcon } from "../../../shared/components/common/icons.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
@@ -9,16 +11,13 @@ import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import { useToastStore } from "../../../shared/components/toast/useToastStore.jsx";
 
-export default function ClickedMarker({ point, setPoint }) {
+export default function ClickedMarker({ point, setPoint, onLocationSaved }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { fetchRoute, routeLoading, setRouteLoading, userLocation } = useLocationStore();
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
   const addToast = useToastStore(state => state.addToast);
-
-  useEffect(() => {
-    if (point?.autoOpenForm) {
-      setIsFormOpen(true);
-    }
-  }, [point]);
+  const shouldShowForm = isFormOpen || Boolean(point?.autoOpenForm);
 
   const handleGetDirections = useCallback((e) => {
     e.stopPropagation();
@@ -39,7 +38,7 @@ export default function ClickedMarker({ point, setPoint }) {
         fetchRoute(start, end);
         setPoint(null);
       },
-      (error) => {
+      () => {
         setRouteLoading(false);
         addToast("Không thể lấy vị trí của bạn. Vui lòng cho phép truy cập vị trí.", "error");
       },
@@ -57,7 +56,7 @@ export default function ClickedMarker({ point, setPoint }) {
           <div className="w-4 h-4 bg-cyan-glow rounded-full shadow-neon border-2 border-text-primary z-10"></div>
 
           <AnimatePresence>
-            {!isFormOpen && (
+            {!shouldShowForm && (
               <motion.div
                 initial={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
                 animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
@@ -99,7 +98,14 @@ export default function ClickedMarker({ point, setPoint }) {
 
                   <div className="flex flex-col gap-2.5">
                     <ActionButton
-                      onClick={() => setIsFormOpen(true)}
+                      onClick={() => {
+                        if (!user) {
+                          addToast("Vui lòng đăng nhập để thêm địa điểm.", "error");
+                          navigate("/login");
+                          return;
+                        }
+                        setIsFormOpen(true);
+                      }}
                       className="w-full !py-2.5 gap-2 text-[10px] uppercase tracking-widest shadow-none"
                     >
                       <PlusIcon size={14} /> Thêm địa điểm
@@ -125,10 +131,13 @@ export default function ClickedMarker({ point, setPoint }) {
         </div>
       </Marker>
 
-      {isFormOpen && (
+      {shouldShowForm && (
         <Suspense fallback={null}>
           <LocationFormModal
             point={point}
+            onSaved={(savedLocation) => {
+              onLocationSaved?.(savedLocation);
+            }}
             onClose={() => {
               setIsFormOpen(false);
               setPoint(null);

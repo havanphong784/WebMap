@@ -45,12 +45,16 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [localWeather, setLocalWeather] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [likeOverride, setLikeOverride] = useState(null);
   const scrollRef = useRef(null);
 
   const group = location?.group || [];
   const hasGroup = group.length > 1;
   const selectedIndex = hasGroup ? Math.min(currentIndex, group.length - 1) : 0;
   const displayLocation = hasGroup ? group[selectedIndex] : location;
+  const localLiked = likeOverride?.id === displayLocation?.id
+    ? likeOverride.value
+    : Boolean(displayLocation?.is_liked);
 
   const formatImageUrl = (url) => {
     if (!url) return null;
@@ -221,6 +225,21 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
       showToast("Lỗi kết nối");
     } finally {
       setIsSubmittingComment(false);
+    }
+  };
+
+  const handleToggleLike = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const previousLiked = localLiked;
+    setLikeOverride({id: displayLocation.id, value: !previousLiked});
+    const res = await toggleLike(displayLocation.id, user.uid);
+    if (!res?.success) {
+      setLikeOverride({id: displayLocation.id, value: previousLiked});
+      showToast(res?.message || "Không thể cập nhật lượt thích");
     }
   };
 
@@ -481,7 +500,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
               <h4
                 className="text-[10px] font-black text-text-primary uppercase tracking-[0.35em] flex items-center gap-3">
                 <div className="w-1.5 h-4 bg-gradient-to-b from-sunset to-sunset/20 rounded-full shadow-sunset"></div>
-                Thảo luận ({displayLocation.comments_count || 0})
+                Thảo luận ({comments.length || displayLocation.comments_count || 0})
               </h4>
             </div>
 
@@ -597,7 +616,9 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
               loading={routeLoading}
               onClick={() => {
                 navigator.geolocation.getCurrentPosition((pos) => {
-                  fetchRoute([pos.coords.longitude, pos.coords.latitude], [location.lng, location.lat]);
+                  fetchRoute([pos.coords.longitude, pos.coords.latitude], [displayLocation.lng, displayLocation.lat]);
+                }, () => {
+                  showToast("Không thể lấy vị trí của bạn");
                 });
               }}
               size="lg"
@@ -613,12 +634,12 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
             <motion.button
               whileHover={{scale: 1.05, y: -2}}
               whileTap={{scale: 0.95}}
-              onClick={() => toggleLike(displayLocation.id, user?.uid)}
-              className={`flex h-12 w-12 items-center justify-center rounded-2xl border border-glass-border bg-white/80 transition-all duration-500 sm:w-auto sm:px-6 ${displayLocation.is_liked ? 'bg-sunset/10 text-sunset border-sunset/20 shadow-sunset' : 'text-text-muted hover:text-text-primary hover:bg-white'}`}
+              onClick={handleToggleLike}
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl border border-glass-border bg-white/80 transition-all duration-500 sm:w-auto sm:px-6 ${localLiked ? 'bg-sunset/10 text-sunset border-sunset/20 shadow-sunset' : 'text-text-muted hover:text-text-primary hover:bg-white'}`}
               aria-label="Thích địa điểm"
             >
-              <LikeIcon size={24} fill={displayLocation.is_liked ? "currentColor" : "none"}
-                        className={displayLocation.is_liked ? "drop-shadow-[0_0_8px_rgba(255,75,43,0.3)]" : ""}/>
+              <LikeIcon size={24} fill={localLiked ? "currentColor" : "none"}
+                        className={localLiked ? "drop-shadow-[0_0_8px_rgba(255,75,43,0.3)]" : ""}/>
             </motion.button>
           </div>
         </div>

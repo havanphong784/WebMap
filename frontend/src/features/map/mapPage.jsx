@@ -343,7 +343,16 @@ export default function MapPage() {
       interactiveLayerIds={['clusters', 'unclustered-point', 'unclustered-label']}
     >
       <WeatherLayers />
-      <ClickedMarker point={infoClicked} setPoint={setInfoClicked} />
+      <ClickedMarker
+        point={infoClicked}
+        setPoint={setInfoClicked}
+        onLocationSaved={(savedLocation) => {
+          if (!savedLocation) return;
+          setInfoClicked(null);
+          setActiveLocation(savedLocation);
+          flyToLocation(savedLocation.lng, savedLocation.lat, 16, 1200, true);
+        }}
+      />
       <ClusterLocations />
       <RouteLayer />
       <UserMarker />

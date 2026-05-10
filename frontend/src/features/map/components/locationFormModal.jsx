@@ -32,7 +32,7 @@ const SUGGESTED_TAGS = [
   "đồ uống", "wifi", "ngoài trời", "lịch sử", "mua sắm"
 ];
 
-export default function LocationFormModal({point, onClose}) {
+export default function LocationFormModal({point, onClose, onSaved}) {
   const addLocation = useLocationStore((state) => state.addLocation);
   const isLoading = useLocationStore((state) => state.isLoading);
   const {user} = useAuthStore();
@@ -185,7 +185,7 @@ export default function LocationFormModal({point, onClose}) {
         });
       }
 
-      await addLocation({
+      const result = await addLocation({
         user_id: user.uid,
         name,
         address,
@@ -199,7 +199,13 @@ export default function LocationFormModal({point, onClose}) {
         tags
       });
 
-      onClose();
+      if (result?.success) {
+        addToast("Đã đăng địa điểm mới", "success");
+        onSaved?.(result.data);
+        onClose();
+      } else {
+        addToast(result?.message || "Không thể lưu địa điểm, vui lòng thử lại!", "error");
+      }
     } catch (error) {
       console.error("Lỗi khi upload ảnh hoặc lưu data:", error);
       addToast("Có lỗi xảy ra, vui lòng thử lại!", "error");
