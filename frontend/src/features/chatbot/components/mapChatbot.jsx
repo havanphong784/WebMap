@@ -1,10 +1,13 @@
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
 import ChatbotAnimation from './chatbotAnimation.jsx';
 import GlassPanel from '../../../shared/components/common/glassPanel.jsx';
-import {CloseIcon, SendIcon, SparklesIcon} from '../../../shared/components/common/icons.jsx';
+import {CloseIcon, PinIcon, RouteIcon, SendIcon, SparklesIcon} from '../../../shared/components/common/icons.jsx';
 import eveSpritesheet from '../styles/eve/spritesheet.webp';
 import {isMobile} from '../../../shared/utils/deviceUtils.js';
+import {useLocationStore} from '../../map/store/useLocationsStore.jsx';
+import {useWeatherStore} from '../../map/store/useWeatherStore.jsx';
+import {apiClient} from '../../../shared/api/apiClient.js';
 
 const ROWS = {
   STARTUP: 0,
@@ -18,16 +21,169 @@ const ROWS = {
   SMILE: 8
 };
 
+const SAVED_TRIPS_KEY = 'aether.savedTrips';
+
+const normalizeText = (value = '') => (
+  value
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+);
+
+const getDistanceKm = (from, location) => {
+  const fromLng = Number(from?.[0]);
+  const fromLat = Number(from?.[1]);
+  const lng = Number(location?.lng);
+  const lat = Number(location?.lat);
+  if (![fromLng, fromLat, lng, lat].every(Number.isFinite)) return null;
+
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const dLat = toRad(lat - fromLat);
+  const dLng = toRad(lng - fromLng);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(fromLat)) * Math.cos(toRad(lat)) * Math.sin(dLng / 2) ** 2;
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+const parseTripOptions = (text) => {
+  const normalized = normalizeText(text);
+  const hoursMatch = normalized.match(/(\d+)\s*(h|gio|hour)/);
+  const daysMatch = normalized.match(/(\d+)\s*(ngay|day)/);
+  const durationHours = daysMatch
+    ? Number(daysMatch[1]) * 8
+    : hoursMatch
+      ? Number(hoursMatch[1])
+      : normalized.includes('ca ngay')
+        ? 8
+        : 4;
+
+  const budget = normalized.includes('re') || normalized.includes('tiet kiem')
+    ? 'Tiết kiệm'
+    : normalized.includes('cao') || normalized.includes('sang') || normalized.includes('premium')
+      ? 'Thoải mái'
+      : 'Vừa phải';
+
+  const preferenceMap = [
+    {keyword: 'cafe', label: 'cafe'},
+    {keyword: 'ca phe', label: 'cafe'},
+    {keyword: 'an', label: 'restaurant'},
+    {keyword: 'food', label: 'restaurant'},
+    {keyword: 'view', label: 'view'},
+    {keyword: 'checkin', label: 'check-in'},
+    {keyword: 'check-in', label: 'check-in'},
+    {keyword: 'yen tinh', label: 'yên tĩnh'},
+    {keyword: 'lich su', label: 'lịch sử'},
+    {keyword: 'gia dinh', label: 'gia đình'},
+    {keyword: 'dem', label: 'ban đêm'},
+  ];
+
+  const preferences = preferenceMap
+    .filter(item => normalized.includes(item.keyword))
+    .map(item => item.label);
+
+  return {
+    durationHours: Math.min(Math.max(durationHours, 2), 24),
+    budget,
+    preferences: [...new Set(preferences)],
+  };
+};
+
+const hasLocationSignal = (location, terms) => {
+  const haystack = normalizeText([
+    location.name,
+    location.address,
+    location.category,
+    ...(location.tags || []),
+  ].filter(Boolean).join(' '));
+  return terms.some(term => haystack.includes(normalizeText(term)));
+};
+
+const scoreLocation = (location, {userLocation, weather, preferences = [], text = ''}) => {
+  let score = Number(location.rating || 0) * 2
+    + Number(location.likes_count || 0) * 0.35
+    + Number(location.comments_count || 0) * 0.2;
+
+  if (preferences.length && hasLocationSignal(location, preferences)) score += 8;
+
+  const searchTerms = normalizeText(text).split(/\s+/).filter(word => word.length > 2);
+  if (searchTerms.length && hasLocationSignal(location, searchTerms)) score += 4;
+
+  const condition = normalizeText(weather?.weather?.[0]?.main || weather?.weather?.[0]?.description || '');
+  if ((condition.includes('rain') || condition.includes('mua')) && hasLocationSignal(location, ['cafe', 'hotel', 'restaurant', 'trong nhà'])) {
+    score += 3;
+  }
+  if ((condition.includes('clear') || condition.includes('sun')) && hasLocationSignal(location, ['view', 'ngoài trời', 'check-in'])) {
+    score += 3;
+  }
+
+  const distance = getDistanceKm(userLocation, location);
+  if (distance !== null) score += Math.max(0, 6 - distance);
+
+  return score;
+};
+
+const getRecommendedLocations = (locations, options) => (
+  [...locations]
+    .filter(location => Number.isFinite(Number(location.lat)) && Number.isFinite(Number(location.lng)))
+    .map(location => ({location, score: scoreLocation(location, options)}))
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.location)
+);
+
+const buildItinerary = (locations, options) => {
+  const stopCount = Math.min(6, Math.max(2, Math.ceil(options.durationHours / 2)));
+  return getRecommendedLocations(locations, options).slice(0, stopCount);
+};
+
+const makeRouteGeometry = (itinerary, userLocation) => {
+  const coordinates = [];
+  if (userLocation?.length === 2) {
+    coordinates.push([Number(userLocation[0]), Number(userLocation[1])]);
+  }
+
+  itinerary.forEach(location => {
+    coordinates.push([Number(location.lng), Number(location.lat)]);
+  });
+
+  if (coordinates.length < 2) return null;
+  return {type: 'LineString', coordinates};
+};
+
+const formatItineraryText = (itinerary, options, weather) => {
+  const weatherText = weather?.weather?.[0]?.description
+    ? ` Thời tiết hiện tại: ${weather.weather[0].description}.`
+    : '';
+  const preferenceText = options.preferences.length
+    ? ` Ưu tiên: ${options.preferences.join(', ')}.`
+    : '';
+
+  return `Mình đã dựng một lịch trình ${options.durationHours} giờ với ${itinerary.length} điểm dừng, ngân sách ${options.budget.toLowerCase()}.${preferenceText}${weatherText}`;
+};
+
 const MapChatbot = () => {
+  const locations = useLocationStore(state => state.locations);
+  const userLocation = useLocationStore(state => state.userLocation);
+  const setRouteData = useLocationStore(state => state.setRouteData);
+  const weather = useWeatherStore(state => state.weather);
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       role: 'bot',
-      text: 'Chào bạn, tôi là EVE. Bạn có thể hỏi tôi về địa điểm, thời tiết hoặc lộ trình khám phá gần đây.'
+      text: 'Chào bạn, tôi là EVE. Tôi có thể gợi ý địa điểm theo vị trí, thời tiết, tag hoặc dựng lịch trình ngắn từ các địa điểm đang có trên bản đồ.'
     }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [savedTrips, setSavedTrips] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(SAVED_TRIPS_KEY) || '[]');
+    } catch {
+      return [];
+    }
+  });
   const [activeRow, setActiveRow] = useState(ROWS.STARTUP);
   const constraintsRef = useRef(null);
   const botRef = useRef(null);
@@ -35,6 +191,95 @@ const MapChatbot = () => {
   const [isLeftHalf, setIsLeftHalf] = useState(false);
   const isDragging = useRef(false);
   const [mobile] = useState(() => isMobile());
+
+  const quickPrompts = useMemo(() => [
+    'Gợi ý quán cafe gần đây',
+    'Lên lịch trình 4 giờ, view đẹp, ngân sách vừa phải',
+    'Địa điểm phù hợp với thời tiết hiện tại',
+    'Xem chuyến đi đã lưu',
+  ], []);
+
+  const saveTrip = (itinerary, options) => {
+    const stopKey = itinerary.map(location => location.id || location.name).join('-');
+    const trip = {
+      id: `trip-${options.durationHours}-${stopKey}-${savedTrips.length}`,
+      title: `Chuyến đi ${options.durationHours} giờ`,
+      options,
+      stops: itinerary.map(location => ({
+        id: location.id,
+        name: location.name,
+        address: location.address,
+        category: location.category,
+        lat: location.lat,
+        lng: location.lng,
+      })),
+    };
+
+    setSavedTrips(prev => {
+      const next = [trip, ...prev].slice(0, 10);
+      localStorage.setItem(SAVED_TRIPS_KEY, JSON.stringify(next));
+      return next;
+    });
+
+    return trip;
+  };
+
+  const showRouteOnMap = (itinerary) => {
+    const geometry = makeRouteGeometry(itinerary, userLocation);
+    if (geometry) setRouteData(geometry);
+  };
+
+  const createBotReply = (text) => {
+    const normalized = normalizeText(text);
+
+    if (normalized.includes('da luu') || normalized.includes('chuyen di da luu') || normalized.includes('saved')) {
+      if (!savedTrips.length) {
+        return {
+          role: 'bot',
+          text: 'Bạn chưa có chuyến đi nào được lưu. Hãy thử nhắn: "Lên lịch trình 4 giờ cafe view đẹp".',
+        };
+      }
+
+      return {
+        role: 'bot',
+        text: `Bạn đang có ${savedTrips.length} chuyến đi đã lưu. Đây là chuyến mới nhất.`,
+        itinerary: savedTrips[0].stops,
+        actions: [{label: 'Hiển thị tuyến', type: 'route', itinerary: savedTrips[0].stops}],
+      };
+    }
+
+    const isTripRequest = ['lich trinh', 'trip', 'chuyen di', 'planner', 'ke hoach'].some(keyword => normalized.includes(keyword));
+    const options = parseTripOptions(text);
+    const recommended = isTripRequest
+      ? buildItinerary(locations, {...options, userLocation, weather, text})
+      : getRecommendedLocations(locations, {...options, userLocation, weather, text}).slice(0, 5);
+
+    if (!recommended.length) {
+      return {
+        role: 'bot',
+        text: 'Mình chưa thấy đủ địa điểm trong vùng bản đồ hiện tại để gợi ý. Hãy di chuyển/zoom bản đồ hoặc tải thêm dữ liệu địa điểm trước nhé.',
+      };
+    }
+
+    if (isTripRequest) {
+      return {
+        role: 'bot',
+        text: `${formatItineraryText(recommended, options, weather)} Mình cũng đã lưu vào "Chuyến đi của tôi".`,
+        itinerary: recommended,
+        routeItinerary: recommended,
+        shouldSaveTrip: true,
+        tripOptions: options,
+        actions: [{label: 'Vẽ lại tuyến', type: 'route', itinerary: recommended}],
+      };
+    }
+
+    return {
+      role: 'bot',
+      text: `Mình chọn ${recommended.length} địa điểm phù hợp nhất từ dữ liệu hiện có trên map. Bạn có thể nhắn thêm số giờ/ngân sách để mình biến nó thành lịch trình.`,
+      itinerary: recommended,
+      actions: [{label: 'Tạo lịch trình 4 giờ', type: 'plan', prompt: `Lên lịch trình 4 giờ ${text}`}],
+    };
+  };
 
   useEffect(() => {
     if (isOpen || isDragging.current || mobile) return;
@@ -62,25 +307,112 @@ const MapChatbot = () => {
     return () => window.removeEventListener('wheel', handleMapActivity);
   }, [isOpen, activeRow, mobile]);
 
-  const handleSend = () => {
-    if (!input.trim() || isTyping) return;
+  const handleSend = async (overrideText = input) => {
+    if (!overrideText.trim() || isTyping) return;
 
-    const userMsg = {role: 'user', text: input};
+    const userMsg = {role: 'user', text: overrideText};
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
     setActiveRow(ROWS.HAPPY);
 
-    setTimeout(() => {
+    try {
+      // Check for local commands first (like "saved trips")
+      const normalized = normalizeText(overrideText);
+      if (normalized.includes('da luu') || normalized.includes('chuyen di da luu') || normalized.includes('saved')) {
+        const botReply = createBotReply(overrideText);
+        setMessages(prev => [...prev, botReply]);
+        setIsTyping(false);
+        setActiveRow(ROWS.SMILE);
+        return;
+      }
+
+      // Call AI Backend
+      const res = await apiClient.post('/chatbot/chat', {
+        message: overrideText,
+        context: {
+          weather,
+          locations: locations.slice(0, 20), // Send top 20 locations for context
+          userLocation
+        }
+      });
+
       setIsTyping(false);
       setActiveRow(ROWS.SMILE);
-      setMessages(prev => [...prev, {
-        role: 'bot',
-        text: 'Tôi đang phân tích yêu cầu của bạn. Bản hoàn chỉnh sẽ sớm có gợi ý địa điểm và lộ trình tốt hơn.'
-      }]);
 
+      if (res.success && res.data?.response) {
+        let aiText = res.data.response;
+        let actions = null;
+
+        // Try to extract [ACTIONS] block
+        const actionMatch = aiText.match(/\[ACTIONS\]:\s*(\{.*\})/);
+        if (actionMatch) {
+          try {
+            actions = JSON.parse(actionMatch[1]);
+            // Remove the JSON block from the text shown to user
+            aiText = aiText.replace(/\[ACTIONS\]:\s*\{.*\}/, '').trim();
+          } catch (e) {
+            console.error("Failed to parse AI actions:", e);
+          }
+        }
+        
+        const botReply = {
+          role: 'bot',
+          text: aiText,
+        };
+
+        if (actions && actions.type === 'recommendations' && actions.locationIds?.length > 0) {
+          const recommended = locations.filter(loc => actions.locationIds.includes(loc.id));
+          if (recommended.length > 0) {
+            botReply.itinerary = recommended;
+            
+            if (actions.isItinerary) {
+              botReply.routeItinerary = recommended;
+              botReply.shouldSaveTrip = true;
+              botReply.tripOptions = {
+                durationHours: actions.durationHours || 4,
+                budget: 'Vừa phải',
+                preferences: []
+              };
+              botReply.actions = [{label: 'Vẽ lại tuyến', type: 'route', itinerary: recommended}];
+            } else {
+              botReply.actions = [{label: 'Tạo lịch trình 4 giờ', type: 'plan', prompt: `Lên lịch trình 4 giờ cho các địa điểm này`}];
+            }
+          }
+        }
+        
+        setMessages(prev => [...prev, botReply]);
+        
+        // Trigger side effects
+        if (botReply.routeItinerary) {
+          showRouteOnMap(botReply.routeItinerary);
+        }
+        if (botReply.shouldSaveTrip) {
+          saveTrip(botReply.itinerary, botReply.tripOptions);
+        }
+      } else {
+        // Fallback to local logic if AI fails
+        const botReply = createBotReply(overrideText);
+        setMessages(prev => [...prev, botReply]);
+      }
+    } catch (error) {
+      console.error("Chatbot error:", error);
+      setIsTyping(false);
+      const botReply = createBotReply(overrideText);
+      setMessages(prev => [...prev, botReply]);
+    } finally {
       setTimeout(() => setActiveRow(ROWS.STARTUP), 3000);
-    }, 1500);
+    }
+  };
+
+  const handleMessageAction = (action) => {
+    if (action.type === 'route') {
+      showRouteOnMap(action.itinerary || []);
+      return;
+    }
+    if (action.type === 'plan') {
+      handleSend(action.prompt);
+    }
   };
 
   const toggleOpen = () => {
@@ -113,7 +445,6 @@ const MapChatbot = () => {
   return (
     <div ref={constraintsRef} className="fixed inset-0 pointer-events-none z-[4000]">
       <motion.div
-        animate={!mobile}
         ref={botRef}
         drag={!mobile}
         dragConstraints={constraintsRef}
@@ -175,7 +506,7 @@ const MapChatbot = () => {
                 animate={false}
                 variant="floating"
                 pad="none"
-                className="relative flex h-[min(520px,calc(100dvh-12rem))] min-h-[380px] flex-col overflow-hidden rounded-[1.75rem] border-white/80 bg-white/95 shadow-[0_24px_70px_rgba(22,29,29,0.18)] ring-1 ring-black/5 sm:h-[520px] sm:rounded-[2rem]"
+                className="relative flex h-[min(560px,calc(100dvh-12rem))] min-h-[390px] flex-col overflow-hidden rounded-[1.75rem] border-white/80 bg-white/95 shadow-[0_24px_70px_rgba(22,29,29,0.18)] ring-1 ring-black/5 sm:h-[560px] sm:rounded-[2rem]"
               >
                 <div className="flex shrink-0 items-center justify-between border-b border-glass-border bg-white/90 px-4 py-3.5 backdrop-blur-2xl sm:px-5 sm:py-4">
                   <div className="flex min-w-0 items-center gap-3">
@@ -189,13 +520,13 @@ const MapChatbot = () => {
                           EVE Companion
                         </h3>
                         <span className="hidden rounded-full border border-cyan-glow/20 bg-cyan-glow/8 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-cyan-glow sm:inline-flex">
-                          Beta
+                          Planner
                         </span>
                       </div>
                       <div className="mt-1 flex items-center gap-2">
                         <span className="h-2 w-2 rounded-full bg-emerald shadow-[0_0_10px_rgba(16,185,129,0.65)]"/>
                         <span className="truncate text-[11px] font-bold text-text-muted">
-                          Sẵn sàng hỗ trợ
+                          Dựa trên map, thời tiết và tag
                         </span>
                       </div>
                     </div>
@@ -215,11 +546,24 @@ const MapChatbot = () => {
                 </div>
 
                 <div className="flex-1 space-y-4 overflow-y-auto bg-map-bg/80 px-4 py-5 custom-scrollbar sm:px-5">
+                  <div className="flex flex-wrap gap-2">
+                    {quickPrompts.map(prompt => (
+                      <button
+                        key={prompt}
+                        onClick={() => handleSend(prompt)}
+                        disabled={isTyping}
+                        className="rounded-full border border-cyan-glow/20 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-cyan-glow shadow-sm transition-all hover:bg-cyan-glow/10 disabled:opacity-50"
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+
                   {messages.map((msg, idx) => (
                     <motion.div
                       key={`${msg.role}-${idx}`}
-                      animate={!mobile ? {opacity: 1, x: 0, y: 0} : {}}
-                      initial={!mobile ? {opacity: 0, x: msg.role === 'user' ? 14 : -14, y: 8} : {}}
+                      animate={mobile ? undefined : {opacity: 1, x: 0, y: 0}}
+                      initial={mobile ? false : {opacity: 0, x: msg.role === 'user' ? 14 : -14, y: 8}}
                       className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
@@ -230,6 +574,44 @@ const MapChatbot = () => {
                         }`}
                       >
                         {msg.text}
+
+                        {msg.itinerary?.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            {msg.itinerary.map((location, index) => (
+                              <div
+                                key={`${location.id || location.name}-${index}`}
+                                className="rounded-2xl border border-glass-border bg-white/70 px-3 py-2 text-left"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-glow text-[10px] font-black text-white">
+                                    {index + 1}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="truncate text-[12px] font-black text-text-primary">{location.name}</p>
+                                    <p className="mt-0.5 line-clamp-2 text-[10px] font-medium text-text-muted">
+                                      {location.address || location.category}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {msg.actions?.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {msg.actions.map(action => (
+                              <button
+                                key={action.label}
+                                onClick={() => handleMessageAction(action)}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-cyan-glow/25 bg-cyan-glow/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-cyan-glow transition-all hover:bg-cyan-glow/15"
+                              >
+                                {action.type === 'route' ? <RouteIcon size={12}/> : <PinIcon size={12}/>}
+                                {action.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   ))}
@@ -261,7 +643,7 @@ const MapChatbot = () => {
                       className="min-w-0 flex-1 bg-transparent px-3 text-[13px] font-semibold text-text-primary outline-none placeholder:text-text-muted"
                     />
                     <button
-                      onClick={handleSend}
+                      onClick={() => handleSend()}
                       disabled={!input.trim() || isTyping}
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-glow text-white shadow-neon transition-all hover:brightness-105 active:scale-95 disabled:opacity-35 disabled:shadow-none"
                       aria-label="Gửi tin nhắn"
@@ -276,7 +658,6 @@ const MapChatbot = () => {
         </AnimatePresence>
 
         <motion.button
-          animate={!mobile}
           whileHover={!mobile ? {scale: 1.12} : {}}
           whileTap={{scale: 0.92}}
           onClick={toggleOpen}

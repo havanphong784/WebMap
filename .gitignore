@@ -22,3 +22,11 @@ graphify-out/
 docs/
 .gitignore
 *.md
+/pnpm-lock.yaml
+/pnpm-workspace.yaml
+.understand-anything/
+list_models.js
+list_models_v1beta.js
+test_all_models.js
+test_fetch.js
+test_gemini.js
