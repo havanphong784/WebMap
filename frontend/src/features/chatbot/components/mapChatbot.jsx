@@ -151,6 +151,19 @@ const makeRouteGeometry = (itinerary, userLocation) => {
   return {type: 'LineString', coordinates};
 };
 
+const makeRoutePoints = (itinerary, userLocation) => {
+  const points = [];
+  if (userLocation?.length === 2) {
+    points.push([Number(userLocation[0]), Number(userLocation[1])]);
+  }
+
+  itinerary.forEach(location => {
+    points.push([Number(location.lng), Number(location.lat)]);
+  });
+
+  return points.filter(point => point.every(Number.isFinite));
+};
+
 const formatItineraryText = (itinerary, options, weather) => {
   const weatherText = weather?.weather?.[0]?.description
     ? ` Thời tiết hiện tại: ${weather.weather[0].description}.`
@@ -224,7 +237,23 @@ const MapChatbot = () => {
     return trip;
   };
 
-  const showRouteOnMap = (itinerary) => {
+  const showRouteOnMap = async (itinerary) => {
+    const points = makeRoutePoints(itinerary, userLocation);
+    if (points.length < 2) return;
+
+    try {
+      const encodedPoints = encodeURIComponent(points.map(point => point.join(',')).join(';'));
+      const result = await apiClient.get(`/locations/routing?points=${encodedPoints}`);
+      const geometry = result?.routes?.[0]?.geometry;
+
+      if (geometry?.type === 'LineString' && Array.isArray(geometry.coordinates)) {
+        setRouteData(geometry);
+        return;
+      }
+    } catch (error) {
+      console.error('Goong itinerary routing error:', error);
+    }
+
     const geometry = makeRouteGeometry(itinerary, userLocation);
     if (geometry) setRouteData(geometry);
   };

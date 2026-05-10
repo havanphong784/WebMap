@@ -211,9 +211,9 @@ export const useLocationStore = create((set) => ({
       const result = await apiClient.get(`/locations/routing?start=${startStr}&end=${endStr}`);
       if (result && result.routes && result.routes.length > 0) {
         const route = result.routes[0];
-        const geometry = route.geometry || (route.overview_polyline ? route.overview_polyline.points : null);
+        const geometry = route.geometry;
         
-        if (geometry) {
+        if (geometry?.type === "LineString" && Array.isArray(geometry.coordinates)) {
           set({routeData: geometry});
         } else {
           throw new Error("No geometry found in route");
@@ -222,20 +222,8 @@ export const useLocationStore = create((set) => ({
         throw new Error(getErrorMessage(result, "Backend routing failed"));
       }
     } catch (error) {
-      console.warn("Gọi backend thất bại, thử qua public OSRM...", error);
-      try {
-        const url = `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`;
-        const response = await fetch(url);
-        const data = await response.json();
-        if (data.code === 'Ok') {
-          set({routeData: data.routes[0].geometry});
-        } else {
-          set({routeError: "Không thể tìm đường đi"});
-        }
-      } catch (proxyError) {
-        console.error("Lỗi cả public OSRM:", proxyError);
-        set({routeError: "Không thể tìm đường đi"});
-      }
+      console.error("Goong routing error:", error);
+      set({routeError: "Không thể tìm đường đi"});
     } finally {
       set({routeLoading: false});
     }

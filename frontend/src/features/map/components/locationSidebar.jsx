@@ -282,11 +282,12 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
         }
     };
 
-    const handleOpenGoogleMaps = () => {
-        const coords = formatCoordinates(displayLocation);
-        if (!coords) return;
+    const handleOpenGoongMaps = () => {
+        const lat = Number(displayLocation?.lat);
+        const lng = Number(displayLocation?.lng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
         window.open(
-            `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coords)}`,
+            `https://map.goong.io/?lat=${lat}&lng=${lng}&zoom=17`,
             "_blank",
             "noopener,noreferrer"
         );
@@ -604,14 +605,14 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
                             <button
                                 type="button"
-                                onClick={handleOpenGoogleMaps}
+                                onClick={handleOpenGoongMaps}
                                 className="min-h-14 rounded-2xl border border-glass-border bg-white/70 px-3 py-2 flex items-center gap-2 text-left transition-all hover:border-cyan-glow/25 hover:bg-white active:scale-[0.98]"
                             >
                                 <ExternalLinkIcon size={15} className="text-cyan-glow shrink-0"/>
                                 <div className="min-w-0">
                                     <p className="text-[8px] font-black uppercase tracking-[0.2em] text-text-muted">Mở
                                         ngoài</p>
-                                    <p className="text-[12px] font-black text-text-primary truncate">Google Maps</p>
+                                    <p className="text-[12px] font-black text-text-primary truncate">Goong Maps</p>
                                 </div>
                             </button>
                         </div>

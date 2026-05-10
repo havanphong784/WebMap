@@ -205,16 +205,12 @@
 }
 
 .maplibregl-ctrl-attrib,
-.maplibregl-ctrl-logo,
-.mapboxgl-ctrl-attrib,
-.mapboxgl-ctrl-logo {
+.maplibregl-ctrl-logo {
     display: none !important;
 }
 
 .maplibregl-popup-content,
-.maplibregl-popup-content *,
-.mapboxgl-popup-content,
-.mapboxgl-popup-content * {
+.maplibregl-popup-content * {
     background: transparent !important;
     border-radius: 0 !important;
     padding: 0 !important;
@@ -222,8 +218,7 @@
     border: none !important;
 }
 
-.maplibregl-popup-tip,
-.mapboxgl-popup-tip {
+.maplibregl-popup-tip {
     display: none !important;
 }
 
