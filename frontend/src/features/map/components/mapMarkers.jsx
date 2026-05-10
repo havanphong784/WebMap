@@ -2,6 +2,7 @@ import { memo, useMemo, useState, useEffect } from "react";
 import LocationCard from "./locationCard.jsx";
 import { useLocationStore } from "../store/useLocationsStore.jsx";
 import { useMap } from "react-map-gl/maplibre";
+import {groupNearbyLocations} from "../utils/locationGrouping.js";
 
 const MapMarkers = memo(({ viewMode, onLocationClick, activeLocation }) => {
   const locations = useLocationStore(state => state.locations);
@@ -30,16 +31,18 @@ const MapMarkers = memo(({ viewMode, onLocationClick, activeLocation }) => {
   const otherMarkers = useMemo(() => {
     if (zoom < 14.0) return [];
 
-    const filtered = locations
-      .filter(loc => loc.id !== activeLocation?.id)
+    const groupedLocations = groupNearbyLocations(locations)
+      .filter(group => !group.items.some(loc => loc.id === activeLocation?.id))
       .slice(0, 15);
 
-    return filtered.map((loc) => (
+    return groupedLocations.map(({location, items}) => (
       <LocationCard
-        key={loc.id}
-        location={loc}
+        key={items.map(loc => loc.id).join('-')}
+        location={location}
         onClick={onLocationClick}
         viewMode={viewMode}
+        count={items.length}
+        allInGroup={items}
       />
     ));
   }, [locations, activeLocation?.id, onLocationClick, viewMode, zoom]);

@@ -12,6 +12,8 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import achievementRoutes from "./routes/achievementRoutes.js";
 import followRoutes from "./routes/followRoutes.js";
 import weatherRoutes from "./routes/weatherRoutes.js";
+import {errorHandler, notFoundHandler} from "./middlewares/errorHandler.js";
+import {normalizeApiResponse} from "./middlewares/normalizeResponse.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +27,8 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use(normalizeApiResponse);
+
 app.use("/api/auth", authRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/likes", likeRoutes);
@@ -35,10 +39,12 @@ app.use("/api/follows", followRoutes);
 app.use("/api/weather", weatherRoutes);
 
 app.get("/health", (req, res) => {
-  res.json({message: "Server Backend đang chạy !"});
+  res.json({success: true, message: "Server Backend đang chạy!"});
 });
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server: http://localhost:${PORT}`);
 });
-

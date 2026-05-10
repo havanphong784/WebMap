@@ -2,14 +2,18 @@ import {apiClient} from "../../../shared/api/apiClient.js";
 
 export const getAddress = async (lat, lng) => {
   try {
-    // Proxy qua backend để tránh CORS và 503 trên máy tính
     const result = await apiClient.get(`/locations/geocoding/reverse?lat=${lat}&lng=${lng}`);
-    
-    if (result && result.display_name) {
+
+    if (result?.success === false) {
+      return {display_name: result.message || "Không xác định được địa chỉ"};
+    }
+
+    if (result?.display_name) {
       return {
         display_name: result.display_name
       };
     }
+
     return {display_name: "Không xác định được địa chỉ"};
   } catch (error) {
     console.error("Lỗi lấy địa chỉ:", error);
@@ -20,7 +24,7 @@ export const getAddress = async (lat, lng) => {
 export const searchAddress = async (query) => {
   try {
     const results = await apiClient.get(`/locations/geocoding/search?q=${encodeURIComponent(query)}`);
-    return results;
+    return Array.isArray(results) ? results : [];
   } catch (error) {
     console.error("Lỗi tìm kiếm:", error);
     return [];

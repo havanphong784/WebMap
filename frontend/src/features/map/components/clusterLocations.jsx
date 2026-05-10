@@ -13,7 +13,13 @@ const ClusterLocations = memo(() => {
       properties: {
         id: loc.id,
         name: loc.name,
+        lat: loc.lat,
+        lng: loc.lng,
         category: loc.category,
+        address: loc.address,
+        image_url: loc.image_url,
+        user_id: loc.user_id,
+        created_at: loc.created_at,
         rating: loc.rating || 5
       }
     }))

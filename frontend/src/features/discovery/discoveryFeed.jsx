@@ -1,6 +1,5 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {AnimatePresence, motion} from "framer-motion";
-import {useNavigate} from "react-router-dom";
 import {useAuthStore} from "../auth/context/authContext.jsx";
 import {useLocationStore} from "../map/store/useLocationsStore.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
@@ -18,7 +17,6 @@ import DiscoveryCard from "./components/DiscoveryCard.jsx";
 import { isMobile } from "../../shared/utils/deviceUtils.js";
 
 const DiscoveryFeed = () => {
-  const navigate = useNavigate();
   const {user} = useAuthStore();
   const {
     trendingLocations,
@@ -29,13 +27,28 @@ const DiscoveryFeed = () => {
     fetchUniqueTags,
     fetchByTag,
     followingLocations,
-    fetchFollowing
+    fetchFollowing,
+    error
   } = useLocationStore();
 
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [feedType, setFeedType] = useState('global');
   const mobile = useMemo(() => isMobile(), []);
+
+  const navigate = useCallback((to, options = {}) => {
+    if (to === '/' && options.state?.focusLocation) {
+      const loc = options.state.focusLocation;
+      const params = new URLSearchParams();
+      if (loc.lat) params.set('lat', loc.lat);
+      if (loc.lng) params.set('lng', loc.lng);
+      if (loc.id) params.set('locationId', loc.id);
+      window.location.assign(`/${params.toString() ? `?${params.toString()}` : ''}`);
+      return;
+    }
+
+    window.location.assign(to);
+  }, []);
 
   useEffect(() => {
     fetchUniqueTags();
@@ -189,6 +202,32 @@ const DiscoveryFeed = () => {
               ))}
             </SkeletonTheme>
           </div>
+        ) : error ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-24 sm:py-32 glass-panel border border-sunset/20 bg-white/80 rounded-3xl flex flex-col items-center justify-center"
+          >
+            <FilterIcon size={40} className="text-sunset/70 mx-auto mb-4" />
+            <p className="text-text-primary font-jakarta font-black uppercase tracking-[0.2em] text-sm mb-3">
+              Không thể tải dữ liệu
+            </p>
+            <p className="text-text-muted text-xs font-medium max-w-sm mx-auto mb-6">{error}</p>
+            <button
+              onClick={() => {
+                if (feedType === 'global') {
+                  activeCategory === 'All'
+                    ? fetchTrending(user?.uid)
+                    : fetchByTag(activeCategory, user?.uid);
+                } else {
+                  fetchFollowing(user?.uid);
+                }
+              }}
+              className="text-white bg-sunset px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sunset hover:brightness-105 active:scale-95 transition-all"
+            >
+              Thử lại
+            </button>
+          </motion.div>
         ) : filteredPosts.length > 0 ? (
           <div className="sm:columns-2 columns-1 gap-x-6">
             <AnimatePresence>

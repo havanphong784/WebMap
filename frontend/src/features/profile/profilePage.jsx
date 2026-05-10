@@ -18,9 +18,11 @@ export default function ProfilePage() {
   const {user: currentUser, logout, unreadAchievements, setUnreadAchievements} = useAuthStore();
   const {userLocations, fetchUserLocations, removeLocation, isLoading: locationsLoading} = useLocationStore();
   const uid = uidParam || currentUser?.uid;
+  const currentUserId = currentUser?.uid;
 
   const [profileUser, setProfileUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [achievements, setAchievements] = useState([]);
   const [dailyTasks, setDailyTasks] = useState([]);
@@ -35,61 +37,72 @@ export default function ProfilePage() {
     }
   }, [uid, navigate]);
 
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const fetchProfileData = useCallback(async () => {
     if (!uid) return;
     setLoading(true);
+    setError(null);
     try {
       const response = await apiClient.get(`/auth/${uid}`);
-      if (response.success) setProfileUser(response.user);
-      await fetchUserLocations(uid, currentUser?.uid);
+      if (response.success) {
+        setProfileUser(response.user);
+      } else {
+        setProfileUser(null);
+        setError(response.message || "Không thể tải hồ sơ");
+        return;
+      }
+      await fetchUserLocations(uid, currentUserId);
 
       const achResponse = await apiClient.get(`/achievements/${uid}`);
       if (achResponse.success) {
         setAchievements(achResponse.data.achievements);
         setDailyTasks(achResponse.data.dailyTasks);
+      } else {
+        setAchievements([]);
+        setDailyTasks([]);
       }
 
-      if (currentUser?.uid && uid !== currentUser.uid) {
-        const followRes = await apiClient.get(`/follows/status?followerId=${currentUser.uid}&followedId=${uid}`);
+      if (currentUserId && uid !== currentUserId) {
+        const followRes = await apiClient.get(`/follows/status?followerId=${currentUserId}&followedId=${uid}`);
         if (followRes.success) setIsFollowing(followRes.data.isFollowing);
       }
     } catch (err) {
       console.error(err);
+      setError(err.message || "Không thể tải hồ sơ");
     } finally {
       setLoading(false);
     }
-  }, [currentUser?.uid, uid, fetchUserLocations]);
+  }, [currentUserId, uid, fetchUserLocations]);
 
   useEffect(() => {
-    fetchProfileData();
+    const timer = setTimeout(fetchProfileData, 0);
+    return () => clearTimeout(timer);
   }, [fetchProfileData]);
 
   const handleToggleFollow = useCallback(async () => {
-    if (!currentUser) return navigate('/login');
+    if (!currentUserId) return navigate('/login');
     setIsFollowLoading(true);
     try {
-      const res = await apiClient.post('/follows/toggle', { follower_id: currentUser.uid, followed_id: uid });
+      const res = await apiClient.post('/follows/toggle', { follower_id: currentUserId, followed_id: uid });
       if (res.success) setIsFollowing(res.data.followed);
     } catch (err) {
       console.error(err);
     } finally {
       setIsFollowLoading(false);
     }
-  }, [currentUser, uid, navigate]);
+  }, [currentUserId, uid, navigate]);
 
   const handleDeleteLocation = useCallback(async (e, locId) => {
     e.stopPropagation();
     if (!window.confirm('Bạn có chắc muốn xóa địa điểm này?')) return;
     setDeletingId(locId);
     try {
-      await removeLocation(locId, currentUser.uid);
+      await removeLocation(locId, currentUserId);
     } catch (err) {
       console.error(err);
     } finally {
       setDeletingId(null);
     }
-  }, [removeLocation, currentUser?.uid]);
+  }, [removeLocation, currentUserId]);
 
   const handleLogout = async () => {
     await logout();
@@ -103,6 +116,17 @@ export default function ProfilePage() {
     {label: 'Lượt thích', value: profileUser?.total_likes_received || 0, icon: LikeIcon, color: 'text-sunset'},
   ], [profileUser?.total_posts, profileUser?.xp, profileUser?.total_likes_received]);
 
+  if (!loading && error) return (
+    <div className="min-h-screen bg-map-bg flex flex-col items-center justify-center space-y-6 px-6 text-center">
+      <p className="text-text-primary font-jakarta font-black uppercase tracking-widest text-sm">Không thể tải hồ sơ</p>
+      <p className="text-text-muted text-sm max-w-sm">{error}</p>
+      <div className="flex gap-3">
+        <ActionButton variant="secondary" onClick={fetchProfileData}>Thử lại</ActionButton>
+        <ActionButton variant="glass" onClick={() => navigate('/')}>Về trang chủ</ActionButton>
+      </div>
+    </div>
+  );
+
   if (!loading && !profileUser) return (
     <div className="min-h-screen bg-map-bg flex flex-col items-center justify-center space-y-6">
       <p className="text-text-muted font-jakarta font-bold uppercase tracking-widest text-sm">Không tìm thấy người
@@ -111,7 +135,7 @@ export default function ProfilePage() {
     </div>
   );
 
-  const isOwnProfile = currentUser?.uid === uid;
+  const isOwnProfile = currentUserId === uid;
 
   return (
     <div className="page-shell text-text-primary">
@@ -243,7 +267,7 @@ export default function ProfilePage() {
                 setActiveTab('achievements');
                 if (isOwnProfile && unreadAchievements > 0) {
                   try {
-                    await apiClient.post(`/achievements/mark-seen/${currentUser.uid}`);
+                    await apiClient.post(`/achievements/mark-seen/${currentUserId}`);
                     setUnreadAchievements(0);
                   } catch (err) {
                     console.error("Lỗi mark seen:", err);
@@ -265,7 +289,7 @@ export default function ProfilePage() {
 
           {activeTab === 'posts' ? (
             <>
-              {loading ? (
+              {loading || locationsLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                   <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
                     {[...Array(3)].map((_, i) => (

@@ -1,6 +1,29 @@
 import {create} from "zustand";
 import {apiClient} from "../../../shared/api/apiClient.js";
 
+const MAP_CACHE_TTL = 30000;
+const MAP_CACHE_LIMIT = 40;
+const mapLocationsCache = new Map();
+let latestMapRequestId = 0;
+
+const getErrorMessage = (result, fallback = "Không thể tải dữ liệu") =>
+  result?.message || result?.error?.message || fallback;
+
+const makeBoundsCacheKey = (userId, bounds) => [
+  userId || "guest",
+  bounds.getWest().toFixed(3),
+  bounds.getEast().toFixed(3),
+  bounds.getSouth().toFixed(3),
+  bounds.getNorth().toFixed(3),
+].join(":");
+
+const putMapCache = (key, data) => {
+  mapLocationsCache.set(key, {data, timestamp: Date.now()});
+  if (mapLocationsCache.size > MAP_CACHE_LIMIT) {
+    mapLocationsCache.delete(mapLocationsCache.keys().next().value);
+  }
+};
+
 export const useLocationStore = create((set) => ({
   locations: [],
   trendingLocations: [],
@@ -8,7 +31,11 @@ export const useLocationStore = create((set) => ({
   userLocations: [],
   routeData: null,
   routeLoading: false,
+  mapLoading: false,
   isLoading: false,
+  error: null,
+  mapError: null,
+  routeError: null,
   tags: [],
   userLocation: null,
   accuracy: null,
@@ -18,28 +45,36 @@ export const useLocationStore = create((set) => ({
   setRouteData: (state) => (set({routeData: state})),
 
   fetchTrending: async (userId) => {
-    set({isLoading: true});
+    set({isLoading: true, error: null});
     try {
       const result = await apiClient.get(`/locations/trending?user_id=${userId || "guest"}`);
       if (result.success) {
-        set({trendingLocations: result.data, isLoading: false});
+        set({trendingLocations: result.data, error: null});
+      } else {
+        set({error: getErrorMessage(result, "Không thể tải feed cộng đồng")});
       }
     } catch (error) {
       console.error(error);
+      set({error: error.message});
+    } finally {
       set({isLoading: false});
     }
   },
 
   fetchFollowing: async (userId) => {
     if (!userId) return;
-    set({isLoading: true});
+    set({isLoading: true, error: null});
     try {
       const result = await apiClient.get(`/locations/following?user_id=${userId}`);
       if (result.success) {
-        set({followingLocations: result.data, isLoading: false});
+        set({followingLocations: result.data, error: null});
+      } else {
+        set({error: getErrorMessage(result, "Không thể tải feed đang theo dõi")});
       }
     } catch (error) {
       console.error(error);
+      set({error: error.message});
+    } finally {
       set({isLoading: false});
     }
   },
@@ -56,34 +91,51 @@ export const useLocationStore = create((set) => ({
   },
 
   fetchByTag: async (tag, userId) => {
-    set({isLoading: true});
+    set({isLoading: true, error: null});
     try {
       const result = await apiClient.get(`/locations/tag/${tag}?user_id=${userId || "guest"}`);
       if (result.success) {
-        set({trendingLocations: result.data, isLoading: false});
+        set({trendingLocations: result.data, error: null});
+      } else {
+        set({error: getErrorMessage(result, "Không thể tải địa điểm theo tag")});
       }
     } catch (error) {
       console.error("Lỗi fetch by tag:", error);
+      set({error: error.message});
+    } finally {
       set({isLoading: false});
     }
   },
 
   fetchUserLocations: async (targetUid, currentUserId) => {
-    set({isLoading: true});
+    set({isLoading: true, error: null});
     try {
       const result = await apiClient.get(`/locations/user/${targetUid}?current_user_id=${currentUserId || ""}`);
       if (result.success) {
-        set({userLocations: result.data, isLoading: false});
+        set({userLocations: result.data, error: null});
+      } else {
+        set({error: getErrorMessage(result, "Không thể tải địa điểm của người dùng")});
       }
     } catch (error) {
       console.error(error);
+      set({error: error.message});
+    } finally {
       set({isLoading: false});
     }
   },
 
   fetchLocations: async (userId, bounds) => {
     if (!bounds) return;
-    set({isLoading: true});
+    const cacheKey = makeBoundsCacheKey(userId, bounds);
+    const cached = mapLocationsCache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < MAP_CACHE_TTL) {
+      set({locations: cached.data, mapError: null});
+      return;
+    }
+
+    const requestId = ++latestMapRequestId;
+    set({mapLoading: true, mapError: null});
     try {
       const params = new URLSearchParams({
         user_id: userId || "",
@@ -93,28 +145,45 @@ export const useLocationStore = create((set) => ({
         maxLat: bounds.getNorth()
       });
       const result = await apiClient.get(`/locations?${params.toString()}`);
+      if (requestId !== latestMapRequestId) return;
+
       if (result.success) {
-        set({locations: result.data, isLoading: false});
+        putMapCache(cacheKey, result.data);
+        set({locations: result.data, mapError: null});
+      } else {
+        set({mapError: getErrorMessage(result, "Không thể tải địa điểm trên bản đồ")});
       }
     } catch (error) {
       console.error(error);
-      set({isLoading: false});
+      if (requestId === latestMapRequestId) {
+        set({mapError: error.message});
+      }
+    } finally {
+      if (requestId === latestMapRequestId) {
+        set({mapLoading: false});
+      }
     }
   },
 
   addLocation: async (locationData) => {
-    set({isLoading: true});
+    set({isLoading: true, error: null});
     try {
       const result = await apiClient.post("/locations", locationData);
 
       if (result.success) {
+        mapLocationsCache.clear();
         set((state) => ({
           locations: [result.data, ...state.locations]
         }));
+      } else {
+        set({error: getErrorMessage(result, "Không thể thêm địa điểm")});
       }
-      set({isLoading: false});
+      return result;
     } catch (error) {
       console.error(error);
+      set({error: error.message});
+      return {success: false, message: error.message};
+    } finally {
       set({isLoading: false});
     }
   },
@@ -131,9 +200,11 @@ export const useLocationStore = create((set) => ({
 
     if (!isValidPoint(start) || !isValidPoint(end)) {
       console.error("Tọa độ không hợp lệ:", {start, end});
+      set({routeError: "Tọa độ không hợp lệ"});
       return;
     }
-    set({routeLoading: true, routeData: null});
+
+    set({routeLoading: true, routeData: null, routeError: null});
     try {
       const startStr = `${start[0]},${start[1]}`;
       const endStr = `${end[0]},${end[1]}`;
@@ -141,7 +212,7 @@ export const useLocationStore = create((set) => ({
       if (result.success !== false && result.code === 'Ok') {
         set({routeData: result.routes[0].geometry});
       } else {
-        throw new Error("Backend routing failed");
+        throw new Error(getErrorMessage(result, "Backend routing failed"));
       }
     } catch (error) {
       console.warn("Gọi backend thất bại, thử qua public OSRM...", error);
@@ -152,17 +223,18 @@ export const useLocationStore = create((set) => ({
         if (data.code === 'Ok') {
           set({routeData: data.routes[0].geometry});
         } else {
-          console.error("Lỗi tìm đường đi.");
+          set({routeError: "Không thể tìm đường đi"});
         }
       } catch (proxyError) {
         console.error("Lỗi cả public OSRM:", proxyError);
+        set({routeError: "Không thể tìm đường đi"});
       }
     } finally {
       set({routeLoading: false});
     }
   },
 
-  clearRoute: () => set({routeData: null}),
+  clearRoute: () => set({routeData: null, routeError: null}),
 
   toggleLike: async (locationId, userId) => {
     try {
@@ -188,8 +260,10 @@ export const useLocationStore = create((set) => ({
           userLocations: updateLoc(state.userLocations)
         }));
       }
+      return result;
     } catch (err) {
       console.error(err);
+      return {success: false, message: err.message};
     }
   },
 
@@ -214,6 +288,7 @@ export const useLocationStore = create((set) => ({
       return result;
     } catch (err) {
       console.error(err);
+      return {success: false, message: err.message};
     }
   },
 
@@ -221,6 +296,7 @@ export const useLocationStore = create((set) => ({
     try {
       const result = await apiClient.delete(`/locations/${locationId}`, {user_id: userId});
       if (result.success) {
+        mapLocationsCache.clear();
         set((state) => ({
           locations: state.locations.filter(loc => loc.id !== locationId),
           trendingLocations: state.trendingLocations.filter(loc => loc.id !== locationId),
@@ -231,6 +307,7 @@ export const useLocationStore = create((set) => ({
       return result;
     } catch (err) {
       console.error(err);
+      return {success: false, message: err.message};
     }
   },
 
@@ -244,11 +321,10 @@ export const useLocationStore = create((set) => ({
             return {
               locations: state.locations.map(l => l.id === result.data.id ? result.data : l)
             };
-          } else {
-            return {
-              locations: [result.data, ...state.locations]
-            };
           }
+          return {
+            locations: [result.data, ...state.locations]
+          };
         });
         return result.data;
       }
@@ -257,7 +333,4 @@ export const useLocationStore = create((set) => ({
     }
     return null;
   },
-
 }));
-
-

@@ -14,7 +14,7 @@ import {notificationTypeConfig} from "./config/notificationTypeConfig.js";
 export default function NotificationsPage() {
   const navigate = useNavigate();
   const {user} = useAuthStore();
-  const {notifications, fetchNotifications, markRead, markAllRead, unreadCount, loading} = useNotificationStore();
+  const {notifications, fetchNotifications, markRead, markAllRead, unreadCount, loading, error} = useNotificationStore();
 
   useEffect(() => {
     if (user?.uid) {
@@ -70,6 +70,20 @@ export default function NotificationsPage() {
               </div>
             ))}
           </SkeletonTheme>
+        ) : error ? (
+          <div className="text-center py-32 glass-panel border border-sunset/20 bg-white/80 rounded-3xl">
+            <MapIcon size={44} className="text-sunset/60 mx-auto mb-4"/>
+            <p className="text-text-primary font-jakarta font-black uppercase tracking-widest text-sm mb-3">
+              Không thể tải thông báo
+            </p>
+            <p className="text-text-muted text-xs font-medium max-w-sm mx-auto mb-6">{error}</p>
+            <button
+              onClick={() => fetchNotifications(user.uid)}
+              className="text-white bg-sunset px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sunset hover:brightness-105 active:scale-95 transition-all"
+            >
+              Thử lại
+            </button>
+          </div>
         ) : notifications.map((notif, i) => {
           const config = notificationTypeConfig[notif.type] || notificationTypeConfig.LIKE;
           const Icon = config.icon;

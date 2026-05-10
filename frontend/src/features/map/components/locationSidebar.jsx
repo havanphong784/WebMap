@@ -38,6 +38,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
+  const [commentsError, setCommentsError] = useState(null);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [toast, setToast] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -48,7 +49,8 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
   const group = location?.group || [];
   const hasGroup = group.length > 1;
-  const displayLocation = hasGroup ? group[currentIndex] : location;
+  const selectedIndex = hasGroup ? Math.min(currentIndex, group.length - 1) : 0;
+  const displayLocation = hasGroup ? group[selectedIndex] : location;
 
   const formatImageUrl = (url) => {
     if (!url) return null;
@@ -97,13 +99,20 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
     let cancelled = false;
 
     const loadComments = async () => {
+      setLoadingComments(true);
+      setCommentsError(null);
       try {
         const result = await apiClient.get(`/comments/${displayLocation.id}/comments`);
         if (!cancelled && result.success) {
           setComments(result.data);
+        } else if (!cancelled) {
+          setCommentsError(result.message || "Không thể tải bình luận");
         }
       } catch (err) {
         console.error(err);
+        if (!cancelled) {
+          setCommentsError("Không thể tải bình luận");
+        }
       } finally {
         if (!cancelled) {
           setLoadingComments(false);
@@ -296,7 +305,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
                 <div
                   className="absolute bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-2xl border border-white/5 text-[9px] font-black text-black tracking-[0.3em] uppercase z-20 shadow-xl">
-                  {currentIndex + 1} / {group.length}
+                  {selectedIndex + 1} / {group.length}
                 </div>
               </>
             )}
@@ -524,6 +533,12 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                       </div>
                     ))}
                   </SkeletonTheme>
+                </div>
+              ) : commentsError ? (
+                <div className="text-center py-10 bg-white/[0.02] rounded-2xl border border-sunset/20">
+                  <CommentIcon size={20} className="text-sunset/70 mx-auto mb-3"/>
+                  <p className="text-text-primary text-[9px] font-black uppercase tracking-[0.3em] mb-2">Không thể tải bình luận</p>
+                  <p className="text-text-muted text-[11px] font-medium">{commentsError}</p>
                 </div>
               ) : comments.length > 0 ? (
                 comments.map((c) => (

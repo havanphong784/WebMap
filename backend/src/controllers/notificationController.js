@@ -1,13 +1,14 @@
 import {getNotificationsByUserId, markAllAsRead, markAsRead} from "../services/notificationService.js";
+import {sendError, sendSuccess} from "../utils/apiResponse.js";
 
 export const getMyNotifications = async (req, res) => {
   try {
     const {uid} = req.params;
     const notifications = await getNotificationsByUserId(uid);
-    res.status(200).json({success: true, data: notifications});
+    sendSuccess(res, {data: notifications});
   } catch (error) {
     console.error("Lỗi lấy thông báo:", error);
-    res.status(500).json({success: false, message: "Lỗi Server"});
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
@@ -16,9 +17,10 @@ export const readNotification = async (req, res) => {
     const {id} = req.params;
     const {user_id} = req.body;
     await markAsRead(id, user_id);
-    res.status(200).json({success: true});
+    sendSuccess(res);
   } catch (error) {
-    res.status(500).json({success: false});
+    console.error("Lỗi đọc thông báo:", error);
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
@@ -26,8 +28,9 @@ export const readAllNotifications = async (req, res) => {
   try {
     const {user_id} = req.body;
     await markAllAsRead(user_id);
-    res.status(200).json({success: true});
+    sendSuccess(res);
   } catch (error) {
-    res.status(500).json({success: false});
+    console.error("Lỗi đọc tất cả thông báo:", error);
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };

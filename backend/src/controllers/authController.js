@@ -1,49 +1,54 @@
-import { getUserProfile, upsertUser, listActiveUsers, updateLastSeen } from "../services/authService.js";
+import {getUserProfile, listActiveUsers, updateLastSeen, upsertUser} from "../services/authService.js";
+import {sendError, sendSuccess} from "../utils/apiResponse.js";
 
 export const login = async (req, res) => {
   try {
-    const { uid, email, name, picture } = req.user;
-    const savedUser = await upsertUser({ uid, email, name, picture });
-    res.status(200).json({ message: "Đăng nhập thành công", user: savedUser });
+    const {uid, email, name, picture} = req.user;
+    const savedUser = await upsertUser({uid, email, name, picture});
+    sendSuccess(res, {message: "Đăng nhập thành công", user: savedUser});
   } catch (error) {
     console.error("Lỗi khi lưu user:", error);
-    res.status(500).json({ error: "Lỗi Server nội bộ" });
+    sendError(res, {status: 500, message: "Lỗi Server nội bộ"});
   }
 };
 
 export const getProfile = async (req, res) => {
   try {
-    const { uid } = req.params;
+    const {uid} = req.params;
     const user = await getUserProfile(uid);
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy người dùng" });
+      return sendError(res, {
+        status: 404,
+        code: "USER_NOT_FOUND",
+        message: "Không tìm thấy người dùng",
+      });
     }
 
-    res.status(200).json({ success: true, user });
+    sendSuccess(res, {user});
   } catch (error) {
     console.error("Lỗi khi lấy profile:", error);
-    res.status(500).json({ error: "Lỗi Server" });
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
 export const getActiveUsers = async (req, res) => {
   try {
     const users = await listActiveUsers(10);
-    res.status(200).json({ success: true, data: users });
+    sendSuccess(res, {data: users});
   } catch (error) {
     console.error("Lỗi khi lấy danh sách user active:", error);
-    res.status(500).json({ error: "Lỗi Server" });
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
 export const heartbeat = async (req, res) => {
   try {
-    const { uid } = req.user;
+    const {uid} = req.user;
     await updateLastSeen(uid);
-    res.status(200).json({ success: true });
+    sendSuccess(res);
   } catch (error) {
     console.error("Lỗi heartbeat:", error);
-    res.status(500).json({ error: "Lỗi Server" });
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
