@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {AnimatePresence, motion} from "framer-motion";
-import {useAuthStore} from "../auth/context/authContext.jsx";
+import {useAuthStore} from "../auth/context/authStore.js";
 import {useLocationStore} from "../map/store/useLocationsStore.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";

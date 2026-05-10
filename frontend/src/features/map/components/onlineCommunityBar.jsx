@@ -5,13 +5,11 @@ import useWindowSize from "../../../shared/hooks/useWindowSize.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
 import { memo } from "react";
-import { isMobile } from "../../../shared/utils/deviceUtils.js";
 
 const OnlineCommunityBar = memo(() => {
   const navigate = useNavigate();
   const { activeUsers, fetchActiveUsers } = useSocialStore();
   const { width: windowWidth } = useWindowSize();
-  const mobile = isMobile();
 
   useEffect(() => {
     fetchActiveUsers();
@@ -45,7 +43,7 @@ const OnlineCommunityBar = memo(() => {
                 <UserBadge
                   user={u}
                   size={windowWidth < 640 ? 32 : 40}
-                  showLevel={false}
+                  hideLevelBadge={true}
                   isOnline={isOnline}
                 />
               </div>

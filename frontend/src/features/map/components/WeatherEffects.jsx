@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import {useWeatherStore} from '../store/useWeatherStore.jsx';
 import {AnimatePresence, motion} from 'framer-motion';
 
@@ -7,11 +7,16 @@ const WeatherEffects = () => {
 
   // Stable random values for rain drops to prevent recalculation and re-renders
   const rainDrops = useMemo(() => {
+    const stableRandom = (seed) => {
+      const x = Math.sin(seed * 999) * 10000;
+      return x - Math.floor(x);
+    };
+
     return [...Array(25)].map((_, i) => ({
-      left: `${(i * 7 + Math.random() * 5) % 100}%`,
-      delay: `${Math.random() * 2}s`,
-      duration: `${0.4 + Math.random() * 0.3}s`,
-      height: `${15 + Math.random() * 25}px`
+      left: `${(i * 7 + stableRandom(i + 1) * 5) % 100}%`,
+      delay: `${stableRandom(i + 31) * 2}s`,
+      duration: `${0.4 + stableRandom(i + 61) * 0.3}s`,
+      height: `${15 + stableRandom(i + 91) * 25}px`
     }));
   }, []);
 

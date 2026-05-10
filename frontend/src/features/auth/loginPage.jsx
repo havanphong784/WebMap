@@ -2,7 +2,7 @@ import {useEffect, useState} from "react";
 import {signInWithPopup} from "firebase/auth";
 import {useLocation, useNavigate} from "react-router-dom";
 import {auth, googleProvider} from "../../config/firebase";
-import {useAuthStore} from "./context/authContext.jsx";
+import {useAuthStore} from "./context/authStore.js";
 import {AnimatePresence, motion} from "framer-motion";
 import {EyeIcon, EyeOffIcon, MapIcon, PowerIcon, PrivateIcon, UserIcon} from "../../shared/components/common/icons.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
@@ -32,12 +32,12 @@ export default function Login() {
 
       navigate(safePath, {replace: true});
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, location.state?.from]);
 
   const handleGoogleLogin = async () => {
     setAuthStatus({type: '', message: ''});
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error(error);
       setAuthStatus({type: 'error', message: "Đăng nhập Google thất bại: " + error.code});
@@ -51,16 +51,15 @@ export default function Login() {
     setAuthStatus({type: '', message: ''});
     setIsAuthLoading(true);
     try {
-      let result;
       if (isRegister) {
         if (!name) {
           setAuthStatus({type: 'error', message: "Vui lòng nhập họ tên"});
           setIsAuthLoading(false);
           return;
         }
-        result = await registerWithEmail(email, password, name);
+        await registerWithEmail(email, password, name);
       } else {
-        result = await loginWithEmail(email, password);
+        await loginWithEmail(email, password);
       }
     } catch (error) {
       console.error(error);

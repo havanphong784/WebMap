@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import {useAuthStore} from "../../auth/context/authContext.jsx";
+import {useAuthStore} from "../../auth/context/authStore.js";
 import {useLocationStore} from "../store/useLocationsStore.jsx";
 import {getDownloadURL, ref, uploadBytesResumable} from "firebase/storage";
 import {storage} from "../../../config/firebase.js";
@@ -55,10 +55,13 @@ export default function LocationFormModal({point, onClose, onSaved}) {
   const [compressedFile, setCompressedFile] = useState(null);
 
   useEffect(() => {
+    let objectUrl = null;
+
     const processImage = async () => {
       if (point.imageFile) {
         setImageFile(point.imageFile);
-        setPreviewUrl(URL.createObjectURL(point.imageFile));
+        objectUrl = URL.createObjectURL(point.imageFile);
+        setPreviewUrl(objectUrl);
         
         // Start background compression immediately
         setIsCompressing(true);
@@ -70,8 +73,8 @@ export default function LocationFormModal({point, onClose, onSaved}) {
     processImage();
 
     return () => {
-      if (previewUrl && previewUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(previewUrl);
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
       }
     };
   }, [point.imageFile]);
@@ -81,13 +84,13 @@ export default function LocationFormModal({point, onClose, onSaved}) {
       if (point.address?.display_name) {
         setAddress(point.address.display_name);
         const newDefaultName = point.address.amenity || point.address.shop || point.address.tourism || point.address.display_name?.split(',')[0] || "";
-        if (!name) setName(newDefaultName);
+        setName(prev => prev || newDefaultName);
       } else if (point.lat && point.lng) {
         const fetchedAddress = await getAddress(point.lat, point.lng);
         if (fetchedAddress?.display_name) {
           setAddress(fetchedAddress.display_name);
           const newDefaultName = fetchedAddress.amenity || fetchedAddress.shop || fetchedAddress.tourism || fetchedAddress.display_name?.split(',')[0] || "";
-          if (!name) setName(newDefaultName);
+          setName(prev => prev || newDefaultName);
         }
       }
     };

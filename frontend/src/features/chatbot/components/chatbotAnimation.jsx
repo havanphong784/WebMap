@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { isMobile } from '../../../shared/utils/deviceUtils.js';
 
 const ChatbotAnimation = ({
@@ -16,34 +16,20 @@ const ChatbotAnimation = ({
 
   const [currentFrame, setCurrentFrame] = useState(0);
   const framesInCurrentRow = ROW_FRAME_COUNTS[activeRow] || cols;
-  const requestRef = useRef();
-  const previousTimeRef = useRef();
-  const mobile = useRef(isMobile());
+  const mobile = isMobile();
 
   useEffect(() => {
-    setCurrentFrame(0);
-  }, [activeRow]);
+    const resetFrame = requestAnimationFrame(() => setCurrentFrame(0));
+    const targetRate = mobile ? frameRate * 1.5 : frameRate;
+    const interval = setInterval(() => {
+      setCurrentFrame(prev => (prev + 1) % framesInCurrentRow);
+    }, targetRate);
 
-  const animate = time => {
-    if (previousTimeRef.current !== undefined) {
-      const deltaTime = time - previousTimeRef.current;
-      // Nếu là mobile, chúng ta có thể làm chậm animation hơn để tiết kiệm pin/CPU
-      const targetRate = mobile.current ? frameRate * 1.5 : frameRate;
-      
-      if (deltaTime >= targetRate) {
-        setCurrentFrame(prev => (prev + 1) % framesInCurrentRow);
-        previousTimeRef.current = time;
-      }
-    } else {
-      previousTimeRef.current = time;
-    }
-    requestRef.current = requestAnimationFrame(animate);
-  };
-
-  useEffect(() => {
-    requestRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(requestRef.current);
-  }, [framesInCurrentRow, frameRate]);
+    return () => {
+      cancelAnimationFrame(resetFrame);
+      clearInterval(interval);
+    };
+  }, [activeRow, framesInCurrentRow, frameRate, mobile]);
 
   return (
     <div
@@ -54,7 +40,7 @@ const ChatbotAnimation = ({
         background: `url(${spritesheetPath})`,
         backgroundSize: `${cols * 100}% ${rows * 100}%`,
         backgroundPosition: `-${currentFrame * 100}% -${activeRow * 100}%`,
-        imageRendering: mobile.current ? 'auto' : 'pixelated'
+        imageRendering: mobile ? 'auto' : 'pixelated'
       }}
     />
   );

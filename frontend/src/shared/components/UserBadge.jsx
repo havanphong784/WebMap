@@ -36,9 +36,20 @@ const TIER_CONFIG = {
   }
 };
 
-const UserBadge = memo(({user, size = 64, hideLevelBadge = false, isOnline = false}) => {
-  const {xp = 0, avatar_url, name} = user;
+const UserBadge = memo(({user = {}, size = 64, hideLevelBadge = false, isOnline = false}) => {
+  const {
+    xp = 0,
+    avatar_url,
+    avatar,
+    photoURL,
+    picture,
+    name,
+    displayName,
+    email
+  } = user || {};
   const mobile = isMobile();
+  const avatarUrl = avatar_url || avatar || photoURL || picture;
+  const displayNameText = name || displayName || email?.split('@')[0] || 'U';
 
   const level = Math.floor(Math.sqrt(xp / 100)) + 1;
 
@@ -150,16 +161,16 @@ const UserBadge = memo(({user, size = 64, hideLevelBadge = false, isOnline = fal
           border: '0.5px solid rgba(255,255,255,0.15)'
         }}
       >
-        {avatar_url ? (
+        {avatarUrl ? (
           <img
-            src={avatar_url}
-            alt={name}
+            src={avatarUrl}
+            alt={displayNameText}
             className={`w-full h-full object-cover grayscale-[0.2] transition-all duration-500 ${!mobile ? "group-hover:grayscale-0" : ""}`}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-white font-bold"
                style={{fontSize: size * 0.25}}>
-            {name?.[0]?.toUpperCase()}
+            {displayNameText[0]?.toUpperCase()}
           </div>
         )}
       </div>
@@ -189,7 +200,7 @@ const UserBadge = memo(({user, size = 64, hideLevelBadge = false, isOnline = fal
         </div>
       )}
 
-      {user.hasNotification && (
+      {user?.hasNotification && (
         <motion.div
           initial={!mobile ? {scale: 0} : {scale: 1}}
           animate={{scale: 1}}

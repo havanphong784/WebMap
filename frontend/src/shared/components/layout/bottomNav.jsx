@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { NavLink } from 'react-router-dom';
-import { useAuthStore } from "../../../features/auth/context/authContext.jsx";
+import { useAuthStore } from "../../../features/auth/context/authStore.js";
 import { MapIcon, DiscoverIcon, NotificationIcon, UserIcon } from "../common/icons.jsx";
 import { useNotificationStore } from "../../../features/notifications/store/useNotificationStore.jsx";
 import { isMobile } from '../../utils/deviceUtils.js';

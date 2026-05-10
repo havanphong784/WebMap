@@ -46,7 +46,9 @@ import {
   CloudRain,
   CloudLightning,
   Snowflake,
-  Sparkles
+  Sparkles,
+  Copy,
+  ExternalLink
 } from 'lucide-react';
 
 
@@ -98,7 +100,9 @@ export {
   CloudRain as RainIcon,
   CloudLightning as LightningIcon,
   Snowflake as SnowIcon,
-  Sparkles as SparklesIcon
+  Sparkles as SparklesIcon,
+  Copy as CopyIcon,
+  ExternalLink as ExternalLinkIcon
 };
 
 

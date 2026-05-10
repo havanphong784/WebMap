@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
-import {useAuthStore} from "../auth/context/authContext.jsx";
+import {useAuthStore} from "../auth/context/authStore.js";
 import {useLocationStore} from "../map/store/useLocationsStore.jsx";
 import {apiClient} from "../../shared/api/apiClient.js";
 import {motion} from "framer-motion";
@@ -141,8 +141,8 @@ export default function ProfilePage() {
     <div className="page-shell text-text-primary">
       <div className="relative h-64 w-full overflow-hidden">
         <motion.img
-          initial={!mobile ? {scale: 1.2} : {}}
-          animate={!mobile}
+          initial={mobile ? false : {scale: 1.2}}
+          animate={mobile ? undefined : {scale: 1}}
           src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200"
           className="w-full h-full object-cover grayscale-[0.3]"
           alt="cover"
@@ -158,8 +158,8 @@ export default function ProfilePage() {
       <div className="px-4 sm:px-6 -mt-16 sm:-mt-20 relative z-10">
         <div className="flex flex-col items-center">
           <motion.div
-            initial={!mobile ? {y: 20, opacity: 0} : {}}
-            animate={!mobile}
+            initial={mobile ? false : {y: 20, opacity: 0}}
+            animate={{y: 0, opacity: 1}}
             className="relative"
           >
             {loading ? (
@@ -172,8 +172,8 @@ export default function ProfilePage() {
           </motion.div>
 
           <motion.div
-            initial={!mobile ? {opacity: 0} : {}}
-            animate={!mobile}
+            initial={mobile ? false : {opacity: 0}}
+            animate={{opacity: 1}}
             transition={{delay: 0.2}}
             className="text-center mt-6 w-full max-w-sm"
           >
@@ -236,8 +236,8 @@ export default function ProfilePage() {
           ) : stats.map((stat, i) => (
             <motion.div
               key={stat.label}
-              initial={!mobile ? {opacity: 0, y: 20} : {}}
-              animate={!mobile}
+              initial={mobile ? false : {opacity: 0, y: 20}}
+              animate={{opacity: 1, y: 0}}
               transition={{delay: 0.3 + (i * 0.1)}}
             >
               <GlassPanel

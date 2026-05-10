@@ -1,6 +1,6 @@
 import {motion} from "framer-motion";
 import {useNavigate} from "react-router-dom";
-import {useAuthStore} from "../auth/context/authContext.jsx";
+import {useAuthStore} from "../auth/context/authStore.js";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import {CheckIcon, MapIcon} from "../../shared/components/common/icons.jsx";
 import {useNotificationStore} from "./store/useNotificationStore.jsx";

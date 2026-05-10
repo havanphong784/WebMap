@@ -6,7 +6,7 @@ import {CloudIcon, DropletsIcon, SunIcon, WindIcon} from "../../../shared/compon
 import { isMobile } from "../../../shared/utils/deviceUtils.js";
 
 const WeatherWidget = () => {
-  const {weather, isLoading, isVisible, activeLayer, setActiveLayer} = useWeatherStore();
+  const {weather, isVisible, activeLayer, setActiveLayer} = useWeatherStore();
   const mobile = isMobile();
 
   if (!isVisible || !weather) return null;

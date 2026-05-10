@@ -5,7 +5,6 @@ import { PhotoIcon, StarIcon } from "../../../shared/components/common/icons.jsx
 
 const LocationCard = memo(({ location, onClick, viewMode = 'mini', count = 1, allInGroup = [] }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
 
   const isExpanded = viewMode === 'full' || isHovered;
 
@@ -76,7 +75,6 @@ const LocationCard = memo(({ location, onClick, viewMode = 'mini', count = 1, al
                 <img
                   src={location.image_url}
                   alt={location.name}
-                  onLoad={() => setImageLoaded(true)}
                   className={`w-full h-full object-cover transition-transform duration-700 ${isExpanded ? 'scale-110' : 'scale-100'}`}
                 />
               ) : (

@@ -1,4 +1,4 @@
-import {createContext, useContext, useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -8,8 +8,7 @@ import {
   updateProfile
 } from "firebase/auth";
 import {auth} from "../../../config/firebase.js";
-
-export const AuthContext = createContext();
+import {AuthContext} from "./authStore.js";
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
@@ -93,7 +92,7 @@ export const AuthProvider = ({children}) => {
 
   const [unreadAchievements, setUnreadAchievements] = useState(0);
 
-  const fetchUnreadCount = async (userId) => {
+  const fetchUnreadCount = useCallback(async (userId) => {
     try {
       const response = await fetch(`${API_URL}/achievements/unread/${userId}`);
       if (response.ok) {
@@ -103,15 +102,18 @@ export const AuthProvider = ({children}) => {
     } catch (err) {
       console.error("Lỗi fetch unread count:", err);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (user?.uid) {
-      fetchUnreadCount(user.uid);
-      const interval = setInterval(() => fetchUnreadCount(user.uid), 60000); // Polling every 1 min
-      return () => clearInterval(interval);
-    }
-  }, [user?.uid]);
+    if (!user?.uid) return;
+
+    const timer = setTimeout(() => fetchUnreadCount(user.uid), 0);
+    const interval = setInterval(() => fetchUnreadCount(user.uid), 60000);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, [user?.uid, fetchUnreadCount]);
 
   return (
     <AuthContext.Provider value={{
@@ -128,10 +130,6 @@ export const AuthProvider = ({children}) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuthStore = () => {
-  return useContext(AuthContext);
 };
 
 

@@ -2,7 +2,7 @@ import { memo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
-import { useAuthStore } from "../../auth/context/authContext.jsx";
+import { useAuthStore } from "../../auth/context/authStore.js";
 
 const UserProfileButton = memo(() => {
   const navigate = useNavigate();

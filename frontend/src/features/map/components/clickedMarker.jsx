@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useState } from "react";
 import { Marker } from "react-map-gl/maplibre";
 const LocationFormModal = lazy(() => import("./locationFormModal.jsx"));
 import { useLocationStore } from "../store/useLocationsStore.jsx";
-import { useAuthStore } from "../../auth/context/authContext.jsx";
+import { useAuthStore } from "../../auth/context/authStore.js";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { CloseIcon, PinIcon, PlusIcon, RouteIcon, SpinnerIcon } from "../../../shared/components/common/icons.jsx";

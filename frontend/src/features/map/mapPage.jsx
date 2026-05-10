@@ -8,7 +8,7 @@ import { getAddress } from "./utils/geocoding.js";
 import { debounce } from "./utils/performance.js";
 import SearchBox from "./components/searchBox.jsx";
 import { useLocationStore } from "./store/useLocationsStore.jsx";
-import { useAuthStore } from "../auth/context/authContext.jsx";
+import { useAuthStore } from "../auth/context/authStore.js";
 import ClusterLocations from "./components/clusterLocations.jsx";
 import LocationSidebar from "./components/locationSidebar.jsx";
 import RouteLayer from "./components/routeLayer.jsx";
@@ -368,7 +368,8 @@ export default function MapPage() {
     markerViewMode,
     handleLocationClick,
     infoClicked,
-    activeLocation
+    activeLocation,
+    flyToLocation
   ]);
 
 

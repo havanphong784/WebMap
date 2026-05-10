@@ -4,7 +4,7 @@ import {AnimatePresence} from 'framer-motion';
 import BottomNav from "./shared/components/layout/bottomNav.jsx";
 import ProtectedRoute from "./shared/components/layout/protectedRoute.jsx";
 import PageTransition from "./shared/components/layout/pageTransition.jsx";
-import {useAuthStore} from "./features/auth/context/authContext.jsx";
+import {useAuthStore} from "./features/auth/context/authStore.js";
 import {useSocialStore} from "./features/map/store/useSocialStore.jsx";
 import {useNotificationStore} from "./features/notifications/store/useNotificationStore.jsx";
 import ToastProvider from "./shared/components/toast/ToastProvider.jsx";

@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../../../features/auth/context/authContext.jsx';
+import { useAuthStore } from '../../../features/auth/context/authStore.js';
 import { SpinnerIcon } from '../common/icons.jsx';
 
 const ProtectedRoute = ({ children }) => {
