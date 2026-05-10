@@ -1,22 +1,22 @@
-import {useLocation, useNavigate} from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Map from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import ClickedMarker from "./components/clickedMarker.jsx";
-import {useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {getAddress} from "./utils/geocoding.js";
-import {debounce} from "./utils/performance.js";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getAddress } from "./utils/geocoding.js";
+import { debounce } from "./utils/performance.js";
 import SearchBox from "./components/searchBox.jsx";
-import {useLocationStore} from "./store/useLocationsStore.jsx";
-import {useAuthStore} from "../auth/context/authContext.jsx";
+import { useLocationStore } from "./store/useLocationsStore.jsx";
+import { useAuthStore } from "../auth/context/authContext.jsx";
 import ClusterLocations from "./components/clusterLocations.jsx";
 import LocationSidebar from "./components/locationSidebar.jsx";
 import RouteLayer from "./components/routeLayer.jsx";
-import {AnimatePresence} from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import colorfull from "./style/colorful";
-import {extractGPS} from "./utils/exifUtils.js";
+import { extractGPS } from "./utils/exifUtils.js";
 
-import {useToastStore} from "../../shared/components/toast/useToastStore.jsx";
+import { useToastStore } from "../../shared/components/toast/useToastStore.jsx";
 
 import OnlineCommunityBar from "./components/onlineCommunityBar.jsx";
 import MapControls from "./components/mapControls.jsx";
@@ -26,9 +26,9 @@ import MapMarkers from "./components/mapMarkers.jsx";
 import WeatherWidget from "./components/WeatherWidget.jsx";
 import WeatherLayers from "./components/WeatherLayers.jsx";
 import WeatherEffects from "./components/WeatherEffects.jsx";
-import {useWeatherStore} from "./store/useWeatherStore.jsx";
+import { useWeatherStore } from "./store/useWeatherStore.jsx";
 import MapChatbot from "../chatbot/components/mapChatbot.jsx";
-import {isMobile} from "../../shared/utils/deviceUtils.js";
+import { isMobile } from "../../shared/utils/deviceUtils.js";
 
 
 export default function MapPage() {
@@ -56,7 +56,7 @@ export default function MapPage() {
       },
       (err) => {
       },
-      {enableHighAccuracy: true}
+      { enableHighAccuracy: true }
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
@@ -65,7 +65,7 @@ export default function MapPage() {
   const fetchLocations = useLocationStore(state => state.fetchLocations);
   const routeData = useLocationStore(state => state.routeData);
   const setRouteData = useLocationStore(state => state.setRouteData);
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
   const [activeLocation, setActiveLocation] = useState(null);
   const fetchLocationDetail = useLocationStore(state => state.fetchLocationDetail);
   const [isLocating, setIsLocating] = useState(false);
@@ -77,7 +77,7 @@ export default function MapPage() {
   const activeLayer = useWeatherStore(state => state.activeLayer);
   const toggleVisibility = useWeatherStore(state => state.toggleVisibility);
 
-  const flyToLocation = useCallback((lng, lat, zoom = 17, duration = 1600) => {
+  const flyToLocation = useCallback((lng, lat, zoom = 17, duration = 1600, withPadding = false) => {
     if (!mapRef.current) return;
 
     mapRef.current.flyTo({
@@ -86,9 +86,12 @@ export default function MapPage() {
       pitch: 45,
       bearing: 0,
       duration: duration,
-      essential: true
+      essential: true,
+      padding: withPadding ? {
+        left: mobile ? 0 : 460,
+      } : { left: 0, bottom: 0, top: 0, right: 0 }
     });
-  }, []);
+  }, [mobile]);
 
   useEffect(() => {
     const focusLocation = routerLocation.state?.focusLocation;
@@ -111,7 +114,7 @@ export default function MapPage() {
     const timer = setTimeout(() => {
       fetchDetail();
       setInfoClicked(null);
-      flyToLocation(lng, lat, 16);
+      flyToLocation(lng, lat, 16, 1600, true);
     }, 100);
 
     return () => clearTimeout(timer);
@@ -126,7 +129,7 @@ export default function MapPage() {
     if (Number.isNaN(lat) || Number.isNaN(lng)) return;
 
     const timer = setTimeout(async () => {
-      flyToLocation(lng, lat, 16);
+      flyToLocation(lng, lat, 16, 1600, true);
 
       if (locationId) {
         const detail = await fetchLocationDetail(locationId, user?.uid);
@@ -137,9 +140,9 @@ export default function MapPage() {
         }
       }
 
-      setInfoClicked({lng, lat, address: null});
+      setInfoClicked({ lng, lat, address: null });
       const diachi = await getAddress(lat, lng);
-      setInfoClicked({lng, lat, address: diachi});
+      setInfoClicked({ lng, lat, address: diachi });
     }, 300);
 
     return () => clearTimeout(timer);
@@ -157,20 +160,38 @@ export default function MapPage() {
 
     if (activeLocation === null) {
       map.fitBounds(bounds, {
-        padding: {top: 100, bottom: 200, left: 100, right: 100},
+        padding: { top: 100, bottom: 200, left: 100, right: 100 },
         duration: 1200,
         essential: true,
       });
     } else {
       map.fitBounds(bounds, {
-        padding: {top: 100, bottom: 200, left: 400, right: 100},
+        padding: { top: 100, bottom: 200, left: 400, right: 100 },
         duration: 1200,
         essential: true,
       });
     }
   }, [routeData, activeLocation]);
 
+  const handleLocationClick = useCallback(async (locData) => {
+    setInfoClicked(null);
+    setActiveLocation(locData);
+    flyToLocation(locData.lng, locData.lat, 16, 2000, true);
+
+    const detail = await fetchLocationDetail(locData.id, user?.uid);
+    if (detail) {
+      setActiveLocation(detail);
+    }
+  }, [flyToLocation, fetchLocationDetail, user?.uid]);
+
   const handleClick = useCallback(async (e) => {
+    // Nếu click trúng marker từ layer unclustered-point của ClusterLocations
+    const feature = e.features?.[0];
+    if (feature && (feature.layer.id === 'unclustered-point' || feature.layer.id === 'unclustered-label')) {
+      handleLocationClick(feature.properties);
+      return;
+    }
+
     if (clickThrottleRef.current) return;
     clickThrottleRef.current = true;
     setTimeout(() => {
@@ -179,18 +200,18 @@ export default function MapPage() {
 
     setActiveLocation(null);
     setRouteData(null);
-    const {lng, lat} = e.lngLat;
+    const { lng, lat } = e.lngLat;
     flyToLocation(lng, lat, 16);
-    setInfoClicked({lng, lat, address: {display_name: "Đang xác định vị trí..."}});
+    setInfoClicked({ lng, lat, address: { display_name: "Đang xác định vị trí..." } });
     const diachi = await getAddress(lat, lng);
-    setInfoClicked({lng, lat, address: diachi});
-  }, [flyToLocation, setRouteData]);
+    setInfoClicked({ lng, lat, address: diachi });
+  }, [flyToLocation, setRouteData, handleLocationClick]);
 
   const handleSearchSelect = useCallback(async (lng, lat, addressName) => {
     flyToLocation(lng, lat, 16);
-    setInfoClicked({lng, lat, address: {display_name: addressName}});
+    setInfoClicked({ lng, lat, address: { display_name: addressName } });
     const diachi = await getAddress(lat, lng);
-    setInfoClicked({lng, lat, address: diachi});
+    setInfoClicked({ lng, lat, address: diachi });
   }, [flyToLocation]);
 
   const debouncedFetch = useRef(
@@ -218,7 +239,7 @@ export default function MapPage() {
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const {longitude, latitude, accuracy} = pos.coords;
+        const { longitude, latitude, accuracy } = pos.coords;
         setUserLocation([longitude, latitude]);
         setAccuracy(accuracy);
 
@@ -235,7 +256,7 @@ export default function MapPage() {
         console.error("Lỗi lấy vị trí:", err);
         addToast("Không thể truy cập vị trí của bạn. Vui lòng cấp quyền.", "error");
       },
-      {enableHighAccuracy: true}
+      { enableHighAccuracy: true }
     );
   }, [addToast, setUserLocation, setAccuracy]);
 
@@ -260,9 +281,9 @@ export default function MapPage() {
       const gps = await extractGPS(file);
       if (gps) {
         flyToLocation(gps.lng, gps.lat, 17);
-        setInfoClicked({lng: gps.lng, lat: gps.lat, address: null, imageFile: file, autoOpenForm: true});
+        setInfoClicked({ lng: gps.lng, lat: gps.lat, address: null, imageFile: file, autoOpenForm: true });
         const diachi = await getAddress(gps.lat, gps.lng);
-        setInfoClicked({lng: gps.lng, lat: gps.lat, address: diachi, imageFile: file, autoOpenForm: true});
+        setInfoClicked({ lng: gps.lng, lat: gps.lat, address: diachi, imageFile: file, autoOpenForm: true });
       } else {
         addToast("Ảnh này không chứa thông tin vị trí (GPS metadata).", "error");
       }
@@ -288,40 +309,36 @@ export default function MapPage() {
     }
   }, []);
 
-  const handleLocationClick = useCallback((locData) => {
-    setInfoClicked(null);
-    setActiveLocation(locData);
-    flyToLocation(locData.lng, locData.lat, 16, 2000);
-  }, [flyToLocation]);
 
   const mapCanvas = useMemo(() => (
     <Map ref={mapRef}
-         mapStyle={colorfull}
-         minZoom={3}
-         maxZoom={18}
-         onLoad={() => {
-           setIsMapReady(true);
-           handleMapChange();
-         }}
-         onMoveEnd={handleMapChange}
-         mapLib={maplibregl}
-         antialias={true}
-         attributionControl={false}
-         initialViewState={{
-           longitude: 108.249476,
-           latitude: 15.972143,
-           zoom: 13,
-           pitch: 45,
-           bearing: 0
-         }}
-         style={{width: '100%', height: '100%'}}
-         onClick={handleClick}
+      mapStyle={colorfull}
+      minZoom={3}
+      maxZoom={18}
+      onLoad={() => {
+        setIsMapReady(true);
+        handleMapChange();
+      }}
+      onMoveEnd={handleMapChange}
+      mapLib={maplibregl}
+      antialias={true}
+      attributionControl={false}
+      initialViewState={{
+        longitude: 108.249476,
+        latitude: 15.972143,
+        zoom: 13,
+        pitch: 45,
+        bearing: 0
+      }}
+      style={{ width: '100%', height: '100%' }}
+      onClick={handleClick}
+      interactiveLayerIds={['clusters', 'unclustered-point', 'unclustered-label']}
     >
-      <WeatherLayers/>
-      <ClickedMarker point={infoClicked} setPoint={setInfoClicked}/>
-      <ClusterLocations/>
-      <RouteLayer/>
-      <UserMarker/>
+      <WeatherLayers />
+      <ClickedMarker point={infoClicked} setPoint={setInfoClicked} />
+      <ClusterLocations />
+      <RouteLayer />
+      <UserMarker />
       <MapMarkers
         viewMode={markerViewMode}
         onLocationClick={handleLocationClick}
@@ -345,10 +362,10 @@ export default function MapPage() {
     <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
       {mapCanvas}
 
-      <WeatherWidget/>
-      <WeatherEffects/>
+      <WeatherWidget />
+      <WeatherEffects />
 
-      <UserProfileButton/>
+      <UserProfileButton />
 
       <MapControls
         onLocate={handleLocateUser}
@@ -364,9 +381,9 @@ export default function MapPage() {
         onToggleWeather={toggleVisibility}
       />
 
-      <SearchBox onSelectLocation={handleSearchSelect}/>
+      <SearchBox onSelectLocation={handleSearchSelect} />
 
-      <OnlineCommunityBar/>
+      <OnlineCommunityBar />
 
       <AnimatePresence>
         {activeLocation && (
@@ -384,14 +401,14 @@ export default function MapPage() {
             onClose={() => {
               setActiveLocation(null);
               if (routerLocation.search) {
-                navigate('/', {replace: true});
+                navigate('/', { replace: true });
               }
             }}
           />
         )}
       </AnimatePresence>
 
-      <MapChatbot/>
+      <MapChatbot />
     </div>
 
   );

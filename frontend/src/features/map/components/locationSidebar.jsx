@@ -49,8 +49,15 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
   const group = location?.group || [];
   const hasGroup = group.length > 1;
-  const currentDisplay = hasGroup ? group[currentIndex] : (locations.find(l => l.id === location?.id) || location);
-  const displayLocation = currentDisplay;
+  const displayLocation = hasGroup ? group[currentIndex] : location;
+
+  const formatImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http') || url.startsWith('blob:')) return url;
+    // Prefix with server URL (removing /api from API_BASE_URL)
+    const baseUrl = apiClient.API_BASE_URL ? apiClient.API_BASE_URL.replace('/api', '') : 'http://localhost:3000';
+    return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   const showToast = (msg) => {
     setToast(msg);
@@ -243,15 +250,15 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
         <div className="relative p-4 shrink-0">
           <div className="relative h-56 rounded-[1.8rem] overflow-hidden shadow-lg border border-black/5 group/img">
             <motion.div
-              key={displayLocation.id}
-              animate={!mobile}
+              key={`${displayLocation.id}-${displayLocation.image_url}`}
+              animate={!mobile ? {scale: 1, opacity: 1} : {}}
               initial={!mobile ? {scale: 1.1, opacity: 0} : {}}
               transition={{duration: 0.8, ease: "easeOut"}}
               className="w-full h-full"
             >
               {displayLocation.image_url ? (
                 <img
-                  src={displayLocation.image_url}
+                  src={formatImageUrl(displayLocation.image_url)}
                   className="w-full h-full object-cover transition-all duration-700 group-hover/img:scale-110"
                   alt={displayLocation.name}
                 />
@@ -526,7 +533,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                     className={`flex gap-2.5 group cursor-pointer transition-opacity duration-300 ${c.is_optimistic ? 'opacity-50 grayscale' : ''}`}
                     onClick={() => handleOpenProfile(c.firebase_uid)}
                   >
-                    <UserBadge user={c} size={32}/>
+                    <UserBadge user={{...c, avatar_url: formatImageUrl(c.avatar_url)}} size={32}/>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
                         <span
