@@ -30,25 +30,31 @@ export default function SearchBox({ onSelectLocation }) {
     onSelectLocation(parseFloat(item.lon), parseFloat(item.lat), item.display_name);
     setResults([]);
     setQuery(item.display_name.split(',')[0]);
-  }
+  };
 
   const clearSearch = () => {
     setQuery("");
     setResults([]);
-  }
+  };
 
   return (
-    <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-lg shadow-floating">
+    <div className="absolute left-1/2 top-4 z-[800] w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 sm:top-6">
       <form onSubmit={handleSearch} className="relative">
-        <GlassPanel className="flex items-center gap-3 py-2.5 px-5 rounded-full border-glass-border bg-white/90 shadow-floating">
-          <SearchIcon size={20} className={isLoading ? "text-cyan-glow animate-pulse" : "text-text-muted"} />
+        <GlassPanel
+          animate={false}
+          variant="floating"
+          radius="full"
+          pad="none"
+          className="flex min-h-12 items-center gap-2 px-3 sm:gap-3 sm:px-5"
+        >
+          <SearchIcon size={19} className={isLoading ? "text-cyan-glow animate-pulse" : "text-text-muted"} />
 
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Tìm địa điểm, người dùng..."
-            className="bg-transparent border-none outline-none flex-1 text-text-primary placeholder-text-dim font-medium text-sm"
+            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-text-primary outline-none placeholder:text-text-muted"
           />
 
           <AnimatePresence>
@@ -59,18 +65,20 @@ export default function SearchBox({ onSelectLocation }) {
                 exit={{ opacity: 0, scale: 0.5 }}
                 onClick={clearSearch}
                 type="button"
-                className="text-text-muted hover:text-text-primary transition-colors"
+                className="rounded-full p-1 text-text-muted transition-colors hover:bg-black/5 hover:text-text-primary"
+                aria-label="Xóa tìm kiếm"
               >
                 <CloseIcon size={18} />
               </motion.button>
             )}
           </AnimatePresence>
 
-          <div className="w-[1px] h-6 bg-glass-border"></div>
+          <div className="h-6 w-px bg-glass-border"></div>
 
-          <ActionButton variant="icon" className="!p-1 bg-transparent border-none shadow-none">
-            {isLoading ? <SpinnerIcon size={18} className="animate-spin text-cyan-glow" /> :
-              <LocateIcon size={18} className="text-text-muted" />}
+          <ActionButton type="submit" variant="ghost" size="iconSm" className="shadow-none" aria-label="Tìm kiếm">
+            {isLoading
+              ? <SpinnerIcon size={18} className="animate-spin text-cyan-glow" />
+              : <LocateIcon size={18} className="text-text-muted" />}
           </ActionButton>
         </GlassPanel>
       </form>
@@ -81,25 +89,27 @@ export default function SearchBox({ onSelectLocation }) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="mt-3 glass-panel p-2 border-glass-border bg-white/95 shadow-floating max-h-72 overflow-y-auto custom-scrollbar"
+            className="mt-2 max-h-[min(22rem,calc(100vh-8rem))] overflow-y-auto rounded-3xl border border-glass-border bg-white/95 p-2 shadow-floating backdrop-blur-3xl custom-scrollbar sm:mt-3"
           >
             {results.map((item, index) => (
               <motion.li
-                key={index}
+                key={`${item.place_id || item.osm_id || item.display_name}-${index}`}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
+                transition={{ delay: index * 0.03 }}
                 onClick={() => handleSelect(item)}
-                className="flex items-start gap-3 px-4 py-3 rounded-xl hover:bg-white/10 cursor-pointer group transition-colors"
+                className="flex cursor-pointer items-start gap-3 rounded-2xl px-4 py-3 transition-colors hover:bg-black/5"
               >
-                <div
-                  className="mt-1 p-2 rounded-lg bg-black/5 text-text-muted group-hover:text-cyan-glow transition-colors">
+                <div className="mt-1 rounded-xl bg-black/5 p-2 text-text-muted transition-colors">
                   <PinIcon size={16} />
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-text-primary leading-tight mb-1">{item.display_name.split(',')[0]}</p>
-                  <p
-                    className="text-[11px] text-text-muted leading-tight">{item.display_name.split(',').slice(1).join(',').trim()}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 truncate text-sm font-bold leading-tight text-text-primary">
+                    {item.display_name.split(',')[0]}
+                  </p>
+                  <p className="line-clamp-2 text-[11px] leading-tight text-text-muted">
+                    {item.display_name.split(',').slice(1).join(',').trim()}
+                  </p>
                 </div>
               </motion.li>
             ))}

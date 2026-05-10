@@ -6,7 +6,7 @@ const ToastProvider = () => {
   const {toasts, removeToast} = useToastStore();
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
+    <div className="fixed left-3 right-3 top-20 z-[9999] flex flex-col gap-2 pointer-events-none sm:left-auto sm:right-4 sm:top-4">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
@@ -15,7 +15,7 @@ const ToastProvider = () => {
             initial={{opacity: 0, x: 50, scale: 0.95}}
             animate={{opacity: 1, x: 0, scale: 1}}
             exit={{opacity: 0, x: 20, scale: 0.95, transition: {duration: 0.2}}}
-            className={`pointer-events-auto flex items-center gap-3.5 px-4 py-3.5 min-w-[300px] max-w-sm glass-panel border border-glass-border bg-glass-obsidian backdrop-blur-2xl rounded-2xl relative overflow-hidden group ${
+            className={`pointer-events-auto relative flex w-full items-center gap-3.5 overflow-hidden rounded-2xl border border-glass-border bg-white/95 px-4 py-3.5 shadow-glass backdrop-blur-2xl sm:min-w-[300px] sm:max-w-sm group ${
               toast.type === 'error'
                 ? 'shadow-[0_4px_30px_rgba(255,75,43,0.15)] border-l-4 border-l-sunset'
                 : toast.type === 'success'
@@ -43,7 +43,8 @@ const ToastProvider = () => {
 
             <button
               onClick={() => removeToast(toast.id)}
-              className="shrink-0 relative z-10 text-text-muted hover:text-white transition-colors p-1.5 bg-white/[0.02] hover:bg-white/[0.05] rounded-full border border-transparent hover:border-white/10"
+              className="relative z-10 shrink-0 rounded-full border border-transparent bg-black/[0.03] p-1.5 text-text-muted transition-colors hover:border-black/10 hover:bg-black/[0.06] hover:text-text-primary"
+              aria-label="Đóng thông báo"
             >
               ✕
             </button>

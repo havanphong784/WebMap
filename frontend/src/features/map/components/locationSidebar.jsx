@@ -33,7 +33,6 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
   const mobile = isMobile();
   const {user} = useAuthStore();
   const navigate = useNavigate();
-  const locations = useLocationStore(state => state.locations);
   const {fetchRoute, routeLoading, toggleLike, postComment} = useLocationStore();
 
   const [commentText, setCommentText] = useState("");
@@ -235,20 +234,20 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
       animate={{x: 0, y: 0, opacity: 1}}
       exit={mobile ? {y: "100%"} : {x: window.innerWidth < 640 ? 0 : "-100%", y: window.innerWidth < 640 ? "100%" : 0, opacity: 0}}
       transition={mobile ? { duration: 0.3 } : {type: "spring", damping: 25, stiffness: 120}}
-      className="fixed inset-x-0 bottom-0 sm:inset-y-0 sm:left-0 z-[2000] w-full sm:w-[520px] p-2 sm:p-5 pointer-events-none"
+      className="fixed inset-x-0 bottom-0 z-[2000] w-full pointer-events-none sm:inset-y-0 sm:left-0 sm:w-[520px] sm:p-5"
     >
       <GlassPanel
-        className="h-[85vh] sm:h-full flex flex-col border-glass-border bg-white/95 backdrop-blur-[80px] shadow-floating overflow-hidden pointer-events-auto rounded-t-[2.5rem] sm:rounded-[2.8rem] ring-1 ring-glass-border relative group/sidebar">
+        animate={false}
+        variant="floating"
+        pad="none"
+        className="relative flex h-[min(88dvh,760px)] flex-col overflow-hidden rounded-b-none rounded-t-[2rem] border-glass-border bg-white/95 shadow-floating ring-1 ring-glass-border pointer-events-auto sm:h-full sm:rounded-[2rem] group/sidebar">
 
-        <div className="w-12 h-1.5 bg-black/10 rounded-full mx-auto mt-4 sm:hidden shrink-0"/>
+        <div className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-black/10 sm:hidden"/>
 
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"></div>
 
-        <div
-          className="absolute -top-40 -left-40 w-80 h-80 bg-cyan-glow/5 blur-[120px] rounded-full pointer-events-none animate-pulse"></div>
-
-        <div className="relative p-4 shrink-0">
-          <div className="relative h-56 rounded-[1.8rem] overflow-hidden shadow-lg border border-black/5 group/img">
+        <div className="relative shrink-0 p-3 sm:p-4">
+          <div className="relative h-[26dvh] min-h-40 max-h-56 overflow-hidden rounded-[1.5rem] border border-black/5 shadow-lg sm:h-56 sm:rounded-[1.8rem] group/img">
             <motion.div
               key={`${displayLocation.id}-${displayLocation.image_url}`}
               animate={!mobile ? {scale: 1, opacity: 1} : {}}
@@ -310,7 +309,8 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                 whileHover={!mobile ? {scale: 1.1, rotate: 90} : {}}
                 whileTap={{scale: 0.9}}
                 onClick={onClose}
-                className="p-2 glass-panel rounded-lg! border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
+                className="rounded-xl border border-glass-border-bright bg-white/85 p-2 text-text-primary shadow-glass backdrop-blur-2xl transition-colors hover:bg-white"
+                aria-label="Đóng chi tiết địa điểm"
               >
                 <CloseIcon size={14}/>
               </motion.button>
@@ -319,7 +319,8 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                   whileHover={{scale: 1.1, y: -2}}
                   whileTap={{scale: 0.9}}
                   onClick={handleShare}
-                  className="p-2 glass-panel !rounded-lg border-glass-border-bright bg-white/80 text-text-primary shadow-glass backdrop-blur-2xl hover:bg-white transition-colors"
+                  className="rounded-xl border border-glass-border-bright bg-white/85 p-2 text-text-primary shadow-glass backdrop-blur-2xl transition-colors hover:bg-white"
+                  aria-label="Chia sẻ địa điểm"
                 >
                   <ShareIcon size={12}/>
                 </motion.button>
@@ -328,7 +329,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
           </div>
         </div>
 
-        <div className="px-6 pb-2 relative z-10">
+        <div className="relative z-10 px-4 pb-2 sm:px-6">
           <div className="flex items-center justify-between mb-4">
             <motion.div
               animate={!mobile}
@@ -417,7 +418,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-0 space-y-5" ref={scrollRef}>
+        <div className="flex-1 space-y-5 overflow-y-auto p-4 pt-0 custom-scrollbar sm:p-6 sm:pt-0" ref={scrollRef}>
           <motion.div
             initial={{opacity: 0}}
             animate={{opacity: 1}}
@@ -560,14 +561,16 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
         </div>
 
         <div
-          className="p-4 border-t border-glass-border-bright bg-white/90 backdrop-blur-3xl space-y-4 shrink-0 relative">
+          className="relative shrink-0 space-y-4 border-t border-glass-border-bright bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-3xl sm:p-4">
           <div
             className="absolute inset-x-0 -top-6 h-6 bg-linear-to-t from-map-bg/80 to-transparent pointer-events-none"></div>
 
-          <div className="flex gap-3 sm:gap-4 items-stretch pt-2">
+          <div className="flex items-stretch gap-2 pt-1 sm:gap-4 sm:pt-2">
             <ActionButton
               onClick={() => onAddReview()}
-              className="flex-1 bg-sunset/5! !border-sunset/20 text-sunset! hover:bg-sunset/10! shadow-sunset-sm rounded-2xl! !py-3.5 group/review-btn"
+              variant="secondary"
+              size="lg"
+              className="flex-1 border-sunset/20 bg-sunset/5! text-sunset! shadow-sunset-sm hover:bg-sunset/10! group/review-btn"
             >
               <div
                 className="absolute inset-0 bg-sunset opacity-0 group-hover/review-btn:opacity-5 transition-opacity"/>
@@ -582,7 +585,8 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                   fetchRoute([pos.coords.longitude, pos.coords.latitude], [location.lng, location.lat]);
                 });
               }}
-              className="flex-1 sm:flex-2 py-3.5! gap-3 shadow-neon rounded-2xl! group/btn overflow-hidden relative"
+              size="lg"
+              className="flex-[1.4] gap-3 overflow-hidden shadow-neon group/btn"
             >
               <div
                 className="absolute inset-0 bg-linear-to-r from-white/0 via-white/5 to-white/0 -translate-x-full group-hover/btn:animate-[shimmer_2s_infinite]"></div>
@@ -595,7 +599,8 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
               whileHover={{scale: 1.05, y: -2}}
               whileTap={{scale: 0.95}}
               onClick={() => toggleLike(displayLocation.id, user?.uid)}
-              className={`w-14 sm:w-auto sm:px-6 flex items-center justify-center rounded-2xl glass-panel border-glass-border transition-all duration-500 ${displayLocation.is_liked ? 'bg-sunset/10 text-sunset border-sunset/20 shadow-sunset' : 'text-text-muted hover:text-text-primary hover:bg-glass-white'}`}
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl border border-glass-border bg-white/80 transition-all duration-500 sm:w-auto sm:px-6 ${displayLocation.is_liked ? 'bg-sunset/10 text-sunset border-sunset/20 shadow-sunset' : 'text-text-muted hover:text-text-primary hover:bg-white'}`}
+              aria-label="Thích địa điểm"
             >
               <LikeIcon size={24} fill={displayLocation.is_liked ? "currentColor" : "none"}
                         className={displayLocation.is_liked ? "drop-shadow-[0_0_8px_rgba(255,75,43,0.3)]" : ""}/>

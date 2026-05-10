@@ -1,4 +1,4 @@
-import { memo, useRef } from "react";
+import { memo } from "react";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import {
   CloudIcon,
@@ -10,75 +10,103 @@ import {
   PlusIcon,
   SpinnerIcon
 } from "../../../shared/components/common/icons.jsx";
+import {cn} from "../../../shared/utils/classNames.js";
 
-const MapControls = memo(({ 
-  onLocate, 
-  isLocating, 
-  onPhotoUpload, 
-  isExtractingPhoto, 
-  viewMode, 
-  setViewMode, 
-  onZoomIn, 
+const MapControls = memo(({
+  onLocate,
+  isLocating,
+  onPhotoUpload,
+  isExtractingPhoto,
+  viewMode,
+  setViewMode,
+  onZoomIn,
   onZoomOut,
   fileInputRef,
   isVisible,
   onToggleWeather
 }) => {
+  const controlButton = "border-glass-border-bright bg-white/90 shadow-glass backdrop-blur-2xl";
+  const activeButton = "border-cyan-glow/40 bg-cyan-glow/15 text-cyan-glow";
+
   return (
-    <div className="absolute right-4 top-1/2 -translate-y-1/2 sm:right-6 z-100 flex flex-col gap-3 sm:gap-4">
+    <div className="absolute right-3 top-40 z-[700] flex flex-col gap-2 sm:right-6 sm:top-1/2 sm:-translate-y-1/2 sm:gap-3">
       <ActionButton
         variant="icon"
+        size="icon"
         onClick={() => setViewMode(prev => prev === 'mini' ? 'full' : 'mini')}
-        className={viewMode === 'full' ? "bg-cyan-glow/20 border-cyan-glow" : "bg-obsidian"}
-        title={viewMode === 'full' ? "Chế độ Thu nhỏ" : "Chế độ Đầy đủ"}
+        className={cn(controlButton, viewMode === 'full' && activeButton)}
+        title={viewMode === 'full' ? "Thu gọn marker" : "Hiện marker đầy đủ"}
+        aria-label={viewMode === 'full' ? "Chuyển marker sang dạng thu gọn" : "Chuyển marker sang dạng đầy đủ"}
       >
-        {viewMode === 'full' ? <PinIcon size={22} className="text-cyan-glow"/> : <EyeIcon size={22} className="text-text-primary"/>}
+        {viewMode === 'full'
+          ? <PinIcon size={20} className="text-cyan-glow"/>
+          : <EyeIcon size={20} className="text-text-primary"/>}
       </ActionButton>
 
       <ActionButton
         variant="icon"
+        size="icon"
         onClick={onToggleWeather}
-        className={isVisible ? "bg-cyan-glow/20 border-cyan-glow" : "bg-obsidian"}
-        title="Bật/Tắt Thời tiết"
+        className={cn(controlButton, isVisible && activeButton)}
+        title="Bật/tắt thời tiết"
+        aria-label="Bật tắt lớp thời tiết"
       >
-        <CloudIcon size={22} className={isVisible ? "text-cyan-glow" : "text-text-dim"} />
+        <CloudIcon size={20} className={isVisible ? "text-cyan-glow" : "text-text-muted"} />
       </ActionButton>
 
       <ActionButton
         variant="icon"
+        size="icon"
         onClick={onLocate}
         disabled={isLocating}
-        className="bg-obsidian"
+        className={controlButton}
+        aria-label="Định vị vị trí của bạn"
       >
-        {isLocating ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin"/> :
-          <LocateIcon size={22} className="text-cyan-glow"/>}
+        {isLocating
+          ? <SpinnerIcon size={20} className="text-cyan-glow animate-spin"/>
+          : <LocateIcon size={20} className="text-cyan-glow"/>}
       </ActionButton>
 
       <ActionButton
         variant="icon"
+        size="icon"
         onClick={() => fileInputRef.current?.click()}
         disabled={isExtractingPhoto}
-        className="bg-obsidian"
+        className={controlButton}
+        aria-label="Tải ảnh để lấy vị trí GPS"
       >
-        {isExtractingPhoto ? <SpinnerIcon size={22} className="text-cyan-glow animate-spin"/> :
-          <PhotoIcon size={22} className="text-cyan-glow"/>}
+        {isExtractingPhoto
+          ? <SpinnerIcon size={20} className="text-cyan-glow animate-spin"/>
+          : <PhotoIcon size={20} className="text-cyan-glow"/>}
       </ActionButton>
 
       <input
         type="file"
         ref={fileInputRef}
         className="hidden"
-        accept="*"
+        accept="image/*"
         onChange={onPhotoUpload}
       />
 
-      <div className="hidden sm:flex flex-col bg-obsidian gap-2 glass-panel p-2 rounded-2xl border-glass-border shadow-glass">
-        <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={onZoomIn}>
-          <PlusIcon size={22} className="text-text-primary"/>
+      <div className="hidden flex-col gap-1 rounded-2xl border border-glass-border bg-white/90 p-1.5 shadow-glass backdrop-blur-2xl sm:flex">
+        <ActionButton
+          variant="ghost"
+          size="iconSm"
+          className="shadow-none"
+          onClick={onZoomIn}
+          aria-label="Phóng to bản đồ"
+        >
+          <PlusIcon size={20} className="text-text-primary"/>
         </ActionButton>
-        <div className="h-px w-full bg-glass-border mx-auto" style={{width: '60%'}}></div>
-        <ActionButton variant="icon" className="bg-transparent border-none shadow-none" onClick={onZoomOut}>
-          <MinusIcon size={22} className="text-text-primary"/>
+        <div className="mx-auto h-px w-6 bg-glass-border"></div>
+        <ActionButton
+          variant="ghost"
+          size="iconSm"
+          className="shadow-none"
+          onClick={onZoomOut}
+          aria-label="Thu nhỏ bản đồ"
+        >
+          <MinusIcon size={20} className="text-text-primary"/>
         </ActionButton>
       </div>
     </div>

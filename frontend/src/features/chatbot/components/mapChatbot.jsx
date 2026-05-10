@@ -1,43 +1,41 @@
-import React, {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
 import ChatbotAnimation from './chatbotAnimation.jsx';
 import GlassPanel from '../../../shared/components/common/glassPanel.jsx';
 import {CloseIcon, SendIcon, SparklesIcon} from '../../../shared/components/common/icons.jsx';
 import eveSpritesheet from '../styles/eve/spritesheet.webp';
-import { isMobile } from '../../../shared/utils/deviceUtils.js';
+import {isMobile} from '../../../shared/utils/deviceUtils.js';
+
+const ROWS = {
+  STARTUP: 0,
+  MOVE_RIGHT: 1,
+  MOVE_LEFT: 2,
+  GREET: 3,
+  HAPPY: 4,
+  SAD: 5,
+  SHUTDOWN: 6,
+  LOOK_AROUND: 7,
+  SMILE: 8
+};
 
 const MapChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       role: 'bot',
-      text: 'Chào bạn! Tôi là EVE. Tôi có thể hỗ trợ bạn tìm địa điểm, xem thời tiết hoặc lên lộ trình khám phá. Bạn muốn bắt đầu từ đâu?'
+      text: 'Chào bạn, tôi là EVE. Bạn có thể hỏi tôi về địa điểm, thời tiết hoặc lộ trình khám phá gần đây.'
     }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [activeRow, setActiveRow] = useState(0);
+  const [activeRow, setActiveRow] = useState(ROWS.STARTUP);
   const constraintsRef = useRef(null);
   const botRef = useRef(null);
   const [isTopHalf, setIsTopHalf] = useState(false);
   const [isLeftHalf, setIsLeftHalf] = useState(false);
   const isDragging = useRef(false);
-  const mobile = useRef(isMobile()).current;
+  const [mobile] = useState(() => isMobile());
 
-  // New Animation Row Mapping (0-indexed)
-  const ROWS = {
-    STARTUP: 0,      // Dòng 1: Khởi động / Idle
-    MOVE_RIGHT: 1,   // Dòng 2: Sang phải
-    MOVE_LEFT: 2,    // Dòng 3: Sang trái
-    GREET: 3,        // Dòng 4: Chào
-    HAPPY: 4,        // Dòng 5: Vui sướng
-    SAD: 5,          // Dòng 6: Buồn
-    SHUTDOWN: 6,     // Dòng 7: Tắt máy
-    LOOK_AROUND: 7,  // Dòng 8: Nhìn quanh
-    SMILE: 8         // Dòng 9: Cười
-  };
-
-  // Random Idle Behavior: Look around occasionally
   useEffect(() => {
     if (isOpen || isDragging.current || mobile) return;
 
@@ -49,9 +47,8 @@ const MapChatbot = () => {
     }, 8000);
 
     return () => clearInterval(idleTimer);
-  }, [isOpen]);
+  }, [isOpen, mobile]);
 
-  // Listen to general map activity (Look around when user interacts with screen)
   useEffect(() => {
     if (mobile) return;
     const handleMapActivity = () => {
@@ -63,7 +60,7 @@ const MapChatbot = () => {
 
     window.addEventListener('wheel', handleMapActivity, {passive: true});
     return () => window.removeEventListener('wheel', handleMapActivity);
-  }, [isOpen, activeRow]);
+  }, [isOpen, activeRow, mobile]);
 
   const handleSend = () => {
     if (!input.trim() || isTyping) return;
@@ -72,17 +69,16 @@ const MapChatbot = () => {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
-    setActiveRow(ROWS.HAPPY); // Vui sướng khi nhận tin nhắn
+    setActiveRow(ROWS.HAPPY);
 
     setTimeout(() => {
       setIsTyping(false);
-      setActiveRow(ROWS.SMILE); // Cười khi trả lời xong
+      setActiveRow(ROWS.SMILE);
       setMessages(prev => [...prev, {
         role: 'bot',
-        text: 'Tôi đang phân tích yêu cầu của bạn... Tính năng này sẽ sớm ra mắt hoàn chỉnh. Hiện tại bạn có thể xem các địa điểm "Trending" trong khu vực nhé!'
+        text: 'Tôi đang phân tích yêu cầu của bạn. Bản hoàn chỉnh sẽ sớm có gợi ý địa điểm và lộ trình tốt hơn.'
       }]);
 
-      // Về idle sau một lúc
       setTimeout(() => setActiveRow(ROWS.STARTUP), 3000);
     }, 1500);
   };
@@ -94,7 +90,7 @@ const MapChatbot = () => {
       const rect = botRef.current.getBoundingClientRect();
       setIsTopHalf(rect.top < window.innerHeight / 2);
       setIsLeftHalf(rect.left < window.innerWidth / 2);
-      setActiveRow(ROWS.GREET); // Chào khi mở
+      setActiveRow(ROWS.GREET);
     } else {
       setActiveRow(ROWS.STARTUP);
     }
@@ -116,11 +112,10 @@ const MapChatbot = () => {
 
   return (
     <div ref={constraintsRef} className="fixed inset-0 pointer-events-none z-[4000]">
-      {/* Draggable Anchor */}
       <motion.div
         animate={!mobile}
         ref={botRef}
-        drag
+        drag={!mobile}
         dragConstraints={constraintsRef}
         dragElastic={0.05}
         onDragStart={() => {
@@ -130,73 +125,78 @@ const MapChatbot = () => {
         onDragEnd={handleDragEnd}
         style={{
           position: 'absolute',
-          left: 'calc(100% - 120px)',
-          top: 'calc(100% - 150px)',
-          width: '80px',
-          height: '80px',
+          ...(mobile
+            ? {
+              right: '16px',
+              bottom: '10.75rem',
+              width: '64px',
+              height: '64px',
+            }
+            : {
+              left: 'calc(100% - 120px)',
+              top: 'calc(100% - 150px)',
+              width: '80px',
+              height: '80px',
+            }),
         }}
         className="pointer-events-auto flex items-center justify-center"
       >
-        {/* Chat Window Popup */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              animate={!mobile ? {opacity: 1, scale: 1, y: 0, x: 0, filter: 'blur(0px)'} : {}}
-              initial={!mobile ? {
+              animate={{opacity: 1, scale: 1, y: 0, x: 0, filter: 'blur(0px)'}}
+              initial={{
                 opacity: 0,
-                scale: 0.8,
-                y: isTopHalf ? 30 : -30,
-                x: isLeftHalf ? -30 : 30,
-                filter: 'blur(10px)'
-              } : {}}
-              exit={{opacity: 0, scale: 0.8, y: isTopHalf ? 30 : -30, x: isLeftHalf ? -30 : 30, filter: 'blur(10px)'}}
-              transition={{type: 'spring', damping: 25, stiffness: 350}}
-              className="absolute w-[320px] sm:w-[380px] z-50"
+                scale: 0.92,
+                y: mobile || !isTopHalf ? 18 : -18,
+                x: mobile ? 0 : isLeftHalf ? -18 : 18,
+                filter: 'blur(8px)'
+              }}
+              exit={{
+                opacity: 0,
+                scale: 0.92,
+                y: mobile || !isTopHalf ? 18 : -18,
+                x: mobile ? 0 : isLeftHalf ? -18 : 18,
+                filter: 'blur(8px)'
+              }}
+              transition={{type: 'spring', damping: 28, stiffness: 360}}
+              className="absolute z-50 w-[min(360px,calc(100vw-1.5rem))] sm:w-[390px]"
               style={{
-                bottom: isTopHalf ? 'auto' : '100%',
-                top: isTopHalf ? '100%' : 'auto',
-                left: isLeftHalf ? 0 : 'auto',
-                right: isLeftHalf ? 'auto' : 0,
-                marginBottom: isTopHalf ? 0 : '24px',
-                marginTop: isTopHalf ? '24px' : 0,
-                transformOrigin: `${isTopHalf ? 'top' : 'bottom'} ${isLeftHalf ? 'left' : 'right'}`
+                bottom: mobile ? 'calc(100% + 14px)' : isTopHalf ? 'auto' : '100%',
+                top: mobile ? 'auto' : isTopHalf ? '100%' : 'auto',
+                left: mobile ? 'auto' : isLeftHalf ? 0 : 'auto',
+                right: mobile ? 0 : isLeftHalf ? 'auto' : 0,
+                marginBottom: mobile || !isTopHalf ? 0 : undefined,
+                marginTop: !mobile && isTopHalf ? '24px' : 0,
+                transformOrigin: `${mobile || !isTopHalf ? 'bottom' : 'top'} ${mobile || !isLeftHalf ? 'right' : 'left'}`
               }}
             >
               <GlassPanel
-                className="flex flex-col h-[480px] border-glass-border bg-glass-obsidian shadow-glass rounded-[2.5rem] overflow-hidden p-0 backdrop-blur-3xl relative">
-                {/* Holographic Scanline Overlay */}
-                <div
-                  className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-50 bg-[length:100%_2px,3px_100%]"/>
-
-                {/* Header */}
-                <div
-                  className="px-8 py-5 border-b border-glass-border flex justify-between items-center bg-gradient-to-r from-cyan-glow/10 via-cyan-glow/5 to-transparent relative overflow-hidden shrink-0">
-                  <div
-                    className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-glow/50 to-transparent"/>
-
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-cyan-glow/40 rounded-full blur-md animate-pulse"/>
-                      <div
-                        className="relative w-11 h-11 rounded-full bg-glass-obsidian flex items-center justify-center border border-cyan-glow/40">
-                        <SparklesIcon size={20} className="text-cyan-glow"/>
-                      </div>
+                animate={false}
+                variant="floating"
+                pad="none"
+                className="relative flex h-[min(520px,calc(100dvh-12rem))] min-h-[380px] flex-col overflow-hidden rounded-[1.75rem] border-white/80 bg-white/95 shadow-[0_24px_70px_rgba(22,29,29,0.18)] ring-1 ring-black/5 sm:h-[520px] sm:rounded-[2rem]"
+              >
+                <div className="flex shrink-0 items-center justify-between border-b border-glass-border bg-white/90 px-4 py-3.5 backdrop-blur-2xl sm:px-5 sm:py-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-cyan-glow/20 bg-cyan-glow/10 text-cyan-glow shadow-neon">
+                      <SparklesIcon size={20}/>
                     </div>
-                    <div>
+
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3
-                          className="font-jakarta font-extrabold text-[13px] text-text-primary uppercase tracking-[0.25em]">EVE
-                          Companion</h3>
-                        <span
-                          className="px-1.5 py-0.5 rounded-[4px] bg-cyan-glow/10 border border-cyan-glow/20 text-[8px] text-cyan-glow font-black tracking-tighter">v2.4.0</span>
+                        <h3 className="truncate text-[13px] font-black uppercase tracking-[0.16em] text-text-primary">
+                          EVE Companion
+                        </h3>
+                        <span className="hidden rounded-full border border-cyan-glow/20 bg-cyan-glow/8 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-cyan-glow sm:inline-flex">
+                          Beta
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="relative flex h-2 w-2">
-                          <span
-                            className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-glow opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-glow"></span>
-                        </div>
-                        <span className="text-[10px] text-cyan-glow/80 font-bold tracking-tight uppercase">Neural Link Established</span>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-emerald shadow-[0_0_10px_rgba(16,185,129,0.65)]"/>
+                        <span className="truncate text-[11px] font-bold text-text-muted">
+                          Sẵn sàng hỗ trợ
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -207,73 +207,66 @@ const MapChatbot = () => {
                       setIsOpen(false);
                       setActiveRow(ROWS.STARTUP);
                     }}
-                    className="group p-2.5 bg-obsidian-light/30 hover:bg-sunset/20 rounded-xl transition-all duration-300 border border-glass-border hover:border-sunset/40"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-glass-border bg-white text-text-muted shadow-sm transition-colors hover:border-sunset/30 hover:bg-sunset/10 hover:text-sunset"
+                    aria-label="Đóng chatbot"
                   >
-                    <CloseIcon size={18} className="text-text-muted group-hover:text-sunset transition-colors"/>
+                    <CloseIcon size={18}/>
                   </button>
                 </div>
 
-                {/* Messages Area */}
-                <div
-                  className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar bg-[radial-gradient(circle_at_50%_-20%,var(--color-cyan-glow),transparent)] bg-[length:100%_40%] bg-no-repeat opacity-90">
+                <div className="flex-1 space-y-4 overflow-y-auto bg-map-bg/80 px-4 py-5 custom-scrollbar sm:px-5">
                   {messages.map((msg, idx) => (
                     <motion.div
-                      key={idx}
-                      animate={!mobile}
-                      initial={!mobile ? {opacity: 0, x: msg.role === 'user' ? 20 : -20, y: 10} : {}}
+                      key={`${msg.role}-${idx}`}
+                      animate={!mobile ? {opacity: 1, x: 0, y: 0} : {}}
+                      initial={!mobile ? {opacity: 0, x: msg.role === 'user' ? 14 : -14, y: 8} : {}}
                       className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`relative max-w-[90%] px-5 py-4 rounded-[1.8rem] text-[12px] leading-relaxed font-medium shadow-sm transition-all ${
+                        className={`max-w-[86%] rounded-3xl px-4 py-3 text-[13px] font-semibold leading-relaxed shadow-sm ${
                           msg.role === 'user'
-                            ? 'bg-gradient-to-br from-cyan-glow/30 to-cyan-glow/10 border border-cyan-glow/40 text-text-primary rounded-tr-none'
-                            : 'bg-white/90 border border-glass-border text-text-secondary rounded-tl-none shadow-sm'
-                        }`}>
-                        {msg.role === 'bot' && (
-                          <div className="absolute -left-2 top-0 w-1 h-8 bg-cyan-glow/40 rounded-full blur-[1px]"/>
-                        )}
+                            ? 'rounded-br-lg border border-cyan-glow/30 bg-cyan-glow text-white shadow-neon'
+                            : 'rounded-bl-lg border border-glass-border bg-white text-text-secondary'
+                        }`}
+                      >
                         {msg.text}
                       </div>
                     </motion.div>
                   ))}
+
                   {isTyping && (
                     <div className="flex justify-start">
-                      <div
-                        className="bg-white/90 border border-glass-border px-5 py-3 rounded-[1.5rem] rounded-tl-none flex gap-1.5 items-center shadow-sm">
-                        <motion.span animate={{opacity: [0.4, 1, 0.4]}} transition={{repeat: Infinity, duration: 1}}
-                                     className="w-2 h-2 bg-cyan-glow rounded-full shadow-neon" />
-                        <motion.span animate={{opacity: [0.4, 1, 0.4]}}
-                                     transition={{repeat: Infinity, duration: 1, delay: 0.2}}
-                                     className="w-2 h-2 bg-cyan-glow rounded-full shadow-neon" />
-                        <motion.span animate={{opacity: [0.4, 1, 0.4]}}
-                                     transition={{repeat: Infinity, duration: 1, delay: 0.4}}
-                                     className="w-2 h-2 bg-cyan-glow rounded-full shadow-neon" />
+                      <div className="flex items-center gap-1.5 rounded-3xl rounded-bl-lg border border-glass-border bg-white px-4 py-3 shadow-sm">
+                        {[0, 1, 2].map((dot) => (
+                          <motion.span
+                            key={dot}
+                            animate={{opacity: [0.35, 1, 0.35], y: [0, -2, 0]}}
+                            transition={{repeat: Infinity, duration: 1, delay: dot * 0.16}}
+                            className="h-2 w-2 rounded-full bg-cyan-glow"
+                          />
+                        ))}
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Input Area */}
-                <div className="p-6 bg-obsidian-light/80 border-t border-glass-border backdrop-blur-3xl relative shrink-0">
-                  <div
-                    className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-glow/20 to-transparent"/>
-
-                  <div
-                    className="flex gap-3 p-2.5 bg-white border border-glass-border rounded-[1.5rem] focus-within:border-cyan-glow/40 transition-all duration-500 shadow-sm group">
+                <div className="shrink-0 border-t border-glass-border bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-2xl sm:p-4">
+                  <div className="flex items-center gap-2 rounded-3xl border border-glass-border bg-map-bg/70 p-1.5 shadow-inner focus-within:border-cyan-glow/40 focus-within:bg-white">
                     <input
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                      placeholder="Giao tiếp với EVE..."
-                      className="flex-1 bg-transparent border-none outline-none px-4 text-[13px] text-text-primary placeholder-text-dim font-semibold"
+                      placeholder="Nhắn cho EVE..."
+                      className="min-w-0 flex-1 bg-transparent px-3 text-[13px] font-semibold text-text-primary outline-none placeholder:text-text-muted"
                     />
                     <button
                       onClick={handleSend}
                       disabled={!input.trim() || isTyping}
-                      className="flex items-center justify-center w-12 h-12 bg-cyan-glow text-white rounded-2xl shadow-neon hover:scale-105 active:scale-95 disabled:opacity-30 disabled:scale-100 disabled:shadow-none transition-all duration-300"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-glow text-white shadow-neon transition-all hover:brightness-105 active:scale-95 disabled:opacity-35 disabled:shadow-none"
+                      aria-label="Gửi tin nhắn"
                     >
-                      <SendIcon size={20}/>
+                      <SendIcon size={18}/>
                     </button>
                   </div>
                 </div>
@@ -282,29 +275,26 @@ const MapChatbot = () => {
           )}
         </AnimatePresence>
 
-        {/* Trigger Button */}
         <motion.button
           animate={!mobile}
-          whileHover={!mobile ? {scale: 1.15} : {}}
-          whileTap={{scale: 0.9}}
+          whileHover={!mobile ? {scale: 1.12} : {}}
+          whileTap={{scale: 0.92}}
           onClick={toggleOpen}
-          className={`relative w-20 h-20 flex items-center justify-center transition-all duration-500 group ${
-            isOpen ? 'scale-90 opacity-90' : ''
+          className={`relative flex items-center justify-center transition-all duration-300 group ${mobile ? 'h-16 w-16' : 'h-20 w-20'} ${
+            isOpen ? 'scale-95 opacity-95' : ''
           }`}
+          aria-label="Mở chatbot EVE"
         >
           {!isOpen && (
-            <div
-              className="absolute inset-0 bg-cyan-glow/10 rounded-full blur-2xl group-hover:bg-cyan-glow/20 transition-all duration-500 animate-pulse"/>
+            <div className="absolute inset-1 rounded-full bg-cyan-glow/10 blur-xl transition-colors group-hover:bg-cyan-glow/20"/>
           )}
 
-          <div className="relative">
-            <ChatbotAnimation
-              spritesheetPath={eveSpritesheet}
-              size={80}
-              activeRow={activeRow}
-              className="pointer-events-none drop-shadow-neon"
-            />
-          </div>
+          <ChatbotAnimation
+            spritesheetPath={eveSpritesheet}
+            size={mobile ? 64 : 80}
+            activeRow={activeRow}
+            className="pointer-events-none drop-shadow-neon"
+          />
         </motion.button>
       </motion.div>
     </div>
