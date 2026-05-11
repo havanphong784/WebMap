@@ -439,7 +439,7 @@ export default function MapPage() {
         )}
       </AnimatePresence>
 
-      <MapChatbot/>
+      <MapChatbot onLocationClick={handleLocationClick}/>
     </div>
 
   );

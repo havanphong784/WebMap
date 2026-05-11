@@ -175,7 +175,29 @@ const formatItineraryText = (itinerary, options, weather) => {
   return `Mình đã dựng một lịch trình ${options.durationHours} giờ với ${itinerary.length} điểm dừng, ngân sách ${options.budget.toLowerCase()}.${preferenceText}${weatherText}`;
 };
 
-const MapChatbot = () => {
+const MessageText = ({ text, isUser }) => {
+  if (!text) return null;
+  
+  // Split by bold patterns **text**
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  
+  return (
+    <div className="whitespace-pre-wrap">
+      {parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return (
+            <strong key={i} className={isUser ? 'text-white' : 'font-black text-text-primary'}>
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </div>
+  );
+};
+
+const MapChatbot = ({ onLocationClick }) => {
   const locations = useLocationStore(state => state.locations);
   const userLocation = useLocationStore(state => state.userLocation);
   const setRouteData = useLocationStore(state => state.setRouteData);
@@ -374,12 +396,13 @@ const MapChatbot = () => {
         let actions = null;
 
         // Try to extract [ACTIONS] block
-        const actionMatch = aiText.match(/\[ACTIONS\]:\s*(\{.*\})/);
+        const actionMatch = aiText.match(/\[ACTIONS\]:\s*(\{[\s\S]*?\})(?=\n|$|\[)/);
         if (actionMatch) {
           try {
             actions = JSON.parse(actionMatch[1]);
+            console.log("Parsed AI actions:", actions);
             // Remove the JSON block from the text shown to user
-            aiText = aiText.replace(/\[ACTIONS\]:\s*\{.*\}/, '').trim();
+            aiText = aiText.replace(/\[ACTIONS\]:\s*\{[\s\S]*?\}/, '').trim();
           } catch (e) {
             console.error("Failed to parse AI actions:", e);
           }
@@ -391,7 +414,8 @@ const MapChatbot = () => {
         };
 
         if (actions && actions.type === 'recommendations' && actions.locationIds?.length > 0) {
-          const recommended = locations.filter(loc => actions.locationIds.includes(loc.id));
+          const recommended = locations.filter(loc => actions.locationIds.map(id => String(id)).includes(String(loc.id)));
+          console.log("Filtered recommended locations:", recommended);
           if (recommended.length > 0) {
             botReply.itinerary = recommended;
             
@@ -596,20 +620,22 @@ const MapChatbot = () => {
                       className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-[86%] rounded-3xl px-4 py-3 text-[13px] font-semibold leading-relaxed shadow-sm ${
+                        className={`max-w-[88%] rounded-3xl px-4 py-3 text-[13px] leading-relaxed shadow-sm ring-1 ${
                           msg.role === 'user'
-                            ? 'rounded-br-lg border border-cyan-glow/30 bg-cyan-glow text-white shadow-neon'
-                            : 'rounded-bl-lg border border-glass-border bg-white text-text-secondary'
+                            ? 'rounded-br-lg border-transparent bg-cyan-glow font-bold text-white shadow-neon ring-cyan-glow/20'
+                            : 'rounded-bl-lg border-transparent bg-white font-medium text-text-secondary ring-black/5'
                         }`}
                       >
-                        {msg.text}
+                        <MessageText text={msg.text} isUser={msg.role === 'user'} />
 
                         {msg.itinerary?.length > 0 && (
-                          <div className="mt-3 space-y-2">
+                          <div className="mt-4 space-y-2 border-t border-glass-border pt-3">
+                            <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-text-muted">Gợi ý địa điểm:</p>
                             {msg.itinerary.map((location, index) => (
-                              <div
+                              <button
                                 key={`${location.id || location.name}-${index}`}
-                                className="rounded-2xl border border-glass-border bg-white/70 px-3 py-2 text-left"
+                                onClick={() => onLocationClick?.(location)}
+                                className="w-full rounded-2xl border border-glass-border bg-white/70 px-3 py-2 text-left transition-all hover:border-cyan-glow/30 hover:bg-white active:scale-[0.98]"
                               >
                                 <div className="flex items-start gap-2">
                                   <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-glow text-[10px] font-black text-white">
@@ -617,12 +643,12 @@ const MapChatbot = () => {
                                   </div>
                                   <div className="min-w-0">
                                     <p className="truncate text-[12px] font-black text-text-primary">{location.name}</p>
-                                    <p className="mt-0.5 line-clamp-2 text-[10px] font-medium text-text-muted">
+                                    <p className="mt-0.5 line-clamp-1 text-[10px] font-medium text-text-muted">
                                       {location.address || location.category}
                                     </p>
                                   </div>
                                 </div>
-                              </div>
+                              </button>
                             ))}
                           </div>
                         )}
