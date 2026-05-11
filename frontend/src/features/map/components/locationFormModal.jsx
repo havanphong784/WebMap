@@ -38,11 +38,19 @@ export default function LocationFormModal({point, onClose, onSaved}) {
   const {user} = useAuthStore();
   const addToast = useToastStore(state => state.addToast);
 
-  const rawAddress = point.address || {};
-  const defaultName = rawAddress.amenity || rawAddress.shop || rawAddress.tourism || rawAddress.display_name?.split(',')[0] || "";
+  const isAddressObject = typeof point.address === 'object' && point.address !== null;
+  const rawAddress = isAddressObject ? point.address : {};
+  
+  const defaultName = point.name || 
+                     rawAddress.amenity || 
+                     rawAddress.shop || 
+                     rawAddress.tourism || 
+                     (typeof point.address === 'string' ? point.address.split(',')[0] : rawAddress.display_name?.split(',')[0]) || 
+                     "";
+
   const [name, setName] = useState(defaultName);
-  const [address, setAddress] = useState(rawAddress.display_name || "");
-  const [category, setCategory] = useState("other");
+  const [address, setAddress] = useState(typeof point.address === 'string' ? point.address : rawAddress.display_name || "");
+  const [category, setCategory] = useState(point.category || "other");
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState("");
   const [isPublic, setIsPublic] = useState(true);
@@ -81,6 +89,12 @@ export default function LocationFormModal({point, onClose, onSaved}) {
 
   useEffect(() => {
     const updateAddress = async () => {
+      if (typeof point.address === 'string') {
+        setAddress(point.address);
+        setName(prev => prev || point.name || point.address.split(',')[0]);
+        return;
+      }
+
       if (point.address?.display_name) {
         setAddress(point.address.display_name);
         const newDefaultName = point.address.amenity || point.address.shop || point.address.tourism || point.address.display_name?.split(',')[0] || "";
@@ -95,9 +109,9 @@ export default function LocationFormModal({point, onClose, onSaved}) {
       }
     };
     updateAddress();
-  }, [point.address, point.lat, point.lng]);
+  }, [point.address, point.lat, point.lng, point.name]);
 
-  const [tags, setTags] = useState([]);
+  const [tags, setTags] = useState(point.tags || []);
   const [tagInput, setTagInput] = useState("");
 
   const handleAddTag = (tagValue) => {

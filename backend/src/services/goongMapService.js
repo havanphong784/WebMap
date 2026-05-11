@@ -233,3 +233,4 @@ export const searchAddressWithGoong = async (query, {limit = 5} = {}) => {
 };
 
 export {isConfiguredGoongKey};
+  

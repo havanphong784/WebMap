@@ -22,6 +22,7 @@ graphify-out/
 docs/
 .gitignore
 *.md
+*.py
 /pnpm-lock.yaml
 /pnpm-workspace.yaml
 .understand-anything/

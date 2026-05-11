@@ -422,6 +422,9 @@ export default function MapPage() {
                 lng: activeLocation.lng,
                 lat: activeLocation.lat,
                 address: activeLocation.address,
+                name: activeLocation.name,
+                category: activeLocation.category,
+                tags: activeLocation.tags,
                 autoOpenForm: true
               });
               setActiveLocation(null);
