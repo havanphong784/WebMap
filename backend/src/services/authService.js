@@ -31,7 +31,7 @@ export const getUserProfile = async (uid) => {
 };
 export const listActiveUsers = async (limit = 10) => {
   const query = `
-    SELECT firebase_uid, name, avatar_url, last_seen_at, level, tier
+    SELECT firebase_uid, name, avatar_url, last_seen_at, level, tier, current_lat, current_lng
     FROM users
     WHERE last_seen_at > NOW() - INTERVAL '5 minutes'
     ORDER BY last_seen_at DESC
@@ -41,11 +41,24 @@ export const listActiveUsers = async (limit = 10) => {
   return result.rows;
 };
 
-export const updateLastSeen = async (uid) => {
-  const query = `
-    UPDATE users 
-    SET last_seen_at = NOW() 
-    WHERE firebase_uid = $1;
-  `;
-  await pool.query(query, [uid]);
+export const updateLastSeen = async (uid, location = {}) => {
+  const lat = Number.parseFloat(location?.lat);
+  const lng = Number.parseFloat(location?.lng);
+  const hasLocation = Number.isFinite(lat) && Number.isFinite(lng);
+
+  const query = hasLocation
+    ? `
+      UPDATE users
+      SET last_seen_at = NOW(),
+          current_lat = $2,
+          current_lng = $3
+      WHERE firebase_uid = $1;
+    `
+    : `
+      UPDATE users
+      SET last_seen_at = NOW()
+      WHERE firebase_uid = $1;
+    `;
+
+  await pool.query(query, hasLocation ? [uid, lat, lng] : [uid]);
 };

@@ -129,6 +129,10 @@
     box-shadow: var(--shadow-neon);
 }
 
+@utility drop-shadow-neon {
+    filter: drop-shadow(0 0 12px rgba(0, 206, 209, 0.45));
+}
+
 @utility text-glow-cyan {
     text-shadow: 0 0 12px rgba(0, 206, 209, 0.4);
 }

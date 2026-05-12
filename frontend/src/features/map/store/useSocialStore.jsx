@@ -13,16 +13,19 @@ export const useSocialStore = create((set) => ({
         set({ activeUsers: result.data, isLoading: false });
       }
     } catch (error) {
-      console.error("Lỗi fetch active users:", error);
+      console.error("Loi fetch active users:", error);
       set({ isLoading: false });
     }
   },
 
-  sendHeartbeat: async () => {
+  sendHeartbeat: async (location) => {
     try {
-      await apiClient.post("/auth/heartbeat", {});
+      const [lng, lat] = Array.isArray(location) ? location : [];
+      await apiClient.post("/auth/heartbeat", {
+        location: Number.isFinite(lat) && Number.isFinite(lng) ? {lat, lng} : undefined,
+      });
     } catch (error) {
-      console.error("Lỗi gửi heartbeat:", error);
+      console.error("Loi gui heartbeat:", error);
     }
   },
 }));

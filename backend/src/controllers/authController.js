@@ -34,7 +34,7 @@ export const getProfile = async (req, res) => {
 
 export const getActiveUsers = async (req, res) => {
   try {
-    const users = await listActiveUsers(10);
+    const users = await listActiveUsers(50);
     sendSuccess(res, {data: users});
   } catch (error) {
     console.error("Lỗi khi lấy danh sách user active:", error);
@@ -45,7 +45,7 @@ export const getActiveUsers = async (req, res) => {
 export const heartbeat = async (req, res) => {
   try {
     const {uid} = req.user;
-    await updateLastSeen(uid);
+    await updateLastSeen(uid, req.body?.location);
     sendSuccess(res);
   } catch (error) {
     console.error("Lỗi heartbeat:", error);

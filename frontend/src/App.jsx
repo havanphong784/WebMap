@@ -6,6 +6,7 @@ import ProtectedRoute from "./shared/components/layout/protectedRoute.jsx";
 import PageTransition from "./shared/components/layout/pageTransition.jsx";
 import {useAuthStore} from "./features/auth/context/authStore.js";
 import {useSocialStore} from "./features/map/store/useSocialStore.jsx";
+import {useLocationStore} from "./features/map/store/useLocationsStore.jsx";
 import {useNotificationStore} from "./features/notifications/store/useNotificationStore.jsx";
 import ToastProvider from "./shared/components/toast/ToastProvider.jsx";
 
@@ -31,14 +32,15 @@ function App() {
   const isLandingPage = location.pathname === '/';
   const {user} = useAuthStore();
   const {sendHeartbeat} = useSocialStore();
+  const userLocation = useLocationStore(state => state.userLocation);
   const {fetchNotifications} = useNotificationStore();
 
   useEffect(() => {
     if (user?.uid) {
-      sendHeartbeat();
+      sendHeartbeat(userLocation);
       fetchNotifications(user.uid, true);
 
-      const heartbeatInterval = setInterval(sendHeartbeat, 60000);
+      const heartbeatInterval = setInterval(() => sendHeartbeat(userLocation), 60000);
 
       const notifInterval = setInterval(() => {
         if (document.visibilityState === 'visible') {
@@ -51,7 +53,7 @@ function App() {
         clearInterval(notifInterval);
       };
     }
-  }, [user?.uid, sendHeartbeat, fetchNotifications]);
+  }, [user?.uid, sendHeartbeat, userLocation, fetchNotifications]);
 
   return (
     <div

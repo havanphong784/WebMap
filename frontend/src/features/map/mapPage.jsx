@@ -19,6 +19,8 @@ import {extractGPS} from "./utils/exifUtils.js";
 import {useToastStore} from "../../shared/components/toast/useToastStore.jsx";
 
 import OnlineCommunityBar from "./components/onlineCommunityBar.jsx";
+import OnlineFriendsPane from "./components/onlineFriendsPane.jsx";
+import OnlineUserMarkers from "./components/onlineUserMarkers.jsx";
 import MapControls from "./components/mapControls.jsx";
 import UserMarker from "./components/userMarker.jsx";
 import UserProfileButton from "./components/userProfileButton.jsx";
@@ -27,6 +29,7 @@ import WeatherWidget from "./components/WeatherWidget.jsx";
 import WeatherLayers from "./components/WeatherLayers.jsx";
 import WeatherEffects from "./components/WeatherEffects.jsx";
 import {useWeatherStore} from "./store/useWeatherStore.jsx";
+import {useSocialStore} from "./store/useSocialStore.jsx";
 import MapChatbot from "../chatbot/components/mapChatbot.jsx";
 import {isMobile} from "../../shared/utils/deviceUtils.js";
 import {withNearbyGroup} from "./utils/locationGrouping.js";
@@ -43,9 +46,11 @@ export default function MapPage() {
   const mobile = useMemo(() => isMobile(), []);
   const addToast = useToastStore(state => state.addToast);
   const hasAutoLocated = useRef(false);
+  const heartbeatLocationRef = useRef(0);
 
   const setUserLocation = useLocationStore(state => state.setUserLocation);
   const setAccuracy = useLocationStore(state => state.setAccuracy);
+  const sendHeartbeat = useSocialStore(state => state.sendHeartbeat);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -54,6 +59,10 @@ export default function MapPage() {
       (pos) => {
         setUserLocation([pos.coords.longitude, pos.coords.latitude]);
         setAccuracy(pos.coords.accuracy);
+        if (Date.now() - heartbeatLocationRef.current > 15000) {
+          heartbeatLocationRef.current = Date.now();
+          sendHeartbeat([pos.coords.longitude, pos.coords.latitude]);
+        }
       },
       () => {
       },
@@ -61,7 +70,7 @@ export default function MapPage() {
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [setUserLocation, setAccuracy]);
+  }, [setUserLocation, setAccuracy, sendHeartbeat]);
 
   const fetchLocations = useLocationStore(state => state.fetchLocations);
   const locations = useLocationStore(state => state.locations);
@@ -268,6 +277,21 @@ export default function MapPage() {
     );
   }, [addToast, setUserLocation, setAccuracy]);
 
+  const handleFlyToOnlineUser = useCallback((onlineUser) => {
+    const lat = Number.parseFloat(onlineUser?.current_lat);
+    const lng = Number.parseFloat(onlineUser?.current_lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      addToast("Người dùng này chưa chia sẻ vị trí hiện tại.", "error");
+      return;
+    }
+
+    setActiveLocation(null);
+    setInfoClicked(null);
+    setRouteData(null);
+    flyToLocation(lng, lat, 16, 1600, true);
+  }, [addToast, flyToLocation, setRouteData]);
+
   useEffect(() => {
     if (isMapReady && !hasAutoLocated.current && !routerLocation.state?.focusLocation && !routerLocation.search) {
       hasAutoLocated.current = true;
@@ -356,6 +380,7 @@ export default function MapPage() {
       <ClusterLocations/>
       <RouteLayer/>
       <UserMarker/>
+      <OnlineUserMarkers onUserClick={handleFlyToOnlineUser}/>
       <MapMarkers
         viewMode={markerViewMode}
         onLocationClick={handleLocationClick}
@@ -367,6 +392,7 @@ export default function MapPage() {
     handleClick,
     markerViewMode,
     handleLocationClick,
+    handleFlyToOnlineUser,
     infoClicked,
     activeLocation,
     flyToLocation
@@ -398,6 +424,7 @@ export default function MapPage() {
 
       <SearchBox onSelectLocation={handleSearchSelect}/>
 
+      <OnlineFriendsPane onFlyToUser={handleFlyToOnlineUser}/>
       <OnlineCommunityBar/>
 
       {(mapLoading || mapError || routeError) && (

@@ -225,7 +225,22 @@ const MapChatbot = ({ onLocationClick }) => {
   const [isTopHalf, setIsTopHalf] = useState(false);
   const [isLeftHalf, setIsLeftHalf] = useState(false);
   const isDragging = useRef(false);
-  const [mobile] = useState(() => isMobile());
+  const [mobile, setMobile] = useState(() => isMobile());
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => setMobile(isMobile());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
 
   const quickPrompts = useMemo(() => [
     'Gợi ý quán cafe gần đây',
@@ -392,7 +407,7 @@ const MapChatbot = ({ onLocationClick }) => {
       setActiveRow(ROWS.SMILE);
 
       if (res.success && res.data?.response) {
-        let aiText = res.data.response;
+        let aiText = typeof res.data.response === 'string' ? res.data.response : String(res.data.response || '');
         let actions = null;
 
         // Try to extract [ACTIONS] block
@@ -413,7 +428,7 @@ const MapChatbot = ({ onLocationClick }) => {
           text: aiText,
         };
 
-        if (actions && actions.type === 'recommendations' && actions.locationIds?.length > 0) {
+        if (actions && actions.type === 'recommendations' && Array.isArray(actions.locationIds) && actions.locationIds.length > 0) {
           const recommended = locations.filter(loc => actions.locationIds.map(id => String(id)).includes(String(loc.id)));
           console.log("Filtered recommended locations:", recommended);
           if (recommended.length > 0) {
@@ -448,6 +463,8 @@ const MapChatbot = ({ onLocationClick }) => {
         const botReply = createBotReply(overrideText);
         setMessages(prev => [...prev, botReply]);
       }
+      setIsTyping(false);
+      setActiveRow(ROWS.SMILE);
     } catch (error) {
       console.error("Chatbot error:", error);
       setIsTyping(false);
@@ -517,8 +534,8 @@ const MapChatbot = ({ onLocationClick }) => {
               height: '64px',
             }
             : {
-              left: 'calc(100% - 120px)',
-              top: 'calc(100% - 150px)',
+              right: '40px',
+              bottom: '40px',
               width: '80px',
               height: '80px',
             }),
@@ -685,6 +702,7 @@ const MapChatbot = ({ onLocationClick }) => {
                       </div>
                     </div>
                   )}
+                  <div ref={messagesEndRef} />
                 </div>
 
                 <div className="shrink-0 border-t border-glass-border bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-2xl sm:p-4">

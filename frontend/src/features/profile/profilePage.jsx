@@ -10,7 +10,7 @@ import GlassPanel from "../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../shared/components/common/actionButton.jsx";
 import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
 import AchievementList from "./components/AchievementList.jsx";
-import { isMobile } from "../../shared/utils/deviceUtils.js";
+import {isMobile} from "../../shared/utils/deviceUtils.js";
 
 export default function ProfilePage() {
   const {uid: uidParam} = useParams();
@@ -82,7 +82,7 @@ export default function ProfilePage() {
     if (!currentUserId) return navigate('/login');
     setIsFollowLoading(true);
     try {
-      const res = await apiClient.post('/follows/toggle', { follower_id: currentUserId, followed_id: uid });
+      const res = await apiClient.post('/follows/toggle', {follower_id: currentUserId, followed_id: uid});
       if (res.success) setIsFollowing(res.data.followed);
     } catch (err) {
       console.error(err);
@@ -164,7 +164,7 @@ export default function ProfilePage() {
           >
             {loading ? (
               <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
-                <Skeleton circle width={144} height={144} className="border-4 border-map-bg shadow-2xl" />
+                <Skeleton circle width={144} height={144} className="border-4 border-map-bg shadow-2xl"/>
               </SkeletonTheme>
             ) : (
               <UserBadge user={profileUser} size={144}/>
@@ -180,9 +180,9 @@ export default function ProfilePage() {
             {loading ? (
               <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
                 <div className="flex flex-col items-center gap-3">
-                  <Skeleton width={180} height={36} />
-                  <Skeleton width={140} height={16} />
-                  <Skeleton width={100} height={20} borderRadius={20} className="mt-2" />
+                  <Skeleton width={180} height={36}/>
+                  <Skeleton width={140} height={16}/>
+                  <Skeleton width={100} height={20} borderRadius={20} className="mt-2"/>
                 </div>
               </SkeletonTheme>
             ) : (
@@ -227,9 +227,9 @@ export default function ProfilePage() {
             <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
               {[...Array(3)].map((_, i) => (
                 <GlassPanel key={i} className="py-4 px-2 flex flex-col items-center gap-2 border-white/5 bg-white/5">
-                  <Skeleton circle width={20} height={20} />
-                  <Skeleton width={32} height={20} />
-                  <Skeleton width={48} height={8} />
+                  <Skeleton circle width={20} height={20}/>
+                  <Skeleton width={32} height={20}/>
+                  <Skeleton width={48} height={8}/>
                 </GlassPanel>
               ))}
             </SkeletonTheme>
@@ -294,7 +294,7 @@ export default function ProfilePage() {
                   <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
                     {[...Array(3)].map((_, i) => (
                       <div key={i} className="glass-panel rounded-3xl border-white/5 overflow-hidden p-0 h-64">
-                        <Skeleton width="100%" height="100%" />
+                        <Skeleton width="100%" height="100%"/>
                       </div>
                     ))}
                   </SkeletonTheme>
