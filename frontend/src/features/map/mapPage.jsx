@@ -13,11 +13,8 @@ import ClusterLocations from "./components/clusterLocations.jsx";
 import LocationSidebar from "./components/locationSidebar.jsx";
 import RouteLayer from "./components/routeLayer.jsx";
 import {AnimatePresence} from 'framer-motion';
-// import colorfull from "./style/colorful";
 import {extractGPS} from "./utils/exifUtils.js";
-
 import {useToastStore} from "../../shared/components/toast/useToastStore.jsx";
-
 import OnlineCommunityBar from "./components/onlineCommunityBar.jsx";
 import OnlineFriendsPane from "./components/onlineFriendsPane.jsx";
 import OnlineUserMarkers from "./components/onlineUserMarkers.jsx";
@@ -34,6 +31,12 @@ import MapChatbot from "../chatbot/components/mapChatbot.jsx";
 import {isMobile} from "../../shared/utils/deviceUtils.js";
 import {withNearbyGroup} from "./utils/locationGrouping.js";
 
+const INTERACTIVE_LAYERS = [
+  'clusters', 'unclustered-point', 'unclustered-label', 
+  'poi', 'poi-level-1', 'poi-level-2', 'poi-level-3', 
+  'place-label', 'place-suburb-label', 'place-neighbourhood-label',
+  'restaurant', 'school', 'hospital', 'cafe', 'bank', 'atm', 'hotel'
+];
 
 export default function MapPage() {
   const navigate = useNavigate();
@@ -51,27 +54,6 @@ export default function MapPage() {
   const setUserLocation = useLocationStore(state => state.setUserLocation);
   const setAccuracy = useLocationStore(state => state.setAccuracy);
   const sendHeartbeat = useSocialStore(state => state.sendHeartbeat);
-
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        setUserLocation([pos.coords.longitude, pos.coords.latitude]);
-        setAccuracy(pos.coords.accuracy);
-        if (Date.now() - heartbeatLocationRef.current > 15000) {
-          heartbeatLocationRef.current = Date.now();
-          sendHeartbeat([pos.coords.longitude, pos.coords.latitude]);
-        }
-      },
-      () => {
-      },
-      {enableHighAccuracy: true}
-    );
-
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, [setUserLocation, setAccuracy, sendHeartbeat]);
-
   const fetchLocations = useLocationStore(state => state.fetchLocations);
   const locations = useLocationStore(state => state.locations);
   const mapLoading = useLocationStore(state => state.mapLoading);
@@ -92,7 +74,6 @@ export default function MapPage() {
 
   const flyToLocation = useCallback((lng, lat, zoom = 17, duration = 1600, withPadding = false) => {
     if (!mapRef.current) return;
-
     mapRef.current.flyTo({
       center: [parseFloat(lng), parseFloat(lat)],
       zoom: zoom,
@@ -100,36 +81,42 @@ export default function MapPage() {
       bearing: 0,
       duration: duration,
       essential: true,
-      padding: withPadding ? {
-        left: mobile ? 0 : 460,
-      } : {left: 0, bottom: 0, top: 0, right: 0}
+      padding: withPadding ? { left: mobile ? 0 : 460 } : {left: 0, bottom: 0, top: 0, right: 0}
     });
   }, [mobile]);
 
   useEffect(() => {
+    if (!navigator.geolocation) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setUserLocation([pos.coords.longitude, pos.coords.latitude]);
+        setAccuracy(pos.coords.accuracy);
+        if (Date.now() - heartbeatLocationRef.current > 15000) {
+          heartbeatLocationRef.current = Date.now();
+          sendHeartbeat([pos.coords.longitude, pos.coords.latitude]);
+        }
+      },
+      () => {},
+      {enableHighAccuracy: true}
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [setUserLocation, setAccuracy, sendHeartbeat]);
+
+  useEffect(() => {
     const focusLocation = routerLocation.state?.focusLocation;
     if (!focusLocation || !isMapReady) return;
-
     const lng = parseFloat(focusLocation.lng);
     const lat = parseFloat(focusLocation.lat);
-
     if (Number.isNaN(lng) || Number.isNaN(lat)) return;
-
     const fetchDetail = async () => {
       const detail = await fetchLocationDetail(focusLocation.id, user?.uid);
-      if (detail) {
-        setActiveLocation(detail);
-      } else {
-        setActiveLocation(focusLocation);
-      }
+      setActiveLocation(detail || focusLocation);
     };
-
     const timer = setTimeout(() => {
       fetchDetail();
       setInfoClicked(null);
       flyToLocation(lng, lat, 16, 1600, true);
     }, 100);
-
     return () => clearTimeout(timer);
   }, [routerLocation.state, isMapReady, flyToLocation, fetchLocationDetail, user?.uid]);
 
@@ -140,10 +127,8 @@ export default function MapPage() {
     const lng = parseFloat(params.get('lng'));
     const locationId = params.get('locationId');
     if (Number.isNaN(lat) || Number.isNaN(lng)) return;
-
     const timer = setTimeout(async () => {
       flyToLocation(lng, lat, 16, 1600, true);
-
       if (locationId) {
         const detail = await fetchLocationDetail(locationId, user?.uid);
         if (detail) {
@@ -152,38 +137,25 @@ export default function MapPage() {
           return;
         }
       }
-
       setInfoClicked({lng, lat, address: null});
       const diachi = await getAddress(lat, lng);
       setInfoClicked({lng, lat, address: diachi});
     }, 300);
-
     return () => clearTimeout(timer);
   }, [isMapReady, routerLocation.search, flyToLocation, fetchLocationDetail, user?.uid]);
 
   useEffect(() => {
     const coordinates = routeData?.coordinates;
     if (!mapRef.current || !coordinates?.length) return;
-
     const map = mapRef.current.getMap();
     if (!map) return;
-
     const bounds = new maplibregl.LngLatBounds(coordinates[0], coordinates[0]);
     coordinates.slice(1).forEach((coordinate) => bounds.extend(coordinate));
-
-    if (activeLocation === null) {
-      map.fitBounds(bounds, {
-        padding: {top: 100, bottom: 200, left: 100, right: 100},
-        duration: 1200,
-        essential: true,
-      });
-    } else {
-      map.fitBounds(bounds, {
-        padding: {top: 100, bottom: 200, left: 400, right: 100},
-        duration: 1200,
-        essential: true,
-      });
-    }
+    map.fitBounds(bounds, {
+      padding: activeLocation === null ? {top: 100, bottom: 200, left: 100, right: 100} : {top: 100, bottom: 200, left: 400, right: 100},
+      duration: 1200,
+      essential: true,
+    });
   }, [routeData, activeLocation]);
 
   const handleLocationClick = useCallback(async (locData) => {
@@ -191,29 +163,40 @@ export default function MapPage() {
     const groupedLocation = locData.group?.length ? locData : withNearbyGroup(locData, locations);
     setActiveLocation(groupedLocation);
     flyToLocation(groupedLocation.lng, groupedLocation.lat, 16, 2000, true);
-
     const detail = await fetchLocationDetail(groupedLocation.id, user?.uid);
     if (detail) {
-      const group = groupedLocation.group?.length
-        ? groupedLocation.group.map(item => item.id === detail.id ? {...item, ...detail} : item)
-        : null;
+      const group = groupedLocation.group?.length ? groupedLocation.group.map(item => item.id === detail.id ? {...item, ...detail} : item) : null;
       setActiveLocation(group?.length > 1 ? {...detail, group} : detail);
     }
   }, [flyToLocation, fetchLocationDetail, locations, user?.uid]);
 
   const handleClick = useCallback(async (e) => {
-    // Nếu click trúng marker từ layer unclustered-point của ClusterLocations
+    // Ưu tiên các tính năng đặc thù (POI, Markers)
     const feature = e.features?.[0];
-    if (feature && (feature.layer.id === 'unclustered-point' || feature.layer.id === 'unclustered-label')) {
-      handleLocationClick(withNearbyGroup(feature.properties, locations));
-      return;
+    
+    if (feature) {
+      if (feature.layer.id === 'unclustered-point' || feature.layer.id === 'unclustered-label') {
+        handleLocationClick(withNearbyGroup(feature.properties, locations));
+        return;
+      }
+      
+      const layerId = feature.layer.id.toLowerCase();
+      if (layerId.includes('poi') || layerId.includes('label') || layerId.includes('place') || layerId.includes('restaurant') || layerId.includes('school')) {
+        const {lng, lat} = e.lngLat;
+        const poiName = feature.properties?.name || feature.properties?.name_vi || feature.properties?.name_en || feature.properties?.title;
+        setActiveLocation(null);
+        setRouteData(null);
+        flyToLocation(lng, lat, 17);
+        setInfoClicked({lng, lat, name: poiName, address: {display_name: "Đang tải địa chỉ..."}});
+        const diachi = await getAddress(lat, lng);
+        setInfoClicked({lng, lat, name: poiName, address: diachi});
+        return;
+      }
     }
 
     if (clickThrottleRef.current) return;
     clickThrottleRef.current = true;
-    setTimeout(() => {
-      clickThrottleRef.current = false;
-    }, 2000);
+    setTimeout(() => { clickThrottleRef.current = false; }, 500);
 
     setActiveLocation(null);
     setRouteData(null);
@@ -224,6 +207,12 @@ export default function MapPage() {
     setInfoClicked({lng, lat, address: diachi});
   }, [flyToLocation, setRouteData, handleLocationClick, locations]);
 
+  const onMouseMove = (e) => {
+    const map = e.target;
+    const features = map.queryRenderedFeatures(e.point, { layers: INTERACTIVE_LAYERS });
+    map.getCanvas().style.cursor = features.length ? 'pointer' : '';
+  };
+
   const handleSearchSelect = useCallback(async (lng, lat, addressName) => {
     flyToLocation(lng, lat, 16);
     setInfoClicked({lng, lat, address: {display_name: addressName}});
@@ -231,20 +220,14 @@ export default function MapPage() {
     setInfoClicked({lng, lat, address: diachi});
   }, [flyToLocation]);
 
-  const debouncedFetch = useRef(
-    debounce((uid, bounds) => {
-      fetchLocations(uid, bounds);
-    }, 300)
-  ).current;
+  const debouncedFetch = useRef(debounce((uid, bounds) => { fetchLocations(uid, bounds); }, 300)).current;
 
   const handleMapChange = useCallback(() => {
     if (mapRef.current) {
       const map = mapRef.current.getMap();
       if (!map) return;
-
       const bounds = map.getBounds();
       debouncedFetch(user?.uid, bounds);
-
       if (isVisible) {
         const center = map.getCenter();
         fetchWeather(center.lat, center.lng);
@@ -259,18 +242,11 @@ export default function MapPage() {
         const {longitude, latitude, accuracy} = pos.coords;
         setUserLocation([longitude, latitude]);
         setAccuracy(accuracy);
-
-        mapRef.current?.flyTo({
-          center: [longitude, latitude],
-          zoom: 16,
-          duration: 2000,
-          pitch: 45
-        });
+        mapRef.current?.flyTo({ center: [longitude, latitude], zoom: 16, duration: 2000, pitch: 45 });
         setIsLocating(false);
       },
       (err) => {
         setIsLocating(false);
-        console.error("Lỗi lấy vị trí:", err);
         addToast("Không thể truy cập vị trí của bạn. Vui lòng cấp quyền.", "error");
       },
       {enableHighAccuracy: true}
@@ -280,34 +256,23 @@ export default function MapPage() {
   const handleFlyToOnlineUser = useCallback((onlineUser) => {
     const lat = Number.parseFloat(onlineUser?.current_lat);
     const lng = Number.parseFloat(onlineUser?.current_lng);
-
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
       addToast("Người dùng này chưa chia sẻ vị trí hiện tại.", "error");
       return;
     }
-
     setActiveLocation(null);
     setInfoClicked(null);
     setRouteData(null);
     flyToLocation(lng, lat, 16, 1600, true);
   }, [addToast, flyToLocation, setRouteData]);
 
-  useEffect(() => {
-    if (isMapReady && !hasAutoLocated.current && !routerLocation.state?.focusLocation && !routerLocation.search) {
-      hasAutoLocated.current = true;
-      handleLocateUser();
-    }
-  }, [isMapReady, handleLocateUser, routerLocation]);
-
   const handlePhotoUpload = useCallback(async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     if (!file.type.startsWith('image/')) {
       addToast("Vui lòng chọn tệp hình ảnh!", "error");
       return;
     }
-
     setIsExtractingPhoto(true);
     try {
       const gps = await extractGPS(file);
@@ -327,44 +292,24 @@ export default function MapPage() {
     }
   }, [addToast, flyToLocation]);
 
-  const zoomIn = useCallback(() => {
-    if (mapRef.current) {
-      const map = mapRef.current.getMap();
-      if (map) map.zoomIn();
-    }
-  }, []);
-
-  const zoomOut = useCallback(() => {
-    if (mapRef.current) {
-      const map = mapRef.current.getMap();
-      if (map) map.zoomOut();
-    }
-  }, []);
-
+  const zoomIn = () => mapRef.current?.getMap()?.zoomIn();
+  const zoomOut = () => mapRef.current?.getMap()?.zoomOut();
 
   const mapCanvas = useMemo(() => (
     <Map ref={mapRef}
          mapStyle={`https://tiles.goong.io/assets/goong_map_web.json?api_key=${import.meta.env.VITE_GOONG_API_KEY}`}
          minZoom={3}
          maxZoom={18}
-         onLoad={() => {
-           setIsMapReady(true);
-           handleMapChange();
-         }}
+         onLoad={() => { setIsMapReady(true); handleMapChange(); }}
          onMoveEnd={handleMapChange}
          mapLib={maplibregl}
          antialias={true}
          attributionControl={false}
-         initialViewState={{
-           longitude: 108.249476,
-           latitude: 15.972143,
-           zoom: 13,
-           pitch: 45,
-           bearing: 0
-         }}
+         initialViewState={{ longitude: 108.249476, latitude: 15.972143, zoom: 13, pitch: 45, bearing: 0 }}
          style={{width: '100%', height: '100%'}}
          onClick={handleClick}
-         interactiveLayerIds={['clusters', 'unclustered-point', 'unclustered-label']}
+         onMouseMove={onMouseMove}
+         interactiveLayerIds={INTERACTIVE_LAYERS}
     >
       <WeatherLayers/>
       <ClickedMarker
@@ -381,33 +326,16 @@ export default function MapPage() {
       <RouteLayer/>
       <UserMarker/>
       <OnlineUserMarkers onUserClick={handleFlyToOnlineUser}/>
-      <MapMarkers
-        viewMode={markerViewMode}
-        onLocationClick={handleLocationClick}
-        activeLocation={activeLocation}
-      />
+      <MapMarkers viewMode={markerViewMode} onLocationClick={handleLocationClick} activeLocation={activeLocation}/>
     </Map>
-  ), [
-    handleMapChange,
-    handleClick,
-    markerViewMode,
-    handleLocationClick,
-    handleFlyToOnlineUser,
-    infoClicked,
-    activeLocation,
-    flyToLocation
-  ]);
-
+  ), [handleMapChange, handleClick, markerViewMode, handleLocationClick, handleFlyToOnlineUser, infoClicked, activeLocation, flyToLocation]);
 
   return (
     <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
       {mapCanvas}
-
       <WeatherWidget/>
       <WeatherEffects/>
-
       <UserProfileButton/>
-
       <MapControls
         onLocate={handleLocateUser}
         isLocating={isLocating}
@@ -421,53 +349,38 @@ export default function MapPage() {
         isVisible={isVisible}
         onToggleWeather={toggleVisibility}
       />
-
       <SearchBox onSelectLocation={handleSearchSelect}/>
-
       <OnlineFriendsPane onFlyToUser={handleFlyToOnlineUser}/>
       <OnlineCommunityBar/>
-
       {(mapLoading || mapError || routeError) && (
-        <div
-          className="absolute left-3 top-32 z-[750] max-w-[calc(100%-6rem)] sm:left-6 sm:top-24 sm:max-w-sm pointer-events-none">
+        <div className="absolute left-3 top-32 z-[750] max-w-[calc(100%-6rem)] sm:left-6 sm:top-24 sm:max-w-sm pointer-events-none">
           <div className={`rounded-2xl border px-4 py-3 text-xs font-bold shadow-glass backdrop-blur-2xl ${
-            mapError || routeError
-              ? 'border-sunset/25 bg-white/95 text-sunset'
-              : 'border-cyan-glow/20 bg-white/90 text-cyan-glow'
+            mapError || routeError ? 'border-sunset/25 bg-white/95 text-sunset' : 'border-cyan-glow/20 bg-white/90 text-cyan-glow'
           }`}>
             {mapError || routeError || 'Đang cập nhật địa điểm...'}
           </div>
         </div>
       )}
-
       <AnimatePresence>
         {activeLocation && (
           <LocationSidebar
             location={activeLocation}
             onAddReview={() => {
               setInfoClicked({
-                lng: activeLocation.lng,
-                lat: activeLocation.lat,
-                address: activeLocation.address,
-                name: activeLocation.name,
-                category: activeLocation.category,
-                tags: activeLocation.tags,
-                autoOpenForm: true
+                lng: activeLocation.lng, lat: activeLocation.lat, 
+                address: activeLocation.address, name: activeLocation.name,
+                category: activeLocation.category, tags: activeLocation.tags, autoOpenForm: true
               });
               setActiveLocation(null);
             }}
             onClose={() => {
               setActiveLocation(null);
-              if (routerLocation.search) {
-                navigate('/map', {replace: true});
-              }
+              if (routerLocation.search) navigate('/map', {replace: true});
             }}
           />
         )}
       </AnimatePresence>
-
       <MapChatbot onLocationClick={handleLocationClick}/>
     </div>
-
   );
 }

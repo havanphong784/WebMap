@@ -83,18 +83,22 @@ export default function ClickedMarker({ point, setPoint, onLocationSaved }) {
                     </button>
                   </div>
 
-                  <div className="text-[12px] font-bold text-text-primary mb-5 leading-tight line-clamp-2">
-                    {!point.address ? (
+                  <div className="text-[12px] font-bold text-text-primary mb-5 leading-tight line-clamp-1">
+                    {point.name || (point.address ? (point.address.display_name || "Không xác định được địa chỉ") : (
                       <SkeletonTheme baseColor="rgba(255,255,255,0.05)" highlightColor="rgba(255,255,255,0.1)">
                         <div className="space-y-1">
                           <Skeleton height={14} width="100%" />
                           <Skeleton height={14} width="80%" />
                         </div>
                       </SkeletonTheme>
-                    ) : (
-                      point.address?.display_name || "Không xác định được địa chỉ"
-                    )}
+                    ))}
                   </div>
+
+                  {point.name && point.address && (
+                    <div className="text-[10px] text-text-muted mb-4 line-clamp-1 opacity-80 italic">
+                      {point.address.display_name}
+                    </div>
+                  )}
 
                   <div className="flex flex-col gap-2.5">
                     <ActionButton
