@@ -46,6 +46,7 @@ export default function MapPage() {
   const [infoClicked, setInfoClicked] = useState(null);
   const [markerViewMode, setMarkerViewMode] = useState('full');
   const [isMapReady, setIsMapReady] = useState(false);
+  const [activeLayers, setActiveLayers] = useState(['clusters', 'unclustered-point', 'unclustered-label']);
   const mobile = useMemo(() => isMobile(), []);
   const addToast = useToastStore(state => state.addToast);
   const heartbeatLocationRef = useRef(0);
@@ -208,7 +209,7 @@ export default function MapPage() {
 
   const onMouseMove = (e) => {
     const map = e.target;
-    const features = map.queryRenderedFeatures(e.point, { layers: INTERACTIVE_LAYERS });
+    const features = map.queryRenderedFeatures(e.point, { layers: activeLayers });
     map.getCanvas().style.cursor = features.length ? 'pointer' : '';
   };
 
@@ -299,7 +300,19 @@ export default function MapPage() {
          mapStyle={`https://tiles.goong.io/assets/goong_map_web.json?api_key=${import.meta.env.VITE_GOONG_API_KEY}`}
          minZoom={3}
          maxZoom={18}
-         onLoad={() => { setIsMapReady(true); handleMapChange(); }}
+         onLoad={() => { 
+           setIsMapReady(true); 
+           handleMapChange();
+           
+           // Cập nhật các layer khả dụng sau khi map load xong
+           const style = mapRef.current?.getMap()?.getStyle();
+           if (style) {
+             const available = INTERACTIVE_LAYERS.filter(id => 
+               style.layers.some(l => l.id === id)
+             );
+             setActiveLayers(available);
+           }
+         }}
          onMoveEnd={handleMapChange}
          mapLib={maplibregl}
          antialias={true}
@@ -308,7 +321,7 @@ export default function MapPage() {
          style={{width: '100%', height: '100%'}}
          onClick={handleClick}
          onMouseMove={onMouseMove}
-         interactiveLayerIds={INTERACTIVE_LAYERS}
+         interactiveLayerIds={activeLayers}
     >
       <WeatherLayers/>
       <ClickedMarker
