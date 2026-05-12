@@ -9,6 +9,7 @@ import {useSocialStore} from "./features/map/store/useSocialStore.jsx";
 import {useNotificationStore} from "./features/notifications/store/useNotificationStore.jsx";
 import ToastProvider from "./shared/components/toast/ToastProvider.jsx";
 
+const LandingPage = lazy(() => import("./features/landing/landingPage.jsx"));
 const MapPage = lazy(() => import("./features/map/mapPage.jsx"));
 const DiscoveryFeed = lazy(() => import("./features/discovery/discoveryFeed.jsx"));
 const ProfilePage = lazy(() => import("./features/profile/profilePage.jsx"));
@@ -27,6 +28,7 @@ const LoadingFallback = () => (
 function App() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+  const isLandingPage = location.pathname === '/';
   const {user} = useAuthStore();
   const {sendHeartbeat} = useSocialStore();
   const {fetchNotifications} = useNotificationStore();
@@ -58,7 +60,8 @@ function App() {
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/login" element={<PageTransition><Login/></PageTransition>}/>
-            <Route path="/" element={<PageTransition><MapPage/></PageTransition>}/>
+            <Route path="/" element={<PageTransition><LandingPage/></PageTransition>}/>
+            <Route path="/map" element={<PageTransition><MapPage/></PageTransition>}/>
 
             <Route path="/discover" element={
               <ProtectedRoute>
@@ -84,11 +87,11 @@ function App() {
               </ProtectedRoute>
             }/>
 
-            <Route path="*" element={<PageTransition><MapPage/></PageTransition>}/>
+            <Route path="*" element={<PageTransition><LandingPage/></PageTransition>}/>
           </Routes>
         </AnimatePresence>
       </Suspense>
-      {!isLoginPage && <BottomNav/>}
+      {!isLoginPage && !isLandingPage && <BottomNav/>}
       <ToastProvider />
     </div>
   );

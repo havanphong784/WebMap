@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@700;800&amp;family=Inter:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#3b4949",
+                        "secondary": "#7d562d",
+                        "primary-container": "#00ced1",
+                        "surface-container-highest": "#dde4e3",
+                        "primary": "#00696b",
+                        "primary-fixed-dim": "#2ddbde",
+                        "on-error": "#ffffff",
+                        "surface": "#f4fbfa",
+                        "tertiary-fixed-dim": "#bbc7dd",
+                        "tertiary": "#535f72",
+                        "on-secondary-fixed": "#2c1600",
+                        "error": "#ba1a1a",
+                        "surface-dim": "#d4dbdb",
+                        "secondary-fixed": "#ffdcbd",
+                        "on-secondary-fixed-variant": "#623f18",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-container": "#7a532a",
+                        "on-primary-fixed-variant": "#004f51",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#d7e3fa",
+                        "secondary-container": "#ffca98",
+                        "on-background": "#161d1d",
+                        "surface-bright": "#f4fbfa",
+                        "on-tertiary-fixed-variant": "#3c475a",
+                        "tertiary-container": "#aebad0",
+                        "surface-container-low": "#eef5f4",
+                        "inverse-surface": "#2b3232",
+                        "background": "#f4fbfa",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#002020",
+                        "inverse-primary": "#2ddbde",
+                        "surface-tint": "#00696b",
+                        "on-tertiary-fixed": "#101c2c",
+                        "surface-container": "#e8efef",
+                        "on-error-container": "#93000a",
+                        "inverse-on-surface": "#ebf2f2",
+                        "surface-variant": "#dde4e3",
+                        "secondary-fixed-dim": "#f0bd8b",
+                        "outline": "#6b7a7a",
+                        "error-container": "#ffdad6",
+                        "outline-variant": "#bac9c9",
+                        "surface-container-high": "#e2eae9",
+                        "primary-fixed": "#5af8fb",
+                        "on-primary-container": "#005354",
+                        "on-tertiary-container": "#3f4a5d",
+                        "on-surface": "#161d1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "margin-page": "24px",
+                        "gutter-panel": "16px",
+                        "unit": "4px",
+                        "stack-md": "16px",
+                        "padding-card": "20px"
+                    },
+                    "fontFamily": {
+                        "h2": ["Plus Jakarta Sans", "sans-serif"],
+                        "h1": ["Plus Jakarta Sans", "sans-serif"],
+                        "mono-data": ["Space Grotesk", "monospace"],
+                        "label-caps": ["Space Grotesk", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "h2": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "h1": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(107, 122, 122, 0.2);
+        }
+        .cyan-glow {
+            box-shadow: 0 0 15px rgba(0, 206, 209, 0.3);
+        }
+        .map-bg {
+            background-image: linear-gradient(to bottom, rgba(244, 251, 250, 0.8), rgba(244, 251, 250, 0.95)), url('https://lh3.googleusercontent.com/aida/ADBb0ug0XWzQXnJ4ZJMV4rEjP9adTAsdOVFrtKjy0p-_L7wRKXvBcpybSfccjJIdGXsgksCzpImT_59Q983KhS_AIo-sNuISZ2D4DLE56FIi7B5YFBLXO1NyDN31_69F6cS18KYVjqhelc55WxXscaW-6sgJ6Z5_iKfRjAEto6PZGYiu8ibsmHQ3JNsKlg9kO5BAZrOkyYOUZmHA5B4gmUmwxr0ETTFmXAlhRzf5EOqZWmdU2Q0hZq3A7kh3FnZ3dA4XH0UgIUQO_hBIAd0');
+            background-size: cover;
+            background-position: center;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Shell -->
+<nav class="fixed top-0 w-full z-50 glass-panel shadow-sm border-b border-outline/20 h-16 flex justify-between items-center px-margin-page">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">public</span>
+<span class="font-h2 text-h2 font-bold tracking-tighter text-primary">Aether Geo-Social</span>
+</div>
+<button class="bg-primary text-on-primary font-label-caps px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors cyan-glow">
+            Launch Protocol
+        </button>
+</nav>
+<main class="relative pt-16">
+<!-- Hero Section -->
+<section class="relative min-h-[90vh] flex flex-col justify-center px-margin-page map-bg overflow-hidden">
+<!-- HUD Elements -->
+<div class="absolute top-10 right-4 flex flex-col gap-2 opacity-40">
+<div class="w-16 h-1 bg-primary-container/30"></div>
+<div class="w-12 h-1 bg-primary-container/30 ml-auto"></div>
+<div class="w-8 h-1 bg-primary-container/30 ml-auto"></div>
+</div>
+<div class="z-10 max-w-lg">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-container/10 border border-primary-container/20 mb-stack-md">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-mono-data text-label-caps text-primary uppercase">v1.0.42 Live Signal</span>
+</div>
+<h1 class="font-h1 text-h1 text-on-background mb-stack-md">
+                    Khám Phá Bản Đồ Xã Hội Thế Hệ Mới
+                </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-margin-page leading-relaxed">
+                    Kết nối và khám phá thế giới qua lăng kính kỹ thuật số hiện đại. Trải nghiệm giao diện HUD tối tân ngay trên thiết bị di động của bạn.
+                </p>
+<div class="flex flex-col gap-stack-md">
+<button class="bg-primary-container text-on-primary-container font-h2 text-body-lg py-4 px-8 rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                        Bắt đầu ngay
+                        <span class="material-symbols-outlined">north_east</span>
+</button>
+<button class="glass-panel text-primary font-h2 text-body-lg py-4 px-8 rounded-xl border border-primary/20 hover:bg-primary/5 transition-all">
+                        Tìm hiểu thêm
+                    </button>
+</div>
+</div>
+<!-- Floating Coordinate Pill (Style Guidance Mandate) -->
+<div class="absolute bottom-8 left-1/2 -translate-x-1/2 glass-panel cyan-glow rounded-full px-6 py-2 flex items-center gap-4 border border-primary-container/30">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">location_on</span>
+<span class="font-mono-data text-mono-data text-primary">10.7626° N, 106.6602° E</span>
+</div>
+<div class="h-4 w-px bg-outline/20"></div>
+<span class="font-mono-data text-mono-data text-on-surface-variant">ALT: 12.4m</span>
+</div>
+</section>
+<!-- Stats Bar -->
+<section class="bg-surface-container-low py-stack-md border-y border-outline-variant/30 overflow-x-auto whitespace-nowrap">
+<div class="flex justify-around items-center min-w-[600px] px-margin-page">
+<div class="flex flex-col items-center">
+<span class="font-h1 text-h2 text-primary">10K+</span>
+<span class="font-label-caps text-on-surface-variant">Địa điểm</span>
+</div>
+<div class="w-px h-10 bg-outline-variant/50"></div>
+<div class="flex flex-col items-center">
+<span class="font-h1 text-h2 text-primary">5K+</span>
+<span class="font-label-caps text-on-surface-variant">Người dùng</span>
+</div>
+<div class="w-px h-10 bg-outline-variant/50"></div>
+<div class="flex flex-col items-center">
+<span class="font-h1 text-h2 text-primary">1M+</span>
+<span class="font-label-caps text-on-surface-variant">Tương tác</span>
+</div>
+</div>
+</section>
+<!-- Features Grid -->
+<section class="py-20 px-margin-page bg-surface">
+<div class="text-center mb-16">
+<span class="font-mono-data text-primary uppercase tracking-widest text-label-caps">Hệ Thống Phân Tích</span>
+<h2 class="font-h1 text-h1 mt-2">Tính Năng Kỹ Thuật</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Feature Cards -->
+<div class="glass-panel p-padding-card rounded-xl hover:border-primary-container/50 transition-all group">
+<div class="w-12 h-12 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'opsz' 40;">layers</span>
+</div>
+<h3 class="font-h2 text-h2 mb-2">Bản Đồ 3D</h3>
+<p class="font-body-md text-on-surface-variant">Hiển thị các lớp địa lý với độ chi tiết cực cao, tối ưu hóa cho phân tích không gian thực.</p>
+</div>
+<div class="glass-panel p-padding-card rounded-xl border-t-2 border-t-secondary">
+<div class="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary mb-4">
+<span class="material-symbols-outlined">explore</span>
+</div>
+<h3 class="font-h2 text-h2 mb-2">Khám Phá Thông Minh</h3>
+<p class="font-body-md text-on-surface-variant">Thuật toán đề xuất địa điểm dựa trên lịch sử di chuyển và sở thích cá nhân.</p>
+</div>
+<div class="glass-panel p-padding-card rounded-xl">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
+<span class="material-symbols-outlined">groups</span>
+</div>
+<h3 class="font-h2 text-h2 mb-2">Đánh Giá Cộng Đồng</h3>
+<p class="font-body-md text-on-surface-variant">Dữ liệu thực tế từ cộng đồng người dùng tin cậy trên toàn cầu.</p>
+</div>
+<div class="glass-panel p-padding-card rounded-xl border-t-2 border-t-outline">
+<div class="w-12 h-12 rounded-lg bg-outline/10 flex items-center justify-center text-outline mb-4">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<h3 class="font-h2 text-h2 mb-2">Bộ Sưu Tập</h3>
+<p class="font-body-md text-on-surface-variant">Lưu trữ và phân loại các điểm mốc quan trọng theo phong cách cá nhân.</p>
+</div>
+<div class="glass-panel p-padding-card rounded-xl cyan-glow border-primary-container/40">
+<div class="w-12 h-12 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container mb-4">
+<span class="material-symbols-outlined">psychology</span>
+</div>
+<h3 class="font-h2 text-h2 mb-2">Trợ Lý AI EVE</h3>
+<p class="font-body-md text-on-surface-variant">Hệ thống trí tuệ nhân tạo hỗ trợ điều hướng và giải đáp thông tin tức thời.</p>
+</div>
+<div class="glass-panel p-padding-card rounded-xl">
+<div class="w-12 h-12 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary mb-4">
+<span class="material-symbols-outlined">sensors</span>
+</div>
+<h3 class="font-h2 text-h2 mb-2">Kết Nối Real-time</h3>
+<p class="font-body-md text-on-surface-variant">Cập nhật trạng thái mạng lưới và tương tác với người dùng khác trong thời gian thực.</p>
+</div>
+</div>
+</section>
+<!-- How It Works (Bento Style with Contextual Image) -->
+<section class="py-20 px-margin-page bg-surface-container-lowest relative overflow-hidden">
+<div class="max-w-7xl mx-auto">
+<div class="mb-16">
+<h2 class="font-h1 text-h1 text-on-background">Quy Trình Khởi Chạy</h2>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+<div class="space-y-12">
+<!-- Step 1 -->
+<div class="flex gap-6 relative">
+<div class="absolute left-6 top-12 bottom-0 w-px bg-outline-variant/30 lg:hidden"></div>
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-h2 z-10">1</div>
+<div>
+<h4 class="font-h2 text-h2 mb-2">Thiết lập Profile</h4>
+<p class="text-on-surface-variant">Khởi tạo danh tính số và mã hóa dữ liệu cá nhân trên nền tảng Geospatial Protocol.</p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex gap-6 relative">
+<div class="absolute left-6 top-12 bottom-0 w-px bg-outline-variant/30 lg:hidden"></div>
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-h2 z-10">2</div>
+<div>
+<h4 class="font-h2 text-h2 mb-2">Quét vùng tín hiệu</h4>
+<p class="text-on-surface-variant">Kích hoạt cảm biến để nhận dạng các điểm mốc và mạng lưới xung quanh vị trí của bạn.</p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="flex gap-6">
+<div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center font-h2 z-10">3</div>
+<div>
+<h4 class="font-h2 text-h2 mb-2">Trải nghiệm HUD</h4>
+<p class="text-on-surface-variant">Đắm chìm vào giao diện Heads-Up Display với đầy đủ thông tin kỹ thuật số hiển thị trực quan.</p>
+</div>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute -inset-4 bg-primary-container/10 blur-3xl rounded-full transition-opacity group-hover:opacity-100 opacity-50"></div>
+<img alt="Giao diện HUD cao cấp hiển thị dữ liệu địa lý" class="rounded-2xl border border-outline/20 shadow-2xl relative z-10 object-cover aspect-[1.78]" data-alt="A futuristic and premium mobile UI mockup showing a geospatial dashboard with high-tech HUD elements. The screen displays a detailed light-mode map with cyan glow lines and white translucent panels. The overall aesthetic is clean, technical, and professional, using the light map-bg color palette. The lighting is soft and high-key, emphasizing a modern data-driven social experience." src="https://lh3.googleusercontent.com/aida/ADBb0ujdZXFJL2KbUgzWuKBe8mJw3ouSpTjnsCO11LaEMrMsM56Jl5t7XoRxDtYLFCeRlE7TwRl4KBw-gFtXTLbVwbbxNwQQRmmfF0LU8T8t7c5VJDLtAezkYkMfYj8wFFQVwQEUZsyJyCnq1ueVR0JsM1syIGi3UWQ53vq5v1YrZXVNPrfQySTvUPjU7ihrY3bHr2gz-zchIqYKrWYN_L2ZlZ1NFhHNaTZpMzAVMUmKcIh0I7IgjugEcWVT9nt54t7wSXxAebmCA1T3aw"/>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-24 px-margin-page bg-primary text-on-primary text-center">
+<h2 class="font-h1 text-h1 mb-stack-md">Sẵn sàng nâng tầm trải nghiệm?</h2>
+<p class="font-body-lg text-body-lg text-on-primary/80 mb-margin-page max-w-2xl mx-auto">
+                Gia nhập mạng lưới Geo-Social lớn nhất và bắt đầu hành trình khám phá thế giới của bạn ngay hôm nay.
+            </p>
+<button class="bg-primary-container text-on-primary-container font-h2 px-10 py-4 rounded-xl hover:scale-105 transition-transform cyan-glow">
+                Tải Ứng Dụng Ngay
+            </button>
+</section>
+</main>
+<!-- Footer Shell -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant/30 py-stack-md">
+<div class="flex flex-col md:flex-row justify-between items-center gap-stack-md px-margin-page max-w-7xl mx-auto">
+<div class="flex flex-col items-center md:items-start gap-1">
+<span class="font-label-caps text-secondary uppercase">Aether Geo-Social</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">© 2024 Aether Geo-Social. Geospatial Protocol v1.0.42-STABLE.</span>
+</div>
+<div class="flex gap-6">
+<a class="font-mono-data text-on-surface-variant hover:text-primary transition-colors" href="#">Network Status</a>
+<a class="font-mono-data text-on-surface-variant hover:text-primary transition-colors" href="#">Encryption API</a>
+<a class="font-mono-data text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-mono-data text-on-surface-variant hover:text-primary transition-colors" href="#">Satellite Intel</a>
+</div>
+</div>
+</footer>
+<!-- Bottom Navigation (Mobile Only) -->
+<div class="md:hidden fixed bottom-6 left-margin-page right-margin-page z-50">
+<div class="glass-panel shadow-2xl rounded-full h-16 flex justify-around items-center px-4 border border-primary-container/30">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-[10px] font-mono-data uppercase">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-[10px] font-mono-data uppercase">Map</span>
+</button>
+<div class="relative -top-8">
+<button class="w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg cyan-glow flex items-center justify-center border-4 border-surface">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">notifications</span>
+<span class="text-[10px] font-mono-data uppercase">Alerts</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-mono-data uppercase">Profile</span>
+</button>
+</div>
+</div>
+</body></html>

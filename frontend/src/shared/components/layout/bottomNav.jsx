@@ -12,7 +12,7 @@ const BottomNav = memo(() => {
   const mobile = isMobile();
 
   const navItems = useMemo(() => [
-    { icon: MapIcon, path: '/', label: 'Bản đồ' },
+    { icon: MapIcon, path: '/map', label: 'Bản đồ' },
     { icon: DiscoverIcon, path: '/discover', label: 'Khám phá' },
     {
       icon: NotificationIcon,

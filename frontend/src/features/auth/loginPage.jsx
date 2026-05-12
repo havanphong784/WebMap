@@ -23,7 +23,7 @@ export default function Login() {
 
   useEffect(() => {
     if (user && !loading) {
-      const from = location.state?.from || "/";
+      const from = location.state?.from || "/map";
       const pathname = from?.pathname ?? '/';
       const search = from?.search ?? '';
       const hash = from?.hash ?? '';
