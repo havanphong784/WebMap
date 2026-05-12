@@ -22,8 +22,29 @@ const sanitizeMessage = (content) => {
   return content.trim().replace(/\s+/g, " ");
 };
 
+const ensureFriends = async ({userId, peerId}) => {
+  const result = await pool.query(
+    `SELECT 1
+     FROM follows f
+     JOIN follows reciprocal
+       ON reciprocal.follower_id = f.followed_id
+      AND reciprocal.followed_id = f.follower_id
+     WHERE f.follower_id = $1 AND f.followed_id = $2
+     LIMIT 1`,
+    [userId, peerId]
+  );
+
+  if (result.rowCount === 0) {
+    const error = new Error("You can only chat with friends");
+    error.status = 403;
+    error.code = "CHAT_FRIEND_REQUIRED";
+    throw error;
+  }
+};
+
 export const listConversation = async ({userId, peerId, limit = 80}) => {
   await ensureMessageTables();
+  await ensureFriends({userId, peerId});
   const safeLimit = Math.min(Math.max(Number.parseInt(limit, 10) || 80, 1), 150);
 
   const result = await pool.query(
@@ -66,10 +87,19 @@ export const listMessageThreads = async ({userId}) => {
        FROM direct_messages dm
        WHERE dm.sender_id = $1 OR dm.recipient_id = $1
      ),
+     friends AS (
+       SELECT f.followed_id AS peer_id
+       FROM follows f
+       JOIN follows reciprocal
+         ON reciprocal.follower_id = f.followed_id
+        AND reciprocal.followed_id = f.follower_id
+       WHERE f.follower_id = $1
+     ),
      latest AS (
-       SELECT DISTINCT ON (peer_id) *
+       SELECT DISTINCT ON (scoped_messages.peer_id) scoped_messages.*
        FROM scoped_messages
-       ORDER BY peer_id, created_at DESC
+       JOIN friends ON friends.peer_id = scoped_messages.peer_id
+       ORDER BY scoped_messages.peer_id, scoped_messages.created_at DESC
      ),
      unread AS (
        SELECT sender_id AS peer_id, COUNT(*)::int AS unread_count
@@ -104,6 +134,7 @@ export const listMessageThreads = async ({userId}) => {
 
 export const sendDirectMessage = async ({senderId, recipientId, content}) => {
   await ensureMessageTables();
+  await ensureFriends({userId: senderId, peerId: recipientId});
   const normalizedContent = sanitizeMessage(content);
   if (!normalizedContent) {
     const error = new Error("Message content is required");
@@ -131,6 +162,7 @@ export const sendDirectMessage = async ({senderId, recipientId, content}) => {
 
 export const markConversationRead = async ({userId, peerId}) => {
   await ensureMessageTables();
+  await ensureFriends({userId, peerId});
   await pool.query(
     `UPDATE direct_messages
      SET is_read = true

@@ -14,7 +14,6 @@ import {
 } from "../../../shared/components/common/icons.jsx";
 import {apiClient} from "../../../shared/api/apiClient.js";
 import {useAuthStore} from "../../auth/context/authStore.js";
-import {useSocialStore} from "../store/useSocialStore.jsx";
 import {isMobile} from "../../../shared/utils/deviceUtils.js";
 
 const hasPosition = (user) => {
@@ -30,6 +29,18 @@ const isRecentlyOnline = (user) => {
 };
 
 const getDisplayName = (user) => user?.name || user?.peer_name || user?.email?.split("@")?.[0] || user?.peer_email?.split("@")?.[0] || "Người dùng Aether";
+
+const formatMessageTime = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const sameDay = date.toDateString() === new Date().toDateString();
+  return new Intl.DateTimeFormat("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    ...(sameDay ? {} : {day: "2-digit", month: "2-digit"}),
+  }).format(date);
+};
 
 const getThreadPeer = (thread) => ({
   firebase_uid: thread.peer_id,
@@ -79,11 +90,12 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
   const navigate = useNavigate();
   const bottomRef = useRef(null);
   const {user: currentUser} = useAuthStore();
-  const activeUsers = useSocialStore(state => state.activeUsers);
-  const isLoading = useSocialStore(state => state.isLoading);
+  const currentUserId = currentUser?.uid;
   const [isOpen, setIsOpen] = useState(false);
   const [activeChatId, setActiveChatId] = useState(null);
   const [query, setQuery] = useState("");
+  const [friendList, setFriendList] = useState([]);
+  const [isLoadingFriends, setIsLoadingFriends] = useState(false);
   const [draftMessage, setDraftMessage] = useState("");
   const [messagesByUser, setMessagesByUser] = useState({});
   const [threads, setThreads] = useState([]);
@@ -96,11 +108,11 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
   const friends = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return activeUsers
-      .filter((item) => item.firebase_uid !== currentUser?.uid)
+    return friendList
+      .filter((item) => item.firebase_uid !== currentUserId)
       .filter((item) => !normalizedQuery || getDisplayName(item).toLowerCase().includes(normalizedQuery))
       .map((item) => ({...item, canLocate: hasPosition(item), isOnline: isRecentlyOnline(item)}));
-  }, [activeUsers, currentUser?.uid, query]);
+  }, [currentUserId, friendList, query]);
 
   const activeChatUser = useMemo(() => {
     const onlineUser = friends.find((item) => item.firebase_uid === activeChatId);
@@ -112,15 +124,27 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
   const activeMessages = activeChatUser ? messagesByUser[activeChatUser.firebase_uid] || [] : [];
 
   const loadThreads = useCallback(async () => {
-    if (!currentUser?.uid) return;
+    if (!currentUserId) return;
     const result = await apiClient.get("/messages/threads");
     if (result.success) {
       setThreads(result.data || []);
     }
-  }, [currentUser?.uid]);
+  }, [currentUserId]);
+
+  const loadFriends = useCallback(async ({silent = false} = {}) => {
+    if (!currentUserId) return;
+    if (!silent) setIsLoadingFriends(true);
+    const result = await apiClient.get(`/follows/friends/${currentUserId}`);
+    if (result.success) {
+      setFriendList(result.data || []);
+    } else if (!silent) {
+      setChatError(result.message || "Không thể tải danh sách bạn bè.");
+    }
+    if (!silent) setIsLoadingFriends(false);
+  }, [currentUserId]);
 
   const loadConversation = useCallback(async (peerId, {silent = false} = {}) => {
-    if (!peerId || !currentUser?.uid) return;
+    if (!peerId || !currentUserId) return;
     if (!silent) setIsLoadingMessages(true);
     const result = await apiClient.get(`/messages/${peerId}?limit=100`);
     if (result.success) {
@@ -134,19 +158,23 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
       setChatError(result.message || "Không thể tải hội thoại.");
     }
     if (!silent) setIsLoadingMessages(false);
-  }, [currentUser?.uid, loadThreads]);
+  }, [currentUserId, loadThreads]);
 
   useEffect(() => {
     if (!isOpen) return;
     const refreshTimer = globalThis.setTimeout(() => {
+      loadFriends();
       loadThreads();
     }, 0);
-    const interval = setInterval(loadThreads, 10000);
+    const interval = setInterval(() => {
+      loadFriends({silent: true});
+      loadThreads();
+    }, 10000);
     return () => {
       globalThis.clearTimeout(refreshTimer);
       clearInterval(interval);
     };
-  }, [isOpen, loadThreads]);
+  }, [isOpen, loadFriends, loadThreads]);
 
   useEffect(() => {
     if (!isOpen || !activeChatUser?.firebase_uid) return;
@@ -208,13 +236,13 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
   };
 
   const sendMessageContent = async (content) => {
-    if (!content || !activeChatUser?.firebase_uid || !currentUser?.uid) return;
+    if (!content || !activeChatUser?.firebase_uid || !currentUserId) return;
 
     const peerId = activeChatUser.firebase_uid;
     const tempId = `pending-${Date.now()}`;
     appendMessage(peerId, {
       id: tempId,
-      sender_id: currentUser.uid,
+      sender_id: currentUserId,
       recipient_id: peerId,
       content,
       created_at: new Date().toISOString(),
@@ -247,10 +275,10 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
   const renderThreadPreview = (friend) => {
     const thread = threadMap.get(friend.firebase_uid);
     if (!thread) {
-      return friend.canLocate ? "Có vị trí trên bản đồ" : "Đang online, chưa chia sẻ vị trí";
+      return friend.isOnline ? "Đang hoạt động" : "Bạn bè";
     }
 
-    const prefix = thread.sender_id === currentUser?.uid ? "Bạn: " : "";
+    const prefix = thread.sender_id === currentUserId ? "Bạn: " : "";
     return `${prefix}${thread.content}`;
   };
 
@@ -317,7 +345,7 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
                 <div className="min-w-0 flex-1">
                   <h2 className="text-2xl font-black tracking-tight text-text-primary">Chat</h2>
                   <p className="text-[11px] font-black uppercase tracking-[0.18em] text-text-muted">
-                    Bạn bè online trên bản đồ
+                    Bạn bè
                   </p>
                 </div>
               </>
@@ -346,20 +374,20 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
                 </div>
 
                 <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-2 py-3">
-                  {isLoading && (
+                  {isLoadingFriends && (
                     <div className="px-3 py-8 text-center text-[10px] font-black uppercase tracking-widest text-text-muted">
                       Đang cập nhật bạn bè...
                     </div>
                   )}
 
-                  {!isLoading && friends.length === 0 && (
+                  {!isLoadingFriends && friends.length === 0 && (
                     <div className="px-6 py-16 text-center">
                       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#e7f3ff] text-[#0084ff]">
                         <UserIcon size={24}/>
                       </div>
-                      <p className="text-sm font-black text-text-primary">Chưa có bạn bè online</p>
+                      <p className="text-sm font-black text-text-primary">Chưa có bạn bè</p>
                       <p className="mt-2 text-xs font-medium leading-6 text-text-muted">
-                        Khi người dùng khác online và chia sẻ vị trí, họ sẽ xuất hiện tại đây để bạn nhắn tin hoặc định vị trên bản đồ.
+                        Khi hai người cùng theo dõi nhau, họ sẽ xuất hiện tại đây để bạn nhắn tin.
                       </p>
                     </div>
                   )}
@@ -436,7 +464,7 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
                   </div>
 
                   <div className="mr-16 max-w-[78%] rounded-[1.25rem] rounded-bl-md bg-white px-4 py-3 text-sm font-medium leading-6 text-text-secondary shadow-sm">
-                    {getDisplayName(activeChatUser)} đang online trên bản đồ. Bấm nút định vị ở góc trên để zoom tới vị trí hiện tại.
+                    Hai bạn đang theo dõi lẫn nhau. Bạn có thể nhắn tin trực tiếp tại đây.
                   </div>
 
                   {isLoadingMessages && (
@@ -447,7 +475,7 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
                   )}
 
                   {activeMessages.map((message) => {
-                    const fromMe = message.sender_id === currentUser?.uid;
+                    const fromMe = message.sender_id === currentUserId;
                     return (
                       <div key={message.id} className={`flex ${fromMe ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-[78%] rounded-[1.25rem] px-4 py-3 text-sm font-bold leading-6 shadow-sm ${
@@ -456,6 +484,11 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
                             : "rounded-bl-md bg-white text-text-primary"
                         }`}>
                           <p className="break-words">{message.content}</p>
+                          {message.created_at && (
+                            <div className={`mt-1 text-[10px] font-black ${fromMe ? "text-white/70" : "text-text-muted"}`}>
+                              {formatMessageTime(message.created_at)}
+                            </div>
+                          )}
                           {message.status !== "sent" && (
                             <div className={`mt-1 text-[10px] font-black ${fromMe ? "text-white/75" : "text-text-muted"}`}>
                               {message.status === "sending" ? "Đang gửi..." : "Gửi lỗi"}

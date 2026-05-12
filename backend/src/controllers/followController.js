@@ -48,6 +48,17 @@ export const getFollowing = async (req, res) => {
   }
 };
 
+export const getFriends = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const data = await followService.getFriends(userId);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Lỗi lấy friends:", error);
+    res.status(500).json({ success: false, message: "Lỗi Server" });
+  }
+};
+
 export const checkFollowStatus = async (req, res) => {
   try {
     const { followerId, followedId } = req.query;

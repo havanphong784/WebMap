@@ -39,6 +39,32 @@ export const getFollowing = async (userId) => {
   return rows;
 };
 
+export const getFriends = async (userId) => {
+  const query = `
+    SELECT
+      u.firebase_uid,
+      u.name,
+      u.email,
+      u.avatar_url,
+      u.xp,
+      u.level,
+      u.tier,
+      u.last_seen_at,
+      u.current_lat,
+      u.current_lng,
+      GREATEST(f.created_at, reciprocal.created_at) AS friends_since
+    FROM follows f
+    JOIN follows reciprocal
+      ON reciprocal.follower_id = f.followed_id
+     AND reciprocal.followed_id = f.follower_id
+    JOIN users u ON u.firebase_uid = f.followed_id
+    WHERE f.follower_id = $1
+    ORDER BY friends_since DESC;
+  `;
+  const { rows } = await pool.query(query, [userId]);
+  return rows;
+};
+
 export const checkIsFollowing = async (followerId, followedId) => {
   if (!followerId || !followedId) return false;
   const query = `SELECT 1 FROM follows WHERE follower_id = $1 AND followed_id = $2`;
