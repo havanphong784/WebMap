@@ -48,7 +48,6 @@ export default function MapPage() {
   const [isMapReady, setIsMapReady] = useState(false);
   const mobile = useMemo(() => isMobile(), []);
   const addToast = useToastStore(state => state.addToast);
-  const hasAutoLocated = useRef(false);
   const heartbeatLocationRef = useRef(0);
 
   const setUserLocation = useLocationStore(state => state.setUserLocation);
@@ -245,7 +244,7 @@ export default function MapPage() {
         mapRef.current?.flyTo({ center: [longitude, latitude], zoom: 16, duration: 2000, pitch: 45 });
         setIsLocating(false);
       },
-      (err) => {
+      () => {
         setIsLocating(false);
         addToast("Không thể truy cập vị trí của bạn. Vui lòng cấp quyền.", "error");
       },

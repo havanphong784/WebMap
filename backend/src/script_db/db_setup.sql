@@ -69,6 +69,17 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_id);
 
+CREATE TABLE IF NOT EXISTS direct_messages (
+    id BIGSERIAL PRIMARY KEY,
+    sender_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
+    recipient_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_direct_messages_pair ON direct_messages(sender_id, recipient_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_direct_messages_recipient ON direct_messages(recipient_id, is_read, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS follows (
     follower_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
     followed_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,

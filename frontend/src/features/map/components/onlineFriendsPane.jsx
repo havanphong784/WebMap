@@ -1,4 +1,4 @@
-import {memo, useEffect, useMemo, useState} from "react";
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {AnimatePresence, motion} from "framer-motion";
 import {useNavigate} from "react-router-dom";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
@@ -9,25 +9,47 @@ import {
   LocateIcon,
   SearchIcon,
   SendIcon,
+  SpinnerIcon,
   UserIcon,
 } from "../../../shared/components/common/icons.jsx";
+import {apiClient} from "../../../shared/api/apiClient.js";
 import {useAuthStore} from "../../auth/context/authStore.js";
 import {useSocialStore} from "../store/useSocialStore.jsx";
 import {isMobile} from "../../../shared/utils/deviceUtils.js";
 
 const hasPosition = (user) => {
-  const lat = Number.parseFloat(user?.current_lat);
-  const lng = Number.parseFloat(user?.current_lng);
+  const lat = Number.parseFloat(user?.current_lat ?? user?.peer_current_lat);
+  const lng = Number.parseFloat(user?.current_lng ?? user?.peer_current_lng);
   return Number.isFinite(lat) && Number.isFinite(lng);
 };
 
 const isRecentlyOnline = (user) => {
-  const lastSeen = new Date(user?.last_seen_at);
+  const lastSeen = new Date(user?.last_seen_at ?? user?.peer_last_seen_at);
   if (Number.isNaN(lastSeen.getTime())) return false;
   return (Date.now() - lastSeen.getTime()) / 1000 / 60 < 2;
 };
 
-const getDisplayName = (user) => user?.name || user?.email?.split("@")?.[0] || "Người dùng Aether";
+const getDisplayName = (user) => user?.name || user?.peer_name || user?.email?.split("@")?.[0] || user?.peer_email?.split("@")?.[0] || "Người dùng Aether";
+
+const getThreadPeer = (thread) => ({
+  firebase_uid: thread.peer_id,
+  name: thread.peer_name,
+  email: thread.peer_email,
+  avatar_url: thread.peer_avatar_url,
+  last_seen_at: thread.peer_last_seen_at,
+  current_lat: thread.peer_current_lat,
+  current_lng: thread.peer_current_lng,
+});
+
+const normalizeMessage = (message) => ({
+  id: String(message.id),
+  sender_id: message.sender_id,
+  recipient_id: message.recipient_id,
+  content: message.content,
+  is_read: message.is_read,
+  created_at: message.created_at,
+  status: message.status || "sent",
+});
 
 const ChatArrowTab = ({isOpen, onClick}) => {
   const mobile = isMobile();
@@ -38,12 +60,12 @@ const ChatArrowTab = ({isOpen, onClick}) => {
       initial={false}
       animate={{
         left: isOpen
-          ? (mobile ? "calc(100vw - 12px - 44px)" : "500px")
-          : "0px"
+          ? (mobile ? "calc(100vw - 56px)" : "500px")
+          : "0px",
       }}
       transition={{type: "spring", damping: 25, stiffness: 120}}
-      className="fixed top-1/2 z-[9999] flex h-14 w-11 -translate-y-1/2 items-center justify-center rounded-r-2xl border border-l-0 border-cyan-glow/25 bg-white text-cyan-glow shadow-floating backdrop-blur-2xl ring-1 ring-white/80 transition-colors hover:bg-cyan-glow hover:text-white"
-      aria-label={isOpen ? "Thu gọn Chat" : "Mở chat bạn bè"}
+      className="fixed top-1/2 z-[9999] flex h-14 w-11 -translate-y-1/2 items-center justify-center rounded-r-2xl border border-l-0 border-cyan-glow/25 bg-white text-cyan-glow shadow-floating ring-1 ring-white/80 transition-colors hover:bg-cyan-glow hover:text-white"
+      aria-label={isOpen ? "Thu gọn chat" : "Mở chat bạn bè"}
     >
       <span className="relative h-5 w-5">
         <ArrowIcon size={19} className={`absolute left-0 top-0 transition-transform ${isOpen ? "rotate-180" : ""}`}/>
@@ -55,6 +77,7 @@ const ChatArrowTab = ({isOpen, onClick}) => {
 
 const OnlineFriendsPane = memo(({onFlyToUser}) => {
   const navigate = useNavigate();
+  const bottomRef = useRef(null);
   const {user: currentUser} = useAuthStore();
   const activeUsers = useSocialStore(state => state.activeUsers);
   const isLoading = useSocialStore(state => state.isLoading);
@@ -64,6 +87,12 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
   const [query, setQuery] = useState("");
   const [draftMessage, setDraftMessage] = useState("");
   const [messagesByUser, setMessagesByUser] = useState({});
+  const [threads, setThreads] = useState([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [chatError, setChatError] = useState("");
+
+  const threadMap = useMemo(() => new Map(threads.map((thread) => [thread.peer_id, thread])), [threads]);
 
   const friends = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -74,8 +103,39 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
       .map((item) => ({...item, canLocate: hasPosition(item), isOnline: isRecentlyOnline(item)}));
   }, [activeUsers, currentUser?.uid, query]);
 
-  const activeChatUser = friends.find((item) => item.firebase_uid === activeChatId) || null;
+  const activeChatUser = useMemo(() => {
+    const onlineUser = friends.find((item) => item.firebase_uid === activeChatId);
+    if (onlineUser) return onlineUser;
+    const thread = threadMap.get(activeChatId);
+    return thread ? {...getThreadPeer(thread), canLocate: hasPosition(thread), isOnline: isRecentlyOnline(thread)} : null;
+  }, [activeChatId, friends, threadMap]);
+
   const activeMessages = activeChatUser ? messagesByUser[activeChatUser.firebase_uid] || [] : [];
+
+  const loadThreads = useCallback(async () => {
+    if (!currentUser?.uid) return;
+    const result = await apiClient.get("/messages/threads");
+    if (result.success) {
+      setThreads(result.data || []);
+    }
+  }, [currentUser?.uid]);
+
+  const loadConversation = useCallback(async (peerId, {silent = false} = {}) => {
+    if (!peerId || !currentUser?.uid) return;
+    if (!silent) setIsLoadingMessages(true);
+    const result = await apiClient.get(`/messages/${peerId}?limit=100`);
+    if (result.success) {
+      setMessagesByUser((messages) => ({
+        ...messages,
+        [peerId]: (result.data || []).map(normalizeMessage),
+      }));
+      setChatError("");
+      await loadThreads();
+    } else if (!silent) {
+      setChatError(result.message || "Không thể tải hội thoại.");
+    }
+    if (!silent) setIsLoadingMessages(false);
+  }, [currentUser?.uid, loadThreads]);
 
   useEffect(() => {
     fetchActiveUsers();
@@ -83,34 +143,122 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
     return () => clearInterval(interval);
   }, [fetchActiveUsers]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const refreshTimer = globalThis.setTimeout(() => {
+      loadThreads();
+    }, 0);
+    const interval = setInterval(loadThreads, 10000);
+    return () => {
+      globalThis.clearTimeout(refreshTimer);
+      clearInterval(interval);
+    };
+  }, [isOpen, loadThreads]);
+
+  useEffect(() => {
+    if (!isOpen || !activeChatUser?.firebase_uid) return;
+    const peerId = activeChatUser.firebase_uid;
+    const refreshTimer = globalThis.setTimeout(() => {
+      loadConversation(peerId);
+    }, 0);
+    const interval = setInterval(() => {
+      loadConversation(peerId, {silent: true});
+    }, 5000);
+    return () => {
+      globalThis.clearTimeout(refreshTimer);
+      clearInterval(interval);
+    };
+  }, [activeChatUser?.firebase_uid, isOpen, loadConversation]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({behavior: "smooth", block: "end"});
+  }, [activeMessages.length, activeChatId]);
+
   const openProfile = (friend) => {
     if (!friend?.firebase_uid) return;
     navigate(`/profile/${friend.firebase_uid}`);
   };
 
   const openChat = (friend) => {
+    if (!friend?.firebase_uid) return;
     setActiveChatId(friend.firebase_uid);
     setDraftMessage("");
+    setChatError("");
   };
 
-  const handleSendMessage = (event) => {
-    event.preventDefault();
-    const content = draftMessage.trim();
-    if (!content || !activeChatUser) return;
-
+  const appendMessage = (peerId, message) => {
     setMessagesByUser((messages) => ({
       ...messages,
-      [activeChatUser.firebase_uid]: [
-        ...(messages[activeChatUser.firebase_uid] || []),
-        {
-          id: `${activeChatUser.firebase_uid}-${Date.now()}`,
-          content,
-          createdAt: new Date().toISOString(),
-          fromMe: true,
-        },
+      [peerId]: [
+        ...(messages[peerId] || []),
+        normalizeMessage(message),
       ],
     }));
+  };
+
+  const replaceMessage = (peerId, tempId, nextMessage) => {
+    setMessagesByUser((messages) => ({
+      ...messages,
+      [peerId]: (messages[peerId] || []).map((message) => (
+        message.id === tempId ? normalizeMessage(nextMessage) : message
+      )),
+    }));
+  };
+
+  const markMessageFailed = (peerId, tempId) => {
+    setMessagesByUser((messages) => ({
+      ...messages,
+      [peerId]: (messages[peerId] || []).map((message) => (
+        message.id === tempId ? {...message, status: "error"} : message
+      )),
+    }));
+  };
+
+  const sendMessageContent = async (content) => {
+    if (!content || !activeChatUser?.firebase_uid || !currentUser?.uid) return;
+
+    const peerId = activeChatUser.firebase_uid;
+    const tempId = `pending-${Date.now()}`;
+    appendMessage(peerId, {
+      id: tempId,
+      sender_id: currentUser.uid,
+      recipient_id: peerId,
+      content,
+      created_at: new Date().toISOString(),
+      is_read: false,
+      status: "sending",
+    });
+
+    setIsSending(true);
+    setChatError("");
+    const result = await apiClient.post(`/messages/${peerId}`, {content});
+    setIsSending(false);
+
+    if (result.success) {
+      replaceMessage(peerId, tempId, result.data);
+      await loadThreads();
+    } else {
+      markMessageFailed(peerId, tempId);
+      setChatError(result.message || "Gửi tin nhắn thất bại.");
+    }
+  };
+
+  const handleSendMessage = async (event) => {
+    event.preventDefault();
+    const content = draftMessage.trim();
+    if (!content || isSending) return;
     setDraftMessage("");
+    await sendMessageContent(content);
+  };
+
+  const renderThreadPreview = (friend) => {
+    const thread = threadMap.get(friend.firebase_uid);
+    if (!thread) {
+      return friend.canLocate ? "Có vị trí trên bản đồ" : "Đang online, chưa chia sẻ vị trí";
+    }
+
+    const prefix = thread.sender_id === currentUser?.uid ? "Bạn: " : "";
+    return `${prefix}${thread.content}`;
   };
 
   return (
@@ -121,7 +269,7 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
         initial={false}
         animate={{x: isOpen ? 0 : "-100%", opacity: isOpen ? 1 : 0.98}}
         transition={{type: "spring", damping: 25, stiffness: 120}}
-        className={`fixed inset-y-0 left-0 z-1001 w-full p-3 sm:w-130 sm:p-5 ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+        className={`fixed inset-y-0 left-0 z-[9998] w-full p-3 sm:w-[520px] sm:p-5 ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
         aria-hidden={!isOpen}
       >
         <GlassPanel
@@ -129,7 +277,7 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
           radius="lg"
           pad="none"
           animate={false}
-          className="flex h-full flex-col overflow-hidden rounded-4xl border-glass-border bg-[#f5f7fb]/96 shadow-floating ring-1 ring-glass-border"
+          className="flex h-full flex-col overflow-hidden rounded-[2rem] border-glass-border bg-[#f5f7fb]/96 shadow-floating ring-1 ring-glass-border"
         >
           <div className="flex min-h-20 items-center gap-3 border-b border-black/5 bg-white px-4">
             {activeChatUser ? (
@@ -138,7 +286,7 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
                   type="button"
                   onClick={() => setActiveChatId(null)}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-black/5 hover:text-text-primary"
-                  aria-label="Quay lai danh sach chat"
+                  aria-label="Quay lại danh sách chat"
                 >
                   <ArrowIcon size={22} className="rotate-180"/>
                 </button>
@@ -146,11 +294,11 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
                   type="button"
                   onClick={() => openProfile(activeChatUser)}
                   className="shrink-0"
-                  aria-label={`Mo ho so ${getDisplayName(activeChatUser)}`}
+                  aria-label={`Mở hồ sơ ${getDisplayName(activeChatUser)}`}
                 >
                   <UserBadge user={activeChatUser} size={46} hideLevelBadge isOnline={activeChatUser.isOnline}/>
                 </button>
-                <button type="button" onClick={() => openChat(activeChatUser)} className="min-w-0 flex-1 text-left">
+                <button type="button" onClick={() => openProfile(activeChatUser)} className="min-w-0 flex-1 text-left">
                   <h2 className="truncate text-lg font-black tracking-tight text-text-primary">
                     {getDisplayName(activeChatUser)}
                   </h2>
@@ -163,15 +311,14 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
                   onClick={() => onFlyToUser?.(activeChatUser)}
                   disabled={!activeChatUser.canLocate}
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-glow text-white shadow-neon transition-all hover:brightness-105 disabled:bg-slate/30 disabled:text-text-muted disabled:shadow-none"
-                  aria-label="Di toi vi tri tren ban do"
+                  aria-label="Đi tới vị trí trên bản đồ"
                 >
                   <LocateIcon size={18}/>
                 </button>
               </>
             ) : (
               <>
-                <div
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0084ff] text-white shadow-[0_12px_32px_rgba(0,132,255,0.28)]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0084ff] text-white shadow-[0_12px_32px_rgba(0,132,255,0.28)]">
                   <CommentIcon size={22}/>
                 </div>
                 <div className="min-w-0 flex-1">
@@ -199,7 +346,7 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
                     <input
                       value={query}
                       onChange={(event) => setQuery(event.target.value)}
-                      placeholder="Tim kiem tren Messenger"
+                      placeholder="Tìm kiếm trên Messenger"
                       className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-text-primary outline-none placeholder:text-text-muted"
                     />
                   </div>
@@ -207,67 +354,71 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
 
                 <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-2 py-3">
                   {isLoading && (
-                    <div
-                      className="px-3 py-8 text-center text-[10px] font-black uppercase tracking-widest text-text-muted">
+                    <div className="px-3 py-8 text-center text-[10px] font-black uppercase tracking-widest text-text-muted">
                       Đang cập nhật bạn bè...
                     </div>
                   )}
 
                   {!isLoading && friends.length === 0 && (
                     <div className="px-6 py-16 text-center">
-                      <div
-                        className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#e7f3ff] text-[#0084ff]">
+                      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#e7f3ff] text-[#0084ff]">
                         <UserIcon size={24}/>
                       </div>
                       <p className="text-sm font-black text-text-primary">Chưa có bạn bè online</p>
                       <p className="mt-2 text-xs font-medium leading-6 text-text-muted">
-                        Khi người dùng khác online và chia sẻ vị trí, họ sẽ xuất hiện tại đây. Bạn có thể trò chuyện và
-                        định vị họ trên bản đồ nếu họ cho phép chia sẻ vị trí.
+                        Khi người dùng khác online và chia sẻ vị trí, họ sẽ xuất hiện tại đây để bạn nhắn tin hoặc định vị trên bản đồ.
                       </p>
                     </div>
                   )}
 
-                  {friends.map((friend) => (
-                    <div
-                      key={friend.firebase_uid}
-                      className="group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-white"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => openProfile(friend)}
-                        className="shrink-0"
-                        aria-label={`Mo ho so ${getDisplayName(friend)}`}
+                  {friends.map((friend) => {
+                    const thread = threadMap.get(friend.firebase_uid);
+                    return (
+                      <div
+                        key={friend.firebase_uid}
+                        className="group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-white"
                       >
-                        <UserBadge user={friend} size={54} hideLevelBadge isOnline={friend.isOnline}/>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => openProfile(friend)}
+                          className="shrink-0"
+                          aria-label={`Mở hồ sơ ${getDisplayName(friend)}`}
+                        >
+                          <UserBadge user={friend} size={54} hideLevelBadge isOnline={friend.isOnline}/>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => openChat(friend)}
-                        className="min-w-0 flex-1 text-left"
-                        aria-label={`Mo chat voi ${getDisplayName(friend)}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-[15px] font-black text-text-primary">{getDisplayName(friend)}</p>
-                          <span
-                            className={`h-2.5 w-2.5 shrink-0 rounded-full ${friend.isOnline ? "bg-emerald" : "bg-slate"}`}/>
-                        </div>
-                        <p className="mt-0.5 truncate text-xs font-semibold text-text-muted">
-                          {friend.canLocate ? "Có vị trí trên bản đồ" : "Đang online, chưa chia sẻ vị trí"}
-                        </p>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => openChat(friend)}
+                          className="min-w-0 flex-1 text-left"
+                          aria-label={`Mở chat với ${getDisplayName(friend)}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <p className="truncate text-[15px] font-black text-text-primary">{getDisplayName(friend)}</p>
+                            <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${friend.isOnline ? "bg-emerald" : "bg-slate"}`}/>
+                            {thread?.unread_count > 0 && (
+                              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0084ff] px-1.5 text-[10px] font-black text-white">
+                                {thread.unread_count}
+                              </span>
+                            )}
+                          </div>
+                          <p className={`mt-0.5 truncate text-xs ${thread?.unread_count > 0 ? "font-black text-text-primary" : "font-semibold text-text-muted"}`}>
+                            {renderThreadPreview(friend)}
+                          </p>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => onFlyToUser?.(friend)}
-                        disabled={!friend.canLocate}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e7f3ff] text-[#0084ff] opacity-100 shadow-sm transition-all hover:scale-105 hover:bg-[#0084ff] hover:text-white disabled:cursor-not-allowed disabled:bg-black/5 disabled:text-text-muted sm:opacity-0 sm:group-hover:opacity-100"
-                        aria-label={`Di toi vi tri ${getDisplayName(friend)}`}
-                      >
-                        <LocateIcon size={18}/>
-                      </button>
-                    </div>
-                  ))}
+                        <button
+                          type="button"
+                          onClick={() => onFlyToUser?.(friend)}
+                          disabled={!friend.canLocate}
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e7f3ff] text-[#0084ff] opacity-100 shadow-sm transition-all hover:scale-105 hover:bg-[#0084ff] hover:text-white disabled:cursor-not-allowed disabled:bg-black/5 disabled:text-text-muted sm:opacity-0 sm:group-hover:opacity-100"
+                          aria-label={`Đi tới vị trí ${getDisplayName(friend)}`}
+                        >
+                          <LocateIcon size={18}/>
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </motion.div>
             ) : (
@@ -286,30 +437,51 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
                       className="flex flex-col items-center"
                     >
                       <UserBadge user={activeChatUser} size={74} hideLevelBadge isOnline={activeChatUser.isOnline}/>
-                      <span
-                        className="mt-3 text-base font-black text-text-primary">{getDisplayName(activeChatUser)}</span>
+                      <span className="mt-3 text-base font-black text-text-primary">{getDisplayName(activeChatUser)}</span>
                       <span className="mt-1 text-xs font-semibold text-text-muted">Aether Geo</span>
                     </button>
                   </div>
 
-                  <div
-                    className="mr-16 max-w-[78%] rounded-[1.25rem] rounded-bl-md bg-white px-4 py-3 text-sm font-medium leading-6 text-text-secondary shadow-sm">
-                    {getDisplayName(activeChatUser)} đang online trên bản đồ. Bấm nút định vị ở góc trên để zoom tới vị
-                    trí hiện tại.
+                  <div className="mr-16 max-w-[78%] rounded-[1.25rem] rounded-bl-md bg-white px-4 py-3 text-sm font-medium leading-6 text-text-secondary shadow-sm">
+                    {getDisplayName(activeChatUser)} đang online trên bản đồ. Bấm nút định vị ở góc trên để zoom tới vị trí hiện tại.
                   </div>
 
-                  {activeMessages.map((message) => (
-                    <div key={message.id} className="flex justify-end">
-                      <div
-                        className="max-w-[78%] rounded-[1.25rem] rounded-br-md bg-[#0084ff] px-4 py-3 text-sm font-bold leading-6 text-white shadow-[0_10px_24px_rgba(0,132,255,0.22)]">
-                        {message.content}
-                      </div>
+                  {isLoadingMessages && (
+                    <div className="flex justify-center py-3 text-xs font-bold text-text-muted">
+                      <SpinnerIcon size={16} className="mr-2 animate-spin"/>
+                      Đang tải hội thoại...
                     </div>
-                  ))}
+                  )}
+
+                  {activeMessages.map((message) => {
+                    const fromMe = message.sender_id === currentUser?.uid;
+                    return (
+                      <div key={message.id} className={`flex ${fromMe ? "justify-end" : "justify-start"}`}>
+                        <div className={`max-w-[78%] rounded-[1.25rem] px-4 py-3 text-sm font-bold leading-6 shadow-sm ${
+                          fromMe
+                            ? "rounded-br-md bg-[#0084ff] text-white shadow-[0_10px_24px_rgba(0,132,255,0.22)]"
+                            : "rounded-bl-md bg-white text-text-primary"
+                        }`}>
+                          <p className="break-words">{message.content}</p>
+                          {message.status !== "sent" && (
+                            <div className={`mt-1 text-[10px] font-black ${fromMe ? "text-white/75" : "text-text-muted"}`}>
+                              {message.status === "sending" ? "Đang gửi..." : "Gửi lỗi"}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {chatError && (
+                    <div className="rounded-2xl bg-red-50 px-4 py-3 text-xs font-bold text-red-600">
+                      {chatError}
+                    </div>
+                  )}
+                  <div ref={bottomRef}/>
                 </div>
 
-                <form onSubmit={handleSendMessage}
-                      className="flex items-center gap-2 border-t border-black/5 bg-white p-3">
+                <form onSubmit={handleSendMessage} className="flex items-center gap-2 border-t border-black/5 bg-white p-3">
                   <input
                     value={draftMessage}
                     onChange={(event) => setDraftMessage(event.target.value)}
@@ -318,11 +490,11 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
                   />
                   <button
                     type="submit"
-                    disabled={!draftMessage.trim()}
+                    disabled={!draftMessage.trim() || isSending}
                     className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0084ff] text-white shadow-[0_10px_24px_rgba(0,132,255,0.24)] transition-all hover:brightness-105 disabled:bg-[#e7f3ff] disabled:text-[#0084ff] disabled:shadow-none"
-                    aria-label="Gui tin nhan"
+                    aria-label="Gửi tin nhắn"
                   >
-                    <SendIcon size={18}/>
+                    {isSending ? <SpinnerIcon size={18} className="animate-spin"/> : <SendIcon size={18}/>}
                   </button>
                 </form>
               </motion.div>

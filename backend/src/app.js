@@ -13,6 +13,7 @@ import achievementRoutes from "./routes/achievementRoutes.js";
 import followRoutes from "./routes/followRoutes.js";
 import weatherRoutes from "./routes/weatherRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 import {errorHandler, notFoundHandler} from "./middlewares/errorHandler.js";
 import {normalizeApiResponse} from "./middlewares/normalizeResponse.js";
 
@@ -39,6 +40,7 @@ app.use("/api/achievements", achievementRoutes);
 app.use("/api/follows", followRoutes);
 app.use("/api/weather", weatherRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/messages", messageRoutes);
 
 app.get("/health", (req, res) => {
   res.json({success: true, message: "Server Backend đang chạy!"});

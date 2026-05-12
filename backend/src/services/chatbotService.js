@@ -6,7 +6,7 @@ dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export const generateChatbotResponse = async (userMessage, context = {}) => {
-  const { weather, locations, userLocation } = context;
+  const { weather, locations, userLocation, history = [] } = context;
 
   const model = genAI.getGenerativeModel({
     model: "gemini-flash-latest",
@@ -23,6 +23,7 @@ Dữ liệu hỗ trợ:
 - Thời tiết hiện tại: ${JSON.stringify(weather)}
 - Các địa điểm xung quanh: ${JSON.stringify(locations)}
 - Vị trí người dùng: ${JSON.stringify(userLocation)}
+- Lich su hoi thoai gan day: ${JSON.stringify(history)}
 
 Nguyên tắc phản hồi:
 1. NGẮN GỌN & TẬP TRUNG: Không viết quá dài. Tránh các câu chào hỏi rườm rà. Tập trung thẳng vào giá trị cho người dùng.

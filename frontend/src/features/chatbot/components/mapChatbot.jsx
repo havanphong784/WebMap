@@ -1,8 +1,8 @@
-import {useEffect, useMemo, useRef, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
 import ChatbotAnimation from './chatbotAnimation.jsx';
 import GlassPanel from '../../../shared/components/common/glassPanel.jsx';
-import {CloseIcon, PinIcon, RouteIcon, SendIcon, SparklesIcon} from '../../../shared/components/common/icons.jsx';
+import {CloseIcon, PinIcon, PlusIcon, RouteIcon, SendIcon, SparklesIcon, SpinnerIcon} from '../../../shared/components/common/icons.jsx';
 import eveSpritesheet from '../styles/eve/spritesheet.webp';
 import {isMobile} from '../../../shared/utils/deviceUtils.js';
 import {useLocationStore} from '../../map/store/useLocationsStore.jsx';
@@ -22,6 +22,11 @@ const ROWS = {
 };
 
 const SAVED_TRIPS_KEY = 'aether.savedTrips';
+const CHAT_SESSION_KEY = 'aether.eve.activeSessionId';
+const WELCOME_MESSAGE = {
+  role: 'bot',
+  text: 'Chào bạn, tôi là EVE. Tôi có thể gợi ý địa điểm theo vị trí, thời tiết, tag hoặc dựng lịch trình ngắn từ các địa điểm đang có trên bản đồ.'
+};
 
 const normalizeText = (value = '') => (
   value
@@ -204,12 +209,11 @@ const MapChatbot = ({ onLocationClick }) => {
   const weather = useWeatherStore(state => state.weather);
 
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: 'bot',
-      text: 'Chào bạn, tôi là EVE. Tôi có thể gợi ý địa điểm theo vị trí, thời tiết, tag hoặc dựng lịch trình ngắn từ các địa điểm đang có trên bản đồ.'
-    }
-  ]);
+  const [messages, setMessages] = useState([WELCOME_MESSAGE]);
+  const [sessions, setSessions] = useState([]);
+  const [sessionId, setSessionId] = useState(() => localStorage.getItem(CHAT_SESSION_KEY) || null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [failedPrompt, setFailedPrompt] = useState(null);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [savedTrips, setSavedTrips] = useState(() => {
@@ -222,6 +226,7 @@ const MapChatbot = ({ onLocationClick }) => {
   const [activeRow, setActiveRow] = useState(ROWS.STARTUP);
   const constraintsRef = useRef(null);
   const botRef = useRef(null);
+  const pendingMessageIdRef = useRef(0);
   const [isTopHalf, setIsTopHalf] = useState(false);
   const [isLeftHalf, setIsLeftHalf] = useState(false);
   const isDragging = useRef(false);
@@ -233,6 +238,68 @@ const MapChatbot = ({ onLocationClick }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const normalizePersistedMessage = useCallback((message) => ({
+    id: message.id,
+    role: message.role === 'assistant' ? 'bot' : message.role,
+    text: message.content,
+    metadata: message.metadata || {},
+    createdAt: message.created_at,
+    feedbackRating: message.feedback_rating,
+    status: 'sent',
+  }), []);
+
+  const loadSessions = useCallback(async () => {
+    const result = await apiClient.get('/chatbot/sessions');
+    if (result.success) {
+      setSessions(result.data || []);
+      return result.data || [];
+    }
+    return [];
+  }, []);
+
+  const loadSessionMessages = useCallback(async (nextSessionId) => {
+    if (!nextSessionId) return;
+    setIsLoadingHistory(true);
+    try {
+      const result = await apiClient.get(`/chatbot/sessions/${nextSessionId}/messages`);
+      if (result.success) {
+        const loadedMessages = (result.data || []).map(normalizePersistedMessage);
+        setMessages(loadedMessages.length ? loadedMessages : [WELCOME_MESSAGE]);
+        setSessionId(nextSessionId);
+        localStorage.setItem(CHAT_SESSION_KEY, nextSessionId);
+      }
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [normalizePersistedMessage]);
+
+  const startNewChat = useCallback(() => {
+    setSessionId(null);
+    setMessages([WELCOME_MESSAGE]);
+    setFailedPrompt(null);
+    localStorage.removeItem(CHAT_SESSION_KEY);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let cancelled = false;
+    const hydrate = async () => {
+      const loadedSessions = await loadSessions();
+      if (cancelled) return;
+
+      const sessionToLoad = sessionId || loadedSessions[0]?.id;
+      if (sessionToLoad && messages.length <= 1) {
+        await loadSessionMessages(sessionToLoad);
+      }
+    };
+
+    hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, loadSessionMessages, loadSessions, messages.length, sessionId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -373,32 +440,75 @@ const MapChatbot = ({ onLocationClick }) => {
     return () => window.removeEventListener('wheel', handleMapActivity);
   }, [isOpen, activeRow, mobile]);
 
+  const buildBotReplyFromAi = (responseText) => {
+    let aiText = typeof responseText === 'string' ? responseText : String(responseText || '');
+    let actions = null;
+
+    const actionMatch = aiText.match(/\[ACTIONS\]:\s*(\{[\s\S]*?\})(?=\n|$|\[)/);
+    if (actionMatch) {
+      try {
+        actions = JSON.parse(actionMatch[1]);
+        aiText = aiText.replace(/\[ACTIONS\]:\s*\{[\s\S]*?\}/, '').trim();
+      } catch (error) {
+        console.error("Failed to parse AI actions:", error);
+      }
+    }
+
+    const botReply = {role: 'bot', text: aiText, status: 'sent'};
+
+    if (actions?.type === 'recommendations' && Array.isArray(actions.locationIds) && actions.locationIds.length > 0) {
+      const ids = actions.locationIds.map(id => String(id));
+      const recommended = locations.filter(loc => ids.includes(String(loc.id)));
+
+      if (recommended.length > 0) {
+        botReply.itinerary = recommended;
+        if (actions.isItinerary) {
+          botReply.routeItinerary = recommended;
+          botReply.shouldSaveTrip = true;
+          botReply.tripOptions = {
+            durationHours: actions.durationHours || 4,
+            budget: 'Vừa phải',
+            preferences: []
+          };
+          botReply.actions = [{label: 'Vẽ lại tuyến', type: 'route', itinerary: recommended}];
+        } else {
+          botReply.actions = [{label: 'Tạo lịch trình 4 giờ', type: 'plan', prompt: 'Lên lịch trình 4 giờ cho các địa điểm này'}];
+        }
+      }
+    }
+
+    return botReply;
+  };
+
   const handleSend = async (overrideText = input) => {
     if (!overrideText.trim() || isTyping) return;
 
-    const userMsg = {role: 'user', text: overrideText};
+    pendingMessageIdRef.current += 1;
+    const optimisticId = `pending-${pendingMessageIdRef.current}`;
+    const userMsg = {id: optimisticId, role: 'user', text: overrideText, status: 'sending'};
     setMessages(prev => [...prev, userMsg]);
     setInput('');
+    setFailedPrompt(null);
     setIsTyping(true);
     setActiveRow(ROWS.HAPPY);
 
     try {
-      // Check for local commands first (like "saved trips")
       const normalized = normalizeText(overrideText);
       if (normalized.includes('da luu') || normalized.includes('chuyen di da luu') || normalized.includes('saved')) {
-        const botReply = createBotReply(overrideText);
+        const botReply = {...createBotReply(overrideText), status: 'sent'};
+        setMessages(prev => prev.map(message => message.id === optimisticId ? {...message, status: 'sent'} : message));
         setMessages(prev => [...prev, botReply]);
         setIsTyping(false);
         setActiveRow(ROWS.SMILE);
         return;
       }
 
-      // Call AI Backend
       const res = await apiClient.post('/chatbot/chat', {
+        sessionId,
         message: overrideText,
         context: {
           weather,
-          locations: locations.slice(0, 20), // Send top 20 locations for context
+          locations: locations.slice(0, 20),
           userLocation
         }
       });
@@ -407,51 +517,30 @@ const MapChatbot = ({ onLocationClick }) => {
       setActiveRow(ROWS.SMILE);
 
       if (res.success && res.data?.response) {
-        let aiText = typeof res.data.response === 'string' ? res.data.response : String(res.data.response || '');
-        let actions = null;
-
-        // Try to extract [ACTIONS] block
-        const actionMatch = aiText.match(/\[ACTIONS\]:\s*(\{[\s\S]*?\})(?=\n|$|\[)/);
-        if (actionMatch) {
-          try {
-            actions = JSON.parse(actionMatch[1]);
-            console.log("Parsed AI actions:", actions);
-            // Remove the JSON block from the text shown to user
-            aiText = aiText.replace(/\[ACTIONS\]:\s*\{[\s\S]*?\}/, '').trim();
-          } catch (e) {
-            console.error("Failed to parse AI actions:", e);
-          }
+        if (res.data.sessionId && res.data.sessionId !== sessionId) {
+          setSessionId(res.data.sessionId);
+          localStorage.setItem(CHAT_SESSION_KEY, res.data.sessionId);
+          loadSessions();
         }
-        
+
         const botReply = {
-          role: 'bot',
-          text: aiText,
+          ...buildBotReplyFromAi(res.data.response),
+          id: res.data.assistantMessage?.id,
+          createdAt: res.data.assistantMessage?.created_at,
         };
 
-        if (actions && actions.type === 'recommendations' && Array.isArray(actions.locationIds) && actions.locationIds.length > 0) {
-          const recommended = locations.filter(loc => actions.locationIds.map(id => String(id)).includes(String(loc.id)));
-          console.log("Filtered recommended locations:", recommended);
-          if (recommended.length > 0) {
-            botReply.itinerary = recommended;
-            
-            if (actions.isItinerary) {
-              botReply.routeItinerary = recommended;
-              botReply.shouldSaveTrip = true;
-              botReply.tripOptions = {
-                durationHours: actions.durationHours || 4,
-                budget: 'Vừa phải',
-                preferences: []
-              };
-              botReply.actions = [{label: 'Vẽ lại tuyến', type: 'route', itinerary: recommended}];
-            } else {
-              botReply.actions = [{label: 'Tạo lịch trình 4 giờ', type: 'plan', prompt: `Lên lịch trình 4 giờ cho các địa điểm này`}];
+        setMessages(prev => prev.map(message => (
+          message.id === optimisticId
+            ? {
+              ...message,
+              id: res.data.userMessage?.id || message.id,
+              createdAt: res.data.userMessage?.created_at,
+              status: 'sent',
             }
-          }
-        }
-        
+            : message
+        )));
         setMessages(prev => [...prev, botReply]);
-        
-        // Trigger side effects
+
         if (botReply.routeItinerary) {
           showRouteOnMap(botReply.routeItinerary);
         }
@@ -459,8 +548,10 @@ const MapChatbot = ({ onLocationClick }) => {
           saveTrip(botReply.itinerary, botReply.tripOptions);
         }
       } else {
-        // Fallback to local logic if AI fails
-        const botReply = createBotReply(overrideText);
+        const botReply = {...createBotReply(overrideText), status: 'sent'};
+        setMessages(prev => prev.map(message => (
+          message.id === optimisticId ? {...message, status: 'sent'} : message
+        )));
         setMessages(prev => [...prev, botReply]);
       }
       setIsTyping(false);
@@ -468,8 +559,10 @@ const MapChatbot = ({ onLocationClick }) => {
     } catch (error) {
       console.error("Chatbot error:", error);
       setIsTyping(false);
-      const botReply = createBotReply(overrideText);
-      setMessages(prev => [...prev, botReply]);
+      setFailedPrompt(overrideText);
+      setMessages(prev => prev.map(message => (
+        message.id === optimisticId ? {...message, status: 'error'} : message
+      )));
     } finally {
       setTimeout(() => setActiveRow(ROWS.STARTUP), 3000);
     }
@@ -602,20 +695,50 @@ const MapChatbot = ({ onLocationClick }) => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsOpen(false);
-                      setActiveRow(ROWS.STARTUP);
-                    }}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-glass-border bg-white text-text-muted shadow-sm transition-colors hover:border-sunset/30 hover:bg-sunset/10 hover:text-sunset"
-                    aria-label="Đóng chatbot"
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={startNewChat}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-cyan-glow/20 bg-cyan-glow/10 text-cyan-glow shadow-sm transition-colors hover:bg-cyan-glow/15"
+                      aria-label="Tao cuoc tro chuyen moi"
+                    >
+                      <PlusIcon size={18}/>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsOpen(false);
+                        setActiveRow(ROWS.STARTUP);
+                      }}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-glass-border bg-white text-text-muted shadow-sm transition-colors hover:border-sunset/30 hover:bg-sunset/10 hover:text-sunset"
+                      aria-label="Dong chatbot"
+                    >
+                      <CloseIcon size={18}/>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="shrink-0 border-b border-glass-border bg-white/90 px-4 py-2 sm:px-5">
+                  <select
+                    value={sessionId || ''}
+                    onChange={(event) => event.target.value ? loadSessionMessages(event.target.value) : startNewChat()}
+                    className="w-full rounded-2xl border border-glass-border bg-map-bg/70 px-3 py-2 text-[11px] font-black uppercase tracking-widest text-text-secondary outline-none focus:border-cyan-glow/40"
                   >
-                    <CloseIcon size={18}/>
-                  </button>
+                    <option value="">Cuoc tro chuyen moi</option>
+                    {sessions.map(session => (
+                      <option key={session.id} value={session.id}>
+                        {(session.title || session.last_message || 'EVE Chat').slice(0, 42)}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="flex-1 space-y-4 overflow-y-auto bg-map-bg/80 px-4 py-5 custom-scrollbar sm:px-5">
+                  {isLoadingHistory && (
+                    <div className="flex items-center justify-center gap-2 rounded-2xl border border-glass-border bg-white px-3 py-2 text-[10px] font-black uppercase tracking-widest text-text-muted">
+                      <SpinnerIcon size={14} className="animate-spin text-cyan-glow"/>
+                      Dang tai lich su
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-2">
                     {quickPrompts.map(prompt => (
                       <button
@@ -684,9 +807,29 @@ const MapChatbot = ({ onLocationClick }) => {
                             ))}
                           </div>
                         )}
+
+                        {msg.role === 'user' && msg.status && msg.status !== 'sent' && (
+                          <div className="mt-2 flex justify-end">
+                            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-white/80">
+                              {msg.status === 'sending' ? 'Đang gửi' : 'Lỗi gửi'}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   ))}
+
+                  {failedPrompt && (
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => handleSend(failedPrompt)}
+                        disabled={isTyping}
+                        className="rounded-full border border-sunset/30 bg-sunset/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-sunset transition-colors hover:bg-sunset/15"
+                      >
+                        Gửi lại tin nhắn lỗi
+                      </button>
+                    </div>
+                  )}
 
                   {isTyping && (
                     <div className="flex justify-start">
