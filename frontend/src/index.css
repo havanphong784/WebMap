@@ -110,11 +110,18 @@
     border-radius: 9999px;
     box-shadow: var(--shadow-neon);
     transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
     &:hover {
         transform: translateY(-2px);
         filter: brightness(110%);
         box-shadow: 0 15px 30px rgba(0, 206, 209, 0.3);
+    }
+    
+    &:active {
+        transform: translateY(0);
     }
 }
 
@@ -124,6 +131,19 @@
 
 @utility text-glow-cyan {
     text-shadow: 0 0 12px rgba(0, 206, 209, 0.4);
+}
+
+@utility landing-grid {
+    background-image:
+        linear-gradient(rgba(0, 206, 209, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 206, 209, 0.08) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), transparent);
+}
+
+@utility landing-art-panel {
+    border-radius: 0.5rem;
+    backdrop-filter: blur(24px);
 }
 
 @utility page-shell {
@@ -144,6 +164,17 @@
 @utility no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@utility scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 @utility custom-scrollbar {
@@ -179,8 +210,30 @@
     to { transform: rotate(360deg); }
 }
 
+@keyframes landing-orbit-spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes landing-route-dash {
+    to { stroke-dashoffset: -80; }
+}
+
 @utility animate-slow-spin {
     animation: spin 4s linear infinite;
+}
+
+@utility landing-orbit {
+    animation: landing-orbit-spin 18s linear infinite;
+}
+
+@utility landing-orbit-reverse {
+    animation-direction: reverse;
+    animation-duration: 24s;
+}
+
+@utility landing-route-draw {
+    animation: landing-route-dash 10s linear infinite;
 }
 
 @utility skeleton {

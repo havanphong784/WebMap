@@ -48,7 +48,13 @@ import {
   Snowflake,
   Sparkles,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Brain,
+  Users,
+  Radar,
+  BookMarked,
+  LocateFixed,
+  Globe2
 } from 'lucide-react';
 
 
@@ -102,7 +108,13 @@ export {
   Snowflake as SnowIcon,
   Sparkles as SparklesIcon,
   Copy as CopyIcon,
-  ExternalLink as ExternalLinkIcon
+  ExternalLink as ExternalLinkIcon,
+  Brain as BrainIcon,
+  Users as UsersIcon,
+  Radar as RadarIcon,
+  BookMarked as BookmarkIcon,
+  LocateFixed as LocateFixedIcon,
+  Globe2 as GlobeIcon
 };
 
 

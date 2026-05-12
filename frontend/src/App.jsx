@@ -61,7 +61,11 @@ function App() {
           <Routes location={location} key={location.pathname}>
             <Route path="/login" element={<PageTransition><Login/></PageTransition>}/>
             <Route path="/" element={<PageTransition><LandingPage/></PageTransition>}/>
-            <Route path="/map" element={<PageTransition><MapPage/></PageTransition>}/>
+            <Route path="/map" element={
+              <ProtectedRoute>
+                <PageTransition><MapPage/></PageTransition>
+              </ProtectedRoute>
+            }/>
 
             <Route path="/discover" element={
               <ProtectedRoute>

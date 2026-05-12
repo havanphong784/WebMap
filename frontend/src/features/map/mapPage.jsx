@@ -432,7 +432,7 @@ export default function MapPage() {
             onClose={() => {
               setActiveLocation(null);
               if (routerLocation.search) {
-                navigate('/', {replace: true});
+                navigate('/map', {replace: true});
               }
             }}
           />
