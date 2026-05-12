@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowIcon,
@@ -181,6 +182,14 @@ function MapArtwork() {
 function LandingPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+
+  // Redirect to map if URL contains location parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('lat') || params.has('lng') || params.has('locationId')) {
+      navigate(`/map${window.location.search}`, { replace: true });
+    }
+  }, [navigate]);
 
   const enterApp = () => navigate(user ? '/map' : '/login');
 

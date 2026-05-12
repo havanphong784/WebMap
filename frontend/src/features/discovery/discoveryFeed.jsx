@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {AnimatePresence, motion} from "framer-motion";
+import {useNavigate} from "react-router-dom";
 import {useAuthStore} from "../auth/context/authStore.js";
 import {useLocationStore} from "../map/store/useLocationsStore.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
@@ -17,6 +18,7 @@ import DiscoveryCard from "./components/DiscoveryCard.jsx";
 import { isMobile } from "../../shared/utils/deviceUtils.js";
 
 const DiscoveryFeed = () => {
+  const navigate = useNavigate();
   const {user} = useAuthStore();
   const {
     trendingLocations,
@@ -36,19 +38,10 @@ const DiscoveryFeed = () => {
   const [feedType, setFeedType] = useState('global');
   const mobile = useMemo(() => isMobile(), []);
 
-  const navigate = useCallback((to, options = {}) => {
-    if (to === '/' && options.state?.focusLocation) {
-      const loc = options.state.focusLocation;
-      const params = new URLSearchParams();
-      if (loc.lat) params.set('lat', loc.lat);
-      if (loc.lng) params.set('lng', loc.lng);
-      if (loc.id) params.set('locationId', loc.id);
-      window.location.assign(`/${params.toString() ? `?${params.toString()}` : ''}`);
-      return;
-    }
-
-    window.location.assign(to);
-  }, []);
+  // Update navigation to point to /map
+  const handleNavigateToMap = useCallback((loc) => {
+    navigate("/map", {state: {focusLocation: loc}});
+  }, [navigate]);
 
   useEffect(() => {
     fetchUniqueTags();
@@ -236,7 +229,13 @@ const DiscoveryFeed = () => {
                   key={post.id}
                   post={post}
                   index={i}
-                  navigate={navigate}
+                  navigate={(to, options) => {
+                    if (to === '/' || to === '/map') {
+                      handleNavigateToMap(options?.state?.focusLocation || post);
+                    } else {
+                      navigate(to, options);
+                    }
+                  }}
                   onLike={handleToggleLike}
                 />
               ))}
@@ -280,7 +279,7 @@ const DiscoveryFeed = () => {
               </button>
             ) : (
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/map')}
                 className="relative z-10 text-cyan-glow bg-cyan-glow/10 border border-cyan-glow/30 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-cyan-glow/20 transition-all shadow-glass hover:scale-105 active:scale-95"
               >
                 Trở về bản đồ
@@ -291,7 +290,7 @@ const DiscoveryFeed = () => {
       </div>
 
       <div className="fixed bottom-32 right-6 z-20">
-        <ActionButton variant="primary" className="p-5! shadow-neon" onClick={() => navigate('/')}>
+        <ActionButton variant="primary" className="p-5! shadow-neon" onClick={() => navigate('/map')}>
           <PlusIcon size={28}/>
         </ActionButton>
       </div>

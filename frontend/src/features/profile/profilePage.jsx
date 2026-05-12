@@ -122,7 +122,7 @@ export default function ProfilePage() {
       <p className="text-text-muted text-sm max-w-sm">{error}</p>
       <div className="flex gap-3">
         <ActionButton variant="secondary" onClick={fetchProfileData}>Thử lại</ActionButton>
-        <ActionButton variant="glass" onClick={() => navigate('/')}>Về trang chủ</ActionButton>
+        <ActionButton variant="glass" onClick={() => navigate('/map')}>Về trang chủ</ActionButton>
       </div>
     </div>
   );
@@ -131,7 +131,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-map-bg flex flex-col items-center justify-center space-y-6">
       <p className="text-text-muted font-jakarta font-bold uppercase tracking-widest text-sm">Không tìm thấy người
         dùng</p>
-      <ActionButton variant="glass" onClick={() => navigate('/')}>Về trang chủ</ActionButton>
+      <ActionButton variant="glass" onClick={() => navigate('/map')}>Về trang chủ</ActionButton>
     </div>
   );
 
@@ -308,7 +308,7 @@ export default function ProfilePage() {
                       whileInView={!mobile ? {opacity: 1, scale: 1} : {}}
                       viewport={{once: true}}
                       transition={{delay: (i % 3) * 0.1}}
-                      onClick={() => navigate("/", {state: {focusLocation: loc}})}
+                      onClick={() => navigate("/map", {state: {focusLocation: loc}})}
                       className="group relative glass-panel rounded-3xl border-glass-border overflow-hidden hover:border-cyan-glow/30 transition-all duration-500 cursor-pointer shadow-lg"
                     >
                       <div className="aspect-[4/3] relative overflow-hidden">
