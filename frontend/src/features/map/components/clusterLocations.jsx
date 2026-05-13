@@ -78,7 +78,7 @@ const ClusterLocations = memo(() => {
         filter={['has', 'point_count']}
         layout={{
           'text-field': '{point_count_abbreviated}',
-          'text-font': ['Open Sans Bold'],
+          'text-font': ['Roboto Bold'],
           'text-size': 12
         }}
         paint={{
@@ -120,7 +120,7 @@ const ClusterLocations = memo(() => {
         minzoom={13}
         layout={{
           'text-field': ['get', 'name'],
-          'text-font': ['Open Sans Regular'],
+          'text-font': ['Roboto Regular'],
           'text-size': 10,
           'text-offset': [0, 1.5],
           'text-anchor': 'top',
@@ -148,5 +148,3 @@ const ClusterLocations = memo(() => {
 ClusterLocations.displayName = "ClusterLocations";
 
 export default ClusterLocations;
-
-

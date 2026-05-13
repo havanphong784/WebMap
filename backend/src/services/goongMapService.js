@@ -22,7 +22,8 @@ const fetchJsonWithTimeout = async (url, timeout = GOONG_TIMEOUT_MS) => {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const message = data?.error_message || data?.message || `Goong request failed with ${response.status}`;
+      const message = data?.error_message || data?.message || `Goong request failed with status ${response.status}`;
+      console.error(`[Goong Error] Status: ${response.status}, Message: ${message}`);
       throw new Error(message);
     }
 
