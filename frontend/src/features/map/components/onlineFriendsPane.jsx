@@ -81,7 +81,6 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
   const {user: currentUser} = useAuthStore();
   const activeUsers = useSocialStore(state => state.activeUsers);
   const isLoading = useSocialStore(state => state.isLoading);
-  const fetchActiveUsers = useSocialStore(state => state.fetchActiveUsers);
   const [isOpen, setIsOpen] = useState(false);
   const [activeChatId, setActiveChatId] = useState(null);
   const [query, setQuery] = useState("");
@@ -136,12 +135,6 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
     }
     if (!silent) setIsLoadingMessages(false);
   }, [currentUser?.uid, loadThreads]);
-
-  useEffect(() => {
-    fetchActiveUsers();
-    const interval = setInterval(fetchActiveUsers, 60000);
-    return () => clearInterval(interval);
-  }, [fetchActiveUsers]);
 
   useEffect(() => {
     if (!isOpen) return;

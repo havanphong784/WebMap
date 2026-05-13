@@ -1,4 +1,4 @@
-import {lazy, Suspense, useEffect} from 'react';
+import {lazy, Suspense, useEffect, useRef} from 'react';
 import {Route, Routes, useLocation} from 'react-router-dom';
 import {AnimatePresence} from 'framer-motion';
 import BottomNav from "./shared/components/layout/bottomNav.jsx";
@@ -34,13 +34,18 @@ function App() {
   const {sendHeartbeat} = useSocialStore();
   const userLocation = useLocationStore(state => state.userLocation);
   const {fetchNotifications} = useNotificationStore();
+  const userLocationRef = useRef(userLocation);
+
+  useEffect(() => {
+    userLocationRef.current = userLocation;
+  }, [userLocation]);
 
   useEffect(() => {
     if (user?.uid) {
-      sendHeartbeat(userLocation);
+      sendHeartbeat(userLocationRef.current);
       fetchNotifications(user.uid, true);
 
-      const heartbeatInterval = setInterval(() => sendHeartbeat(userLocation), 60000);
+      const heartbeatInterval = setInterval(() => sendHeartbeat(userLocationRef.current), 60000);
 
       const notifInterval = setInterval(() => {
         if (document.visibilityState === 'visible') {
@@ -53,7 +58,7 @@ function App() {
         clearInterval(notifInterval);
       };
     }
-  }, [user?.uid, sendHeartbeat, userLocation, fetchNotifications]);
+  }, [user?.uid, sendHeartbeat, fetchNotifications]);
 
   return (
     <div

@@ -31,3 +31,6 @@ list_models_v1beta.js
 test_all_models.js
 test_fetch.js
 test_gemini.js
+script/*
+scratch/*
+artifacts/*

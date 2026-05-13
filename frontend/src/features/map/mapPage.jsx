@@ -3,7 +3,7 @@ import Map from 'react-map-gl/maplibre';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import ClickedMarker from "./components/clickedMarker.jsx";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getAddress } from "./utils/geocoding.js";
 import { debounce } from "./utils/performance.js";
 import SearchBox from "./components/searchBox.jsx";
@@ -28,8 +28,8 @@ import WeatherEffects from "./components/WeatherEffects.jsx";
 import { useWeatherStore } from "./store/useWeatherStore.jsx";
 import { useSocialStore } from "./store/useSocialStore.jsx";
 import MapChatbot from "../chatbot/components/mapChatbot.jsx";
-import { isMobile } from "../../shared/utils/deviceUtils.js";
 import { withNearbyGroup } from "./utils/locationGrouping.js";
+import useWindowSize from "../../shared/hooks/useWindowSize.jsx";
 
 const INTERACTIVE_LAYERS = [
   'clusters', 'unclustered-point', 'unclustered-label',
@@ -47,13 +47,16 @@ export default function MapPage() {
   const [markerViewMode, setMarkerViewMode] = useState('full');
   const [isMapReady, setIsMapReady] = useState(false);
   const [activeLayers, setActiveLayers] = useState(['clusters', 'unclustered-point', 'unclustered-label']);
-  const mobile = useMemo(() => isMobile(), []);
+  const { width } = useWindowSize();
+  const mobile = width <= 768;
   const addToast = useToastStore(state => state.addToast);
   const heartbeatLocationRef = useRef(0);
+  const weatherFetchRef = useRef(0);
 
   const setUserLocation = useLocationStore(state => state.setUserLocation);
   const setAccuracy = useLocationStore(state => state.setAccuracy);
   const sendHeartbeat = useSocialStore(state => state.sendHeartbeat);
+  const fetchActiveUsers = useSocialStore(state => state.fetchActiveUsers);
   const fetchLocations = useLocationStore(state => state.fetchLocations);
   const locations = useLocationStore(state => state.locations);
   const mapLoading = useLocationStore(state => state.mapLoading);
@@ -235,12 +238,23 @@ export default function MapPage() {
       if (!map) return;
       const bounds = map.getBounds();
       debouncedFetch(user?.uid, bounds);
-      if (isVisible) {
+      if (isVisible && Date.now() - weatherFetchRef.current > 60000) {
+        weatherFetchRef.current = Date.now();
         const center = map.getCenter();
         fetchWeather(center.lat, center.lng);
       }
     }
   }, [user?.uid, debouncedFetch, isVisible, fetchWeather]);
+
+  useEffect(() => {
+    fetchActiveUsers();
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchActiveUsers();
+      }
+    }, mobile ? 120000 : 60000);
+    return () => clearInterval(interval);
+  }, [fetchActiveUsers, mobile]);
 
   const handleLocateUser = useCallback(() => {
     setIsLocating(true);
@@ -302,7 +316,7 @@ export default function MapPage() {
   const zoomIn = () => mapRef.current?.getMap()?.zoomIn();
   const zoomOut = () => mapRef.current?.getMap()?.zoomOut();
 
-  const mapCanvas = useMemo(() => (
+  const mapCanvas = (
     <Map ref={mapRef}
       mapStyle={`https://tiles.goong.io/assets/goong_map_web.json?api_key=${import.meta.env.VITE_GOONG_API_KEY}`}
       minZoom={3}
@@ -347,30 +361,32 @@ export default function MapPage() {
       <OnlineUserMarkers onUserClick={handleFlyToOnlineUser} />
       <MapMarkers viewMode={markerViewMode} onLocationClick={handleLocationClick} activeLocation={activeLocation} />
     </Map>
-  ), [handleMapChange, handleClick, markerViewMode, handleLocationClick, handleFlyToOnlineUser, infoClicked, activeLocation, flyToLocation]);
+  );
 
   return (
     <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
       {mapCanvas}
-      <WeatherWidget />
-      <WeatherEffects />
+      {(!mobile || !activeLocation) && <WeatherWidget />}
+      {(!mobile || !activeLocation) && <WeatherEffects />}
       <UserProfileButton />
-      <MapControls
-        onLocate={handleLocateUser}
-        isLocating={isLocating}
-        onPhotoUpload={handlePhotoUpload}
-        isExtractingPhoto={isExtractingPhoto}
-        viewMode={markerViewMode}
-        setViewMode={setMarkerViewMode}
-        onZoomIn={zoomIn}
-        onZoomOut={zoomOut}
-        fileInputRef={fileInputRef}
-        isVisible={isVisible}
-        onToggleWeather={toggleVisibility}
-      />
-      <SearchBox onSelectLocation={handleSearchSelect} />
-      <OnlineFriendsPane onFlyToUser={handleFlyToOnlineUser} />
-      <OnlineCommunityBar />
+      {(!mobile || !activeLocation) && (
+        <MapControls
+          onLocate={handleLocateUser}
+          isLocating={isLocating}
+          onPhotoUpload={handlePhotoUpload}
+          isExtractingPhoto={isExtractingPhoto}
+          viewMode={markerViewMode}
+          setViewMode={setMarkerViewMode}
+          onZoomIn={zoomIn}
+          onZoomOut={zoomOut}
+          fileInputRef={fileInputRef}
+          isVisible={isVisible}
+          onToggleWeather={toggleVisibility}
+        />
+      )}
+      {(!mobile || !activeLocation) && <SearchBox onSelectLocation={handleSearchSelect} />}
+      {(!mobile || !activeLocation) && <OnlineFriendsPane onFlyToUser={handleFlyToOnlineUser} />}
+      {!mobile && <OnlineCommunityBar />}
       {(mapLoading || mapError || routeError) && (
         <div className="absolute left-3 top-32 z-[750] max-w-[calc(100%-6rem)] sm:left-6 sm:top-24 sm:max-w-sm pointer-events-none">
           <div className={`rounded-2xl border px-4 py-3 text-xs font-bold shadow-glass backdrop-blur-2xl ${mapError || routeError ? 'border-sunset/25 bg-white/95 text-sunset' : 'border-cyan-glow/20 bg-white/90 text-cyan-glow'
@@ -398,7 +414,7 @@ export default function MapPage() {
           />
         )}
       </AnimatePresence>
-      <MapChatbot onLocationClick={handleLocationClick} />
+      {(!mobile || !activeLocation) && <MapChatbot onLocationClick={handleLocationClick} />}
     </div>
   );
 }

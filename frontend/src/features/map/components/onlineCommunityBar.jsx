@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSocialStore } from "../store/useSocialStore.jsx";
 import useWindowSize from "../../../shared/hooks/useWindowSize.jsx";
@@ -8,14 +7,8 @@ import { memo } from "react";
 
 const OnlineCommunityBar = memo(() => {
   const navigate = useNavigate();
-  const { activeUsers, fetchActiveUsers } = useSocialStore();
+  const { activeUsers } = useSocialStore();
   const { width: windowWidth } = useWindowSize();
-
-  useEffect(() => {
-    fetchActiveUsers();
-    const interval = setInterval(fetchActiveUsers, 300000);
-    return () => clearInterval(interval);
-  }, [fetchActiveUsers]);
 
   return (
     <div className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 z-10 w-[95%] sm:w-[90%] max-w-xl pointer-events-none px-2">
