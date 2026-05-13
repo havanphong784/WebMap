@@ -11,6 +11,7 @@ import {
   reverseGeocode,
   getDirections,
   searchAddress,
+  getGoongPlace,
   getFollowingLocations
 } from "../controllers/locationController.js";
 
@@ -24,6 +25,7 @@ router.get("/trending", getTrendingLocations);
 router.get("/tags", getUniqueTags);
 router.get("/geocoding/reverse", reverseGeocode);
 router.get("/geocoding/search", searchAddress);
+router.get("/goong/place-detail", getGoongPlace);
 router.get("/routing", getDirections);
 router.get("/tag/:tag", getLocationsByTag);
 router.get("/:id", getLocationById);

@@ -14,6 +14,7 @@ import { getFollowers } from "../services/followService.js";
 import { createNotification } from "../services/notificationService.js";
 import {
   getRouteForPoints,
+  getGoongPlaceDetail,
   isConfiguredGoongKey,
   parseLngLatString,
   reverseGeocodeWithGoong,
@@ -229,7 +230,7 @@ export const getDirections = async (req, res) => {
 
 export const searchAddress = async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, location, origin } = req.query;
     if (!q) {
       return res.status(400).json({ success: false, message: "Thiếu từ khóa tìm kiếm" });
     }
@@ -238,10 +239,29 @@ export const searchAddress = async (req, res) => {
       return res.status(503).json({ success: false, message: "Chưa cấu hình GOONG_API_KEY" });
     }
 
-    const data = await searchAddressWithGoong(q, {limit: 5});
+    const data = await searchAddressWithGoong(q, {limit: 5, location, origin});
     return res.status(200).json(data);
   } catch (error) {
     console.error("Goong address search failed:", error);
     res.status(502).json({ success: false, message: "Tìm kiếm thất bại trên Goong" });
+  }
+};
+
+export const getGoongPlace = async (req, res) => {
+  try {
+    const { place_id } = req.query;
+    if (!place_id) {
+      return res.status(400).json({ success: false, message: "Thiếu place_id" });
+    }
+
+    if (!isConfiguredGoongKey()) {
+      return res.status(503).json({ success: false, message: "Chưa cấu hình GOONG_API_KEY" });
+    }
+
+    const data = await getGoongPlaceDetail(place_id);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Goong place detail failed:", error);
+    res.status(error.status || 502).json({ success: false, message: "Không thể lấy chi tiết địa điểm từ Goong" });
   }
 };

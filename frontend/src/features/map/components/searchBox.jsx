@@ -15,6 +15,7 @@ export default function SearchBox({ onSelectLocation }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectingPlaceId, setSelectingPlaceId] = useState(null);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -26,10 +27,15 @@ export default function SearchBox({ onSelectLocation }) {
     setIsLoading(false);
   };
 
-  const handleSelect = (item) => {
-    onSelectLocation(parseFloat(item.lon), parseFloat(item.lat), item.display_name);
-    setResults([]);
-    setQuery(item.display_name.split(',')[0]);
+  const handleSelect = async (item) => {
+    setSelectingPlaceId(item.place_id || item.id || item.display_name);
+    try {
+      await onSelectLocation(item);
+      setResults([]);
+      setQuery((item.name || item.display_name || "").split(',')[0]);
+    } finally {
+      setSelectingPlaceId(null);
+    }
   };
 
   const clearSearch = () => {
@@ -53,7 +59,7 @@ export default function SearchBox({ onSelectLocation }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm địa điểm, người dùng..."
+            placeholder="Tìm địa điểm trên Goong..."
             className="min-w-0 flex-1 bg-transparent text-sm font-medium text-text-primary outline-none placeholder:text-text-muted"
           />
 
@@ -101,15 +107,22 @@ export default function SearchBox({ onSelectLocation }) {
                 className="flex cursor-pointer items-start gap-3 rounded-2xl px-4 py-3 transition-colors hover:bg-black/5"
               >
                 <div className="mt-1 rounded-xl bg-black/5 p-2 text-text-muted transition-colors">
-                  <PinIcon size={16} />
+                  {selectingPlaceId === (item.place_id || item.id || item.display_name)
+                    ? <SpinnerIcon size={16} className="animate-spin text-cyan-glow" />
+                    : <PinIcon size={16} />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="mb-1 truncate text-sm font-bold leading-tight text-text-primary">
-                    {item.display_name.split(',')[0]}
+                    {item.name || item.display_name.split(',')[0]}
                   </p>
                   <p className="line-clamp-2 text-[11px] leading-tight text-text-muted">
-                    {item.display_name.split(',').slice(1).join(',').trim()}
+                    {item.secondary_text || item.display_name.split(',').slice(1).join(',').trim()}
                   </p>
+                  {Number.isFinite(Number(item.distance_meters)) && (
+                    <p className="mt-1 text-[10px] font-bold text-cyan-glow">
+                      {Math.round(Number(item.distance_meters))} m
+                    </p>
+                  )}
                 </div>
               </motion.li>
             ))}

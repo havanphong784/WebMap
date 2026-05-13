@@ -18,16 +18,23 @@ const LocationCard = memo(({ location, onClick, viewMode = 'mini', count = 1, al
       longitude={Number(location.lng)}
       latitude={Number(location.lat)}
       anchor="bottom"
-      style={{ zIndex: isHovered ? 2000 : (isExpanded ? 100 : 1) }}
+      style={{
+        zIndex: isHovered ? 3000 : (isExpanded ? 2500 : 2000),
+        pointerEvents: "auto",
+      }}
       onClick={(e) => {
         e.originalEvent.stopPropagation();
+        e.originalEvent.preventDefault();
         handleInteraction(e.originalEvent);
       }}
     >
       <div
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={handleInteraction}
+        onClick={(e) => {
+          e.preventDefault();
+          handleInteraction(e);
+        }}
         className="relative cursor-pointer group"
       >
         <motion.div

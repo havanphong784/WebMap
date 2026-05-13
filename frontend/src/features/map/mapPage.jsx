@@ -4,7 +4,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import ClickedMarker from "./components/clickedMarker.jsx";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getAddress } from "./utils/geocoding.js";
+import { getAddress, getPlaceDetail } from "./utils/geocoding.js";
 import { debounce } from "./utils/performance.js";
 import SearchBox from "./components/searchBox.jsx";
 import { useLocationStore } from "./store/useLocationsStore.jsx";
@@ -37,6 +37,41 @@ const INTERACTIVE_LAYERS = [
   'place-label', 'place-suburb-label', 'place-neighbourhood-label',
   'restaurant', 'school', 'hospital', 'cafe', 'bank', 'atm', 'hotel'
 ];
+
+const GOONG_MAP_KEY = import.meta.env.VITE_GOONG_MAP_TILES_KEY || import.meta.env.VITE_GOONG_API_KEY;
+
+const isUserLocationFeature = (feature) => {
+  const layerId = feature?.layer?.id;
+  return layerId === "unclustered-point" || layerId === "unclustered-label";
+};
+
+const isGoongPoiFeature = (feature) => {
+  const layerId = feature?.layer?.id?.toLowerCase?.() || "";
+  const props = feature?.properties || {};
+  const hasName = Boolean(props.name || props.name_vi || props.name_en || props.title);
+  const looksLikePoiLayer = [
+    "poi",
+    "label",
+    "place",
+    "restaurant",
+    "school",
+    "hospital",
+    "cafe",
+    "bank",
+    "atm",
+    "hotel",
+    "shop",
+    "building",
+  ].some(token => layerId.includes(token));
+
+  return hasName && looksLikePoiLayer;
+};
+
+const pickClickableFeature = (features = []) => {
+  const userLocation = features.find(isUserLocationFeature);
+  if (userLocation) return userLocation;
+  return features.find(isGoongPoiFeature) || null;
+};
 
 export default function MapPage() {
   const navigate = useNavigate();
@@ -175,16 +210,18 @@ export default function MapPage() {
 
   const handleClick = useCallback(async (e) => {
     // Ưu tiên các tính năng đặc thù (POI, Markers)
-    const feature = e.features?.[0];
+    const renderedFeatures = e.features?.length
+      ? e.features
+      : e.target?.queryRenderedFeatures?.(e.point) || [];
+    const feature = pickClickableFeature(renderedFeatures);
 
     if (feature) {
-      if (feature.layer.id === 'unclustered-point' || feature.layer.id === 'unclustered-label') {
+      if (isUserLocationFeature(feature)) {
         handleLocationClick(withNearbyGroup(feature.properties, locations));
         return;
       }
 
-      const layerId = feature.layer.id.toLowerCase();
-      if (layerId.includes('poi') || layerId.includes('label') || layerId.includes('place') || layerId.includes('restaurant') || layerId.includes('school')) {
+      if (isGoongPoiFeature(feature)) {
         const { lng, lat } = e.lngLat;
         const poiName = feature.properties?.name || feature.properties?.name_vi || feature.properties?.name_en || feature.properties?.title;
         setActiveLocation(null);
@@ -192,7 +229,16 @@ export default function MapPage() {
         flyToLocation(lng, lat, 17);
         setInfoClicked({ lng, lat, name: poiName, address: { display_name: "Đang tải địa chỉ..." } });
         const diachi = await getAddress(lat, lng);
-        setInfoClicked({ lng, lat, name: poiName, address: diachi });
+        const detail = diachi?.place_id ? await getPlaceDetail(diachi.place_id) : null;
+        if (detail?.lat && detail?.lng) {
+          setInfoClicked(null);
+          setActiveLocation({
+            ...detail,
+            name: poiName || detail.name,
+          });
+        } else {
+          setInfoClicked({ lng, lat, name: poiName, address: diachi });
+        }
         return;
       }
     }
@@ -223,12 +269,46 @@ export default function MapPage() {
     map.getCanvas().style.cursor = features.length ? 'pointer' : '';
   };
 
-  const handleSearchSelect = useCallback(async (lng, lat, addressName) => {
-    flyToLocation(lng, lat, 16);
-    setInfoClicked({ lng, lat, address: { display_name: addressName } });
-    const diachi = await getAddress(lat, lng);
-    setInfoClicked({ lng, lat, address: diachi });
-  }, [flyToLocation]);
+  const handleSearchSelect = useCallback(async (item) => {
+    if (!item) return;
+    setActiveLocation(null);
+    setInfoClicked(null);
+    setRouteData(null);
+
+    const itemLng = Number(item.lng ?? item.lon);
+    const itemLat = Number(item.lat);
+    const hasItemCoordinates = Number.isFinite(itemLng) && Number.isFinite(itemLat);
+
+    if (hasItemCoordinates) {
+      flyToLocation(itemLng, itemLat, 16, 1600, true);
+      setActiveLocation({
+        ...item,
+        lng: itemLng,
+        lat: itemLat,
+        kind: "goong_place",
+        source: "goong",
+      });
+    }
+
+    const detail = item.place_id ? await getPlaceDetail(item.place_id) : null;
+    const selected = detail || (hasItemCoordinates ? item : null);
+    const lng = Number(selected?.lng ?? selected?.lon);
+    const lat = Number(selected?.lat);
+
+    if (Number.isFinite(lng) && Number.isFinite(lat)) {
+      flyToLocation(lng, lat, 16, 1600, true);
+      setActiveLocation({
+        ...selected,
+        lng,
+        lat,
+        kind: selected.kind || "goong_place",
+        source: selected.source || "goong",
+      });
+      return;
+    }
+
+    addToast("Không lấy được tọa độ từ Goong cho địa điểm này.", "error");
+  }, [addToast, flyToLocation, setRouteData]);
 
   const debouncedFetch = useRef(debounce((uid, bounds) => { fetchLocations(uid, bounds); }, 300)).current;
 
@@ -318,7 +398,7 @@ export default function MapPage() {
 
   const mapCanvas = (
     <Map ref={mapRef}
-      mapStyle={`https://tiles.goong.io/assets/goong_map_web.json?api_key=${import.meta.env.VITE_GOONG_API_KEY}`}
+      mapStyle={`https://tiles.goong.io/assets/goong_map_web.json?api_key=${GOONG_MAP_KEY}`}
       minZoom={3}
       maxZoom={18}
       onLoad={() => {

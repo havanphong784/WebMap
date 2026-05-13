@@ -1,5 +1,8 @@
 const GOONG_BASE_URL = "https://rsapi.goong.io";
 const GOONG_TIMEOUT_MS = 7000;
+const GOONG_ADMIN_UNIT_PARAMS = {
+  has_deprecated_administrative_unit: "true",
+};
 
 const isConfiguredGoongKey = () => {
   const apiKey = process.env.GOONG_API_KEY;
@@ -135,13 +138,10 @@ const normalizeGoongRoute = (route, fallbackPoints) => {
   };
 };
 
-export const getRouteForPoints = async (points = []) => {
-  const validPoints = points.map(normalizeLngLat).filter(Boolean);
-  if (validPoints.length < 2) return null;
-
-  const origin = toGoongLatLng(validPoints[0]);
-  const destination = validPoints.slice(1).map(toGoongLatLng).join(";");
-  const url = makeGoongUrl("/Direction", {
+const getRouteForSegment = async (originPoint, destinationPoint) => {
+  const origin = toGoongLatLng(originPoint);
+  const destination = toGoongLatLng(destinationPoint);
+  const url = makeGoongUrl("/v2/direction", {
     origin,
     destination,
     vehicle: "car",
@@ -155,7 +155,66 @@ export const getRouteForPoints = async (points = []) => {
     throw new Error(data?.status || "Goong did not return a route");
   }
 
-  return normalizeGoongRoute(route, validPoints);
+  return normalizeGoongRoute(route, [originPoint, destinationPoint]);
+};
+
+export const getRouteForPoints = async (points = []) => {
+  const validPoints = points.map(normalizeLngLat).filter(Boolean);
+  if (validPoints.length < 2) return null;
+
+  const segmentRoutes = [];
+  for (let index = 0; index < validPoints.length - 1; index += 1) {
+    segmentRoutes.push(await getRouteForSegment(validPoints[index], validPoints[index + 1]));
+  }
+
+  const coordinates = segmentRoutes.flatMap((route, routeIndex) => {
+    const routeCoordinates = route.geometry?.coordinates || [];
+    return routeIndex === 0 ? routeCoordinates : routeCoordinates.slice(1);
+  });
+
+  return {
+    geometry: coordinates.length
+      ? {type: "LineString", coordinates}
+      : makeLineGeometry(validPoints),
+    distance: segmentRoutes.reduce((sum, route) => sum + Number(route.distanceMeters || 0), 0) || null,
+    duration: segmentRoutes.reduce((sum, route) => sum + Number(route.durationSeconds || 0), 0) || null,
+    distanceMeters: segmentRoutes.reduce((sum, route) => sum + Number(route.distanceMeters || 0), 0) || null,
+    durationSeconds: segmentRoutes.reduce((sum, route) => sum + Number(route.durationSeconds || 0), 0) || null,
+    source: "goong",
+  };
+};
+
+export const normalizeGoongPlace = (place, fallback = {}) => {
+  const location = place?.geometry?.location || {};
+  const lat = toFiniteNumber(location.lat ?? fallback.lat);
+  const lng = toFiniteNumber(location.lng ?? fallback.lng ?? fallback.lon);
+  const formattedAddress = place?.formatted_address || fallback.description || fallback.display_name || "";
+  const name = place?.name
+    || fallback.structured_formatting?.main_text
+    || formattedAddress.split(",")[0]
+    || "Địa điểm Goong";
+
+  return {
+    id: place?.place_id || fallback.place_id || fallback.reference || `${lat},${lng}`,
+    source: "goong",
+    kind: "goong_place",
+    place_id: place?.place_id || fallback.place_id || fallback.reference || null,
+    reference: place?.reference || fallback.reference || place?.place_id || fallback.place_id || null,
+    name,
+    address: formattedAddress,
+    formatted_address: formattedAddress,
+    display_name: formattedAddress,
+    lat,
+    lng,
+    lon: lng,
+    url: place?.url || (place?.place_id ? `https://maps.goong.io/?pid=${place.place_id}` : null),
+    types: Array.isArray(place?.types) ? place.types : (Array.isArray(fallback.types) ? fallback.types : []),
+    plus_code: place?.plus_code || fallback.plus_code || null,
+    compound: place?.compound || fallback.compound || null,
+    deprecated_description: place?.deprecated_description || fallback.deprecated_description || null,
+    deprecated_compound: place?.deprecated_compound || fallback.deprecated_compound || null,
+    address_components: place?.address_components || fallback.address_components || [],
+  };
 };
 
 export const reverseGeocodeWithGoong = async ({lat, lng}) => {
@@ -166,8 +225,10 @@ export const reverseGeocodeWithGoong = async ({lat, lng}) => {
     throw new Error("Invalid coordinates");
   }
 
-  const url = makeGoongUrl("/Geocode", {
+  const url = makeGoongUrl("/v2/geocode", {
     latlng: `${latNumber},${lngNumber}`,
+    limit: "1",
+    ...GOONG_ADMIN_UNIT_PARAMS,
   });
   const data = await fetchJsonWithTimeout(url);
   const result = data?.results?.[0];
@@ -176,62 +237,92 @@ export const reverseGeocodeWithGoong = async ({lat, lng}) => {
     throw new Error(data?.status || "Goong did not return an address");
   }
 
-  return {
-    display_name: result.formatted_address,
-    address: result.address_components || [],
-    place_id: result.place_id,
-    source: "goong",
-  };
+  return normalizeGoongPlace(result, {lat: latNumber, lng: lngNumber});
 };
 
-const getGoongPlaceDetail = async (placeId) => {
-  const url = makeGoongUrl("/Place/Detail", {
+export const getGoongPlaceDetail = async (placeId) => {
+  if (!placeId) {
+    const error = new Error("place_id is required");
+    error.status = 400;
+    error.code = "GOONG_PLACE_ID_REQUIRED";
+    throw error;
+  }
+
+  const url = makeGoongUrl("/v2/place/detail", {
     place_id: placeId,
+    ...GOONG_ADMIN_UNIT_PARAMS,
   });
   const data = await fetchJsonWithTimeout(url);
-  return data?.result || null;
+  const result = data?.result;
+  if (!result) {
+    const error = new Error(data?.status || "Goong did not return place detail");
+    error.status = 404;
+    error.code = "GOONG_PLACE_NOT_FOUND";
+    throw error;
+  }
+  return normalizeGoongPlace(result);
 };
 
-export const searchAddressWithGoong = async (query, {limit = 5} = {}) => {
+export const searchAddressWithGoong = async (query, {limit = 5, location, origin} = {}) => {
   const input = query?.trim();
   if (!input) return [];
 
-  const url = makeGoongUrl("/Place/AutoComplete", {
+  const params = {
     input,
     limit: String(limit),
-  });
+    more_compound: "true",
+    ...GOONG_ADMIN_UNIT_PARAMS,
+  };
+
+  if (location) params.location = location;
+  if (origin) params.origin = origin;
+
+  const url = makeGoongUrl("/v2/place/autocomplete", params);
   const data = await fetchJsonWithTimeout(url);
   const predictions = Array.isArray(data?.predictions)
     ? data.predictions.slice(0, limit)
     : [];
 
-  const detailedResults = await Promise.all(predictions.map(async (prediction) => {
-    if (!prediction?.place_id) return null;
+  const lightweightResults = predictions
+    .filter(prediction => prediction?.place_id)
+    .map(prediction => ({
+      id: prediction.place_id,
+      source: "goong",
+      kind: "goong_prediction",
+      place_id: prediction.place_id,
+      reference: prediction.reference || prediction.place_id,
+      display_name: prediction.description,
+      description: prediction.description,
+      name: prediction.structured_formatting?.main_text || prediction.description?.split(",")?.[0] || "Địa điểm Goong",
+      secondary_text: prediction.structured_formatting?.secondary_text || "",
+      structured_formatting: prediction.structured_formatting || null,
+      compound: prediction.compound || null,
+      deprecated_description: prediction.deprecated_description || null,
+      deprecated_compound: prediction.deprecated_compound || null,
+      has_children: Boolean(prediction.has_children),
+      types: prediction.types || [],
+      distance_meters: prediction.distance_meters ?? null,
+    }));
 
+  const detailedResults = await Promise.all(lightweightResults.map(async (prediction) => {
     try {
       const detail = await getGoongPlaceDetail(prediction.place_id);
-      const location = detail?.geometry?.location;
-      const lat = toFiniteNumber(location?.lat);
-      const lng = toFiniteNumber(location?.lng);
-
-      if (lat === null || lng === null) return null;
-
       return {
-        display_name: detail.formatted_address || prediction.description,
-        lat,
-        lon: lng,
-        lng,
-        place_id: prediction.place_id,
-        source: "goong",
+        ...prediction,
+        ...detail,
+        name: detail.name || prediction.name,
+        secondary_text: prediction.secondary_text,
+        description: prediction.description,
+        structured_formatting: prediction.structured_formatting,
+        distance_meters: prediction.distance_meters,
       };
     } catch (error) {
-      console.warn("Goong Place Detail failed:", error.message);
-      return null;
+      console.warn("Goong Place Detail hydrate failed:", error.message);
+      return prediction;
     }
   }));
 
-  return detailedResults.filter(Boolean);
+  return detailedResults;
 };
 
 export {isConfiguredGoongKey};
-  

@@ -90,11 +90,36 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
     const hasGroup = group.length > 1;
     const selectedIndex = hasGroup ? Math.min(currentIndex, group.length - 1) : 0;
     const displayLocation = hasGroup ? group[selectedIndex] : location;
+    const isGoongPlace = displayLocation?.kind === "goong_place" || displayLocation?.source === "goong";
+    const displayTitle = displayLocation?.name || displayLocation?.formatted_address?.split(",")?.[0] || "Địa điểm Goong";
+    const displayAddress = typeof displayLocation?.address === "string"
+        ? displayLocation.address
+        : displayLocation?.display_name || displayLocation?.formatted_address || displayLocation?.address?.display_name || "";
+    const displayCategory = displayLocation?.category || displayLocation?.types?.[0] || (isGoongPlace ? "Goong Place" : "other");
+    const externalPlaceUrl = displayLocation?.url || (displayLocation?.place_id
+        ? `https://maps.goong.io/?pid=${displayLocation.place_id}`
+        : null);
     const localLiked = likeOverride?.id === displayLocation?.id
         ? likeOverride.value
         : Boolean(displayLocation?.is_liked);
     const distanceLabel = formatDistance(getDistanceKm(userLocation, displayLocation));
     const coordinateText = formatCoordinates(displayLocation);
+    const goongTypes = Array.isArray(displayLocation?.types) ? displayLocation.types.filter(Boolean) : [];
+    const goongCompound = displayLocation?.compound && typeof displayLocation.compound === "object"
+        ? Object.entries(displayLocation.compound).filter(([, value]) => value)
+        : [];
+    const goongDeprecatedCompound = displayLocation?.deprecated_compound && typeof displayLocation.deprecated_compound === "object"
+        ? Object.entries(displayLocation.deprecated_compound).filter(([, value]) => value)
+        : [];
+    const goongAddressComponents = Array.isArray(displayLocation?.address_components)
+        ? displayLocation.address_components.filter(component => component?.long_name || component?.short_name)
+        : [];
+    const goongDetailRows = [
+        {label: "Place ID", value: displayLocation?.place_id},
+        {label: "Reference", value: displayLocation?.reference},
+        {label: "Tọa độ", value: coordinateText},
+        {label: "Plus code", value: displayLocation?.plus_code?.compound_code || displayLocation?.plus_code?.global_code || displayLocation?.plus_code},
+    ].filter(row => row.value);
 
     const formatImageUrl = (url) => {
         if (!url) return null;
@@ -110,16 +135,17 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
     };
 
     const handleOpenProfile = (uid) => {
-        if (!uid) return;
+        if (!uid || isGoongPlace) return;
         onClose();
         navigate(`/profile/${uid}`);
     };
 
     const handleShare = async () => {
-        const shareUrl = `${window.location.origin}/?lat=${displayLocation.lat}&lng=${displayLocation.lng}&locationId=${displayLocation.id}`;
+        const locationIdParam = isGoongPlace ? "" : `&locationId=${displayLocation.id}`;
+        const shareUrl = `${window.location.origin}/?lat=${displayLocation.lat}&lng=${displayLocation.lng}${locationIdParam}`;
         const shareData = {
-            title: displayLocation.name,
-            text: `Khám phá địa điểm "${displayLocation.name}" trên Aether Geo!`,
+            title: displayTitle,
+            text: `Khám phá địa điểm "${displayTitle}" trên Aether Geo!`,
             url: shareUrl,
         };
         try {
@@ -138,7 +164,9 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
     };
 
     useEffect(() => {
-        if (!displayLocation?.id) return;
+        if (!displayLocation?.id || isGoongPlace) {
+            return;
+        }
 
         let cancelled = false;
 
@@ -169,11 +197,11 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
         return () => {
             cancelled = true;
         };
-    }, [displayLocation?.id]);
+    }, [displayLocation?.id, isGoongPlace]);
 
     useEffect(() => {
         const fetchFollowStatus = async () => {
-            if (!user?.uid || !displayLocation?.user_id || user.uid === displayLocation.user_id) return;
+            if (isGoongPlace || !user?.uid || !displayLocation?.user_id || user.uid === displayLocation.user_id) return;
             try {
                 const followRes = await apiClient.get(`/follows/status?followerId=${user.uid}&followedId=${displayLocation.user_id}`);
                 if (followRes.success) setIsFollowing(followRes.data.isFollowing);
@@ -182,7 +210,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
             }
         };
         fetchFollowStatus();
-    }, [user?.uid, displayLocation?.user_id]);
+    }, [user?.uid, displayLocation?.user_id, isGoongPlace]);
 
     useEffect(() => {
         if (displayLocation?.lat && displayLocation?.lng) {
@@ -200,6 +228,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
     const handleToggleFollow = async (e) => {
         e.stopPropagation();
+        if (isGoongPlace) return;
         if (!user) {
             navigate('/login');
             return;
@@ -223,7 +252,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
     const handleSendComment = async (e) => {
         e.preventDefault();
-        if (!commentText.trim() || !user || isSubmittingComment) return;
+        if (isGoongPlace || !commentText.trim() || !user || isSubmittingComment) return;
 
         const content = commentText.trim();
         const tempId = `temp-${Date.now()}`;
@@ -287,7 +316,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
         const lng = Number(displayLocation?.lng);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
         window.open(
-            `https://map.goong.io/?lat=${lat}&lng=${lng}&zoom=17`,
+            externalPlaceUrl || `https://maps.goong.io/?lat=${lat}&lng=${lng}&zoom=17`,
             "_blank",
             "noopener,noreferrer"
         );
@@ -315,6 +344,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
     };
 
     const handleToggleLike = async () => {
+        if (isGoongPlace) return;
         if (!user) {
             navigate('/login');
             return;
@@ -390,7 +420,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                 <img
                                     src={formatImageUrl(displayLocation.image_url)}
                                     className="w-full h-full object-cover transition-all duration-700 group-hover/img:scale-110"
-                                    alt={displayLocation.name}
+                                    alt={displayTitle}
                                 />
                             ) : (
                                 <div
@@ -466,17 +496,18 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
                 <div className="relative z-10 px-4 pb-2 sm:px-6">
                     <div className="flex items-center justify-between mb-4">
-                        <motion.div
-                            animate={{x: 0, opacity: 1}}
-                            initial={mobile ? false : {x: -10, opacity: 0}}
-                            className="flex items-center gap-3 cursor-pointer group/user"
-                            onClick={() => handleOpenProfile(locationOwner.firebase_uid)}
-                        >
-                            <div className="relative">
-                                <UserBadge user={locationOwner} size={36} hideLevelBadge={true}/>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="flex flex-col">
+                        {!isGoongPlace ? (
+                            <motion.div
+                                animate={{x: 0, opacity: 1}}
+                                initial={mobile ? false : {x: -10, opacity: 0}}
+                                className="flex items-center gap-3 cursor-pointer group/user"
+                                onClick={() => handleOpenProfile(locationOwner.firebase_uid)}
+                            >
+                                <div className="relative">
+                                    <UserBadge user={locationOwner} size={36} hideLevelBadge={true}/>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex flex-col">
                   <span
                       className="text-[13px] font-jakarta font-bold text-text-primary leading-none group-hover/user:text-cyan-glow transition-colors">
                     {locationOwner.name || 'Explorer'}
@@ -486,27 +517,42 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                     Lvl.{level} {locationOwner.tier || 'Wanderer'}
                   </span>
                                 </div>
-                                {user?.uid && user.uid !== locationOwner.firebase_uid && (
-                                    <button
-                                        onClick={handleToggleFollow}
-                                        disabled={isFollowLoading}
-                                        className={`w-6 h-6 flex items-center justify-center rounded-full border shadow-sm transition-all duration-300 shrink-0 ${isFollowing
-                                            ? 'bg-white border-glass-border text-text-primary hover:bg-white hover:scale-110'
-                                            : 'bg-cyan-glow border-cyan-glow/50 text-white hover:bg-cyan-glow/80 hover:scale-110 shadow-neon-sm'
-                                        }`}
-                                    >
-                                        {isFollowLoading ? (
-                                            <div
-                                                className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"/>
-                                        ) : isFollowing ? (
-                                            <CheckIcon size={12} strokeWidth={3}/>
-                                        ) : (
-                                            <PlusIcon size={12} strokeWidth={3}/>
-                                        )}
-                                    </button>
-                                )}
-                            </div>
-                        </motion.div>
+                                    {user?.uid && user.uid !== locationOwner.firebase_uid && (
+                                        <button
+                                            onClick={handleToggleFollow}
+                                            disabled={isFollowLoading}
+                                            className={`w-6 h-6 flex items-center justify-center rounded-full border shadow-sm transition-all duration-300 shrink-0 ${isFollowing
+                                                ? 'bg-white border-glass-border text-text-primary hover:bg-white hover:scale-110'
+                                                : 'bg-cyan-glow border-cyan-glow/50 text-white hover:bg-cyan-glow/80 hover:scale-110 shadow-neon-sm'
+                                            }`}
+                                        >
+                                            {isFollowLoading ? (
+                                                <div
+                                                    className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"/>
+                                            ) : isFollowing ? (
+                                                <CheckIcon size={12} strokeWidth={3}/>
+                                            ) : (
+                                                <PlusIcon size={12} strokeWidth={3}/>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                animate={{x: 0, opacity: 1}}
+                                initial={mobile ? false : {x: -10, opacity: 0}}
+                                className="flex items-center gap-3"
+                            >
+                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-cyan-glow/15 bg-cyan-glow/8 text-cyan-glow">
+                                    <PinIcon size={16}/>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[13px] font-jakarta font-bold text-text-primary leading-none">Goong Map</span>
+                                    <span className="text-[8px] font-bold uppercase tracking-widest mt-1.5 text-text-secondary">Place Detail</span>
+                                </div>
+                            </motion.div>
+                        )}
 
                         <motion.div
                             initial={{x: 10, opacity: 0}}
@@ -515,9 +561,9 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                         >
                             <div
                                 className="px-2.5 py-1 rounded-full border border-cyan-glow/20 bg-cyan-glow/5 text-cyan-glow text-[8px] font-black uppercase tracking-widest shadow-neon-sm">
-                                {displayLocation.category}
+                                {displayCategory}
                             </div>
-                            {!displayLocation.is_public && (
+                            {!isGoongPlace && !displayLocation.is_public && (
                                 <div
                                     className="px-2.5 py-1 rounded-full border border-glass-border bg-glass-white text-text-muted text-[8px] font-black uppercase tracking-widest">
                                     Private
@@ -531,10 +577,10 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                         animate={{y: 0, opacity: 1}}
                         className="text-xl font-jakarta font-black tracking-tight text-text-primary leading-tight mb-2"
                     >
-                        {displayLocation.name}
+                        {displayTitle}
                     </motion.h2>
 
-                    {displayLocation.tags?.length > 0 && (
+                    {!isGoongPlace && displayLocation.tags?.length > 0 && (
                         <motion.div
                             initial={{y: 8, opacity: 0}}
                             animate={{y: 0, opacity: 1}}
@@ -557,21 +603,66 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
                 <div className="flex-1 space-y-5 overflow-y-auto p-4 pt-0 custom-scrollbar sm:p-6 sm:pt-0"
                      ref={scrollRef}>
-                    <motion.div
-                        initial={{opacity: 0}}
-                        animate={{opacity: 1}}
-                        className="relative group/review"
-                    >
-                        <div
-                            className="relative p-4 glass-panel border-glass-border bg-white/30 rounded-[1.2rem] hover:bg-white/50 transition-all duration-300">
-                            <div className="absolute top-0 right-0 p-2 opacity-[0.05]">
-                                <CommentIcon size={40} className="text-text-primary"/>
+                    {!isGoongPlace ? (
+                        <motion.div
+                            initial={{opacity: 0}}
+                            animate={{opacity: 1}}
+                            className="relative group/review"
+                        >
+                            <div
+                                className="relative p-4 glass-panel border-glass-border bg-white/30 rounded-[1.2rem] hover:bg-white/50 transition-all duration-300">
+                                <div className="absolute top-0 right-0 p-2 opacity-[0.05]">
+                                    <CommentIcon size={40} className="text-text-primary"/>
+                                </div>
+                                <p className="text-text-primary text-[13px] leading-relaxed font-medium italic relative z-10">
+                                    "{displayLocation.review_text || "Chưa có review chi tiết."}"
+                                </p>
                             </div>
-                            <p className="text-text-primary text-[13px] leading-relaxed font-medium italic relative z-10">
-                                "{displayLocation.review_text || "Chưa có review chi tiết."}"
-                            </p>
-                        </div>
-                    </motion.div>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            initial={{opacity: 0}}
+                            animate={{opacity: 1}}
+                            className="space-y-4 rounded-[1.2rem] border border-cyan-glow/10 bg-cyan-glow/5 p-4"
+                        >
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-glow">Goong Place Detail</p>
+                                <p className="mt-2 text-[13px] font-black leading-tight text-text-primary">{displayTitle}</p>
+                                {displayAddress && (
+                                    <p className="mt-1 text-[12px] font-medium leading-5 text-text-secondary">{displayAddress}</p>
+                                )}
+                            </div>
+
+                            {goongTypes.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {goongTypes.map(type => (
+                                        <span
+                                            key={type}
+                                            className="rounded-full border border-cyan-glow/15 bg-white/60 px-2.5 py-1 text-[8px] font-black uppercase tracking-widest text-text-secondary"
+                                        >
+                                            {type.replace(/_/g, " ")}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {goongDetailRows.length > 0 && (
+                                <div className="grid gap-2">
+                                    {goongDetailRows.map(row => (
+                                        <button
+                                            key={row.label}
+                                            type="button"
+                                            onClick={() => copyText(String(row.value), `Đã sao chép ${row.label}`)}
+                                            className="rounded-2xl border border-glass-border bg-white/65 px-3 py-2 text-left transition-all hover:bg-white active:scale-[0.98]"
+                                        >
+                                            <p className="text-[8px] font-black uppercase tracking-[0.22em] text-text-muted">{row.label}</p>
+                                            <p className="mt-1 truncate text-[12px] font-bold text-text-primary">{String(row.value)}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
 
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-3 text-text-secondary">
@@ -579,18 +670,20 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                 className="w-8 h-8 rounded-xl bg-cyan-glow/5 border border-cyan-glow/10 flex items-center justify-center shrink-0">
                                 <PinIcon size={14} className="text-cyan-glow"/>
                             </div>
-                            <p className="text-[12px] font-medium leading-tight truncate">{displayLocation.address}</p>
+                            <p className="text-[12px] font-medium leading-tight truncate">{displayAddress}</p>
                         </div>
 
-                        <div className="flex items-center gap-3 text-text-dim">
-                            <div
-                                className="w-8 h-8 rounded-xl bg-sunset/5 border border-sunset/10 flex items-center justify-center shrink-0">
-                                <DateIcon size={14} className="text-sunset"/>
+                        {!isGoongPlace && displayLocation.created_at && (
+                            <div className="flex items-center gap-3 text-text-dim">
+                                <div
+                                    className="w-8 h-8 rounded-xl bg-sunset/5 border border-sunset/10 flex items-center justify-center shrink-0">
+                                    <DateIcon size={14} className="text-sunset"/>
+                                </div>
+                                <p className="text-[12px] font-medium">
+                                    Đã đăng vào {parseDBDate(displayLocation.created_at).toLocaleDateString('vi-VN')}
+                                </p>
                             </div>
-                            <p className="text-[12px] font-medium">
-                                Đã đăng vào {parseDBDate(displayLocation.created_at).toLocaleDateString('vi-VN')}
-                            </p>
-                        </div>
+                        )}
 
                         <div className="grid grid-cols-2 gap-2 pt-1">
                             <div
@@ -620,7 +713,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                         <div className="grid grid-cols-2 gap-2">
                             <button
                                 type="button"
-                                onClick={() => copyText(displayLocation.address, "Đã sao chép địa chỉ")}
+                                onClick={() => copyText(displayAddress, "Đã sao chép địa chỉ")}
                                 className="rounded-2xl border border-glass-border bg-white/55 px-3 py-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-secondary transition-all hover:bg-white hover:text-text-primary active:scale-[0.98]"
                             >
                                 <CopyIcon size={13} className="text-cyan-glow"/>
@@ -635,6 +728,56 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                 Tọa độ
                             </button>
                         </div>
+
+                        {isGoongPlace && (goongCompound.length > 0 || goongDeprecatedCompound.length > 0 || goongAddressComponents.length > 0) && (
+                            <div className="space-y-3 rounded-[1.2rem] border border-glass-border bg-white/55 p-4">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-text-primary">
+                                    Hành chính
+                                </h4>
+
+                                {goongCompound.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {goongCompound.map(([key, value]) => (
+                                            <div key={key} className="min-h-14 rounded-2xl border border-cyan-glow/10 bg-cyan-glow/5 px-3 py-2">
+                                                <p className="text-[8px] font-black uppercase tracking-[0.18em] text-text-muted">{key}</p>
+                                                <p className="mt-1 truncate text-[12px] font-black text-text-primary">{value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {goongDeprecatedCompound.length > 0 && (
+                                    <div className="rounded-2xl border border-sunset/10 bg-sunset/5 px-3 py-2">
+                                        <p className="text-[8px] font-black uppercase tracking-[0.18em] text-sunset">Địa giới cũ</p>
+                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                            {goongDeprecatedCompound.map(([key, value]) => (
+                                                <span key={key} className="rounded-full bg-white/70 px-2 py-1 text-[10px] font-bold text-text-secondary">
+                                                    {value}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {goongAddressComponents.length > 0 && (
+                                    <div className="space-y-2">
+                                        {goongAddressComponents.slice(0, 6).map((component, index) => (
+                                            <div key={`${component.long_name || component.short_name}-${index}`} className="flex items-start gap-2 text-[11px]">
+                                                <HashIcon size={12} className="mt-0.5 shrink-0 text-cyan-glow"/>
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-text-primary">{component.long_name || component.short_name}</p>
+                                                    {component.types?.length > 0 && (
+                                                        <p className="truncate text-[9px] font-bold uppercase tracking-widest text-text-muted">
+                                                            {component.types.join(", ")}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {localWeather && (
                             <div className="grid grid-cols-3 gap-2 animate-in fade-in slide-in-from-left-2">
@@ -659,6 +802,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                         )}
                     </div>
 
+                    {!isGoongPlace && (
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
                             <h4
@@ -762,6 +906,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                             )}
                         </div>
                     </div>
+                    )}
                 </div>
 
                 <div
@@ -780,7 +925,9 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                 className="absolute inset-0 bg-sunset opacity-0 group-hover/review-btn:opacity-5 transition-opacity"/>
                             <StarIcon size={18} className="fill-current drop-shadow-sunset"/>
                             <span
-                                className="hidden sm:inline uppercase text-[12px] font-black tracking-widest">Review</span>
+                                className="hidden sm:inline uppercase text-[12px] font-black tracking-widest">
+                                {isGoongPlace ? "Lưu review" : "Review"}
+                            </span>
                         </ActionButton>
 
                         <ActionButton
@@ -796,16 +943,18 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                             <span className="uppercase text-[13px] font-black tracking-widest">Chỉ đường</span>
                         </ActionButton>
 
-                        <motion.button
-                            whileHover={{scale: 1.05, y: -2}}
-                            whileTap={{scale: 0.95}}
-                            onClick={handleToggleLike}
-                            className={`flex h-12 w-12 items-center justify-center rounded-2xl border border-glass-border bg-white/80 transition-all duration-500 sm:w-auto sm:px-6 ${localLiked ? 'bg-sunset/10 text-sunset border-sunset/20 shadow-sunset' : 'text-text-muted hover:text-text-primary hover:bg-white'}`}
-                            aria-label="Thích địa điểm"
-                        >
-                            <LikeIcon size={24} fill={localLiked ? "currentColor" : "none"}
-                                      className={localLiked ? "drop-shadow-[0_0_8px_rgba(255,75,43,0.3)]" : ""}/>
-                        </motion.button>
+                        {!isGoongPlace && (
+                            <motion.button
+                                whileHover={{scale: 1.05, y: -2}}
+                                whileTap={{scale: 0.95}}
+                                onClick={handleToggleLike}
+                                className={`flex h-12 w-12 items-center justify-center rounded-2xl border border-glass-border bg-white/80 transition-all duration-500 sm:w-auto sm:px-6 ${localLiked ? 'bg-sunset/10 text-sunset border-sunset/20 shadow-sunset' : 'text-text-muted hover:text-text-primary hover:bg-white'}`}
+                                aria-label="Thích địa điểm"
+                            >
+                                <LikeIcon size={24} fill={localLiked ? "currentColor" : "none"}
+                                          className={localLiked ? "drop-shadow-[0_0_8px_rgba(255,75,43,0.3)]" : ""}/>
+                            </motion.button>
+                        )}
                     </div>
                 </div>
             </GlassPanel>

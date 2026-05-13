@@ -8,9 +8,10 @@ export const getAddress = async (lat, lng) => {
       return {display_name: result.message || "Không xác định được địa chỉ"};
     }
 
-    if (result?.display_name) {
+    if (result?.display_name || result?.formatted_address) {
       return {
-        display_name: result.display_name
+        ...result,
+        display_name: result.display_name || result.formatted_address,
       };
     }
 
@@ -28,6 +29,17 @@ export const searchAddress = async (query) => {
   } catch (error) {
     console.error("Lỗi tìm kiếm:", error);
     return [];
+  }
+};
+
+export const getPlaceDetail = async (placeId) => {
+  if (!placeId) return null;
+  try {
+    const result = await apiClient.get(`/locations/goong/place-detail?place_id=${encodeURIComponent(placeId)}`);
+    return result?.success ? result.data : null;
+  } catch (error) {
+    console.error("Lỗi lấy chi tiết địa điểm Goong:", error);
+    return null;
   }
 };
 
