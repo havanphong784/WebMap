@@ -14,6 +14,7 @@ import followRoutes from "./routes/followRoutes.js";
 import weatherRoutes from "./routes/weatherRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import sseRoutes from "./routes/sseRoutes.js";
 import {errorHandler, notFoundHandler} from "./middlewares/errorHandler.js";
 import {normalizeApiResponse} from "./middlewares/normalizeResponse.js";
 import {createRateLimiter} from "./middlewares/rateLimit.js";
@@ -69,6 +70,7 @@ app.use("/api/locations/goong", externalProxyLimiter);
 app.use("/api/chatbot", chatbotLimiter);
 app.use(["/api/likes", "/api/comments", "/api/follows", "/api/messages"], writeLimiter);
 
+app.use("/api/sse", sseRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/likes", likeRoutes);

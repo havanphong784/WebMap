@@ -1,6 +1,7 @@
 import pool from "../config/db.js";
+import {broadcast} from "./sseService.js";
 
-export const upsertUser = async ({ uid, email, name, picture }) => {
+export const upsertUser = async ({uid, email, name, picture}) => {
   const query = `
     INSERT INTO users (firebase_uid, email, name, avatar_url)
     VALUES ($1, $2, $3, $4) ON CONFLICT (firebase_uid)
@@ -29,6 +30,7 @@ export const getUserProfile = async (uid) => {
   const result = await pool.query(query, [uid]);
   return result.rows[0];
 };
+
 export const listActiveUsers = async (limit = 10) => {
   const query = `
     SELECT firebase_uid, name, avatar_url, last_seen_at, level, tier, current_lat, current_lng
@@ -39,6 +41,21 @@ export const listActiveUsers = async (limit = 10) => {
   `;
   const result = await pool.query(query, [limit]);
   return result.rows;
+};
+
+// Debounce broadcast active users (tránh spam khi nhiều heartbeat cùng lúc)
+let broadcastTimer = null;
+const scheduleBroadcastActiveUsers = () => {
+  if (broadcastTimer) return;
+  broadcastTimer = setTimeout(async () => {
+    broadcastTimer = null;
+    try {
+      const users = await listActiveUsers(50);
+      broadcast("active_users", users);
+    } catch (err) {
+      console.error("Broadcast active users error:", err.message);
+    }
+  }, 5000); // Gom lại 5s rồi broadcast 1 lần
 };
 
 export const updateLastSeen = async (uid, location = {}) => {
@@ -61,4 +78,7 @@ export const updateLastSeen = async (uid, location = {}) => {
     `;
 
   await pool.query(query, hasLocation ? [uid, lat, lng] : [uid]);
+
+  // Broadcast updated active users list to all connected clients
+  scheduleBroadcastActiveUsers();
 };

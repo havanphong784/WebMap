@@ -1,4 +1,4 @@
-import {lazy, Suspense, useEffect, useRef} from 'react';
+import {lazy, Suspense, useCallback, useEffect, useMemo, useRef} from 'react';
 import {Route, Routes, useLocation} from 'react-router-dom';
 import {AnimatePresence} from 'framer-motion';
 import BottomNav from "./shared/components/layout/bottomNav.jsx";
@@ -9,6 +9,7 @@ import {useSocialStore} from "./features/map/store/useSocialStore.jsx";
 import {useLocationStore} from "./features/map/store/useLocationsStore.jsx";
 import {useNotificationStore} from "./features/notifications/store/useNotificationStore.jsx";
 import ToastProvider from "./shared/components/toast/ToastProvider.jsx";
+import useSSE from "./shared/hooks/useSSE.jsx";
 
 const LandingPage = lazy(() => import("./features/landing/landingPage.jsx"));
 const MapPage = lazy(() => import("./features/map/mapPage.jsx"));
@@ -31,34 +32,48 @@ function App() {
   const isLoginPage = location.pathname === '/login';
   const isLandingPage = location.pathname === '/';
   const {user} = useAuthStore();
-  const {sendHeartbeat} = useSocialStore();
+  const {sendHeartbeat, setActiveUsers} = useSocialStore();
   const userLocation = useLocationStore(state => state.userLocation);
-  const {fetchNotifications} = useNotificationStore();
+  const {setNotificationsFromSSE} = useNotificationStore();
   const userLocationRef = useRef(userLocation);
 
   useEffect(() => {
     userLocationRef.current = userLocation;
   }, [userLocation]);
 
+  // SSE event handlers
+  const sseHandlers = useMemo(() => ({
+    notifications: (data) => {
+      if (Array.isArray(data)) {
+        setNotificationsFromSSE(data);
+      }
+    },
+    new_notification: (data) => {
+      if (data?.id) {
+        useNotificationStore.getState().addNotification(data);
+      }
+    },
+    active_users: (data) => {
+      if (Array.isArray(data)) {
+        setActiveUsers(data);
+      }
+    },
+  }), [setNotificationsFromSSE, setActiveUsers]);
+
+  // SSE connection — replaces notification polling and active users polling
+  useSSE({
+    enabled: Boolean(user?.uid),
+    handlers: sseHandlers,
+  });
+
+  // Heartbeat — still needed to update last_seen in DB (triggers SSE broadcast)
   useEffect(() => {
     if (user?.uid) {
       sendHeartbeat(userLocationRef.current);
-      fetchNotifications(user.uid, true);
-
       const heartbeatInterval = setInterval(() => sendHeartbeat(userLocationRef.current), 60000);
-
-      const notifInterval = setInterval(() => {
-        if (document.visibilityState === 'visible') {
-          fetchNotifications(user.uid, true);
-        }
-      }, 30000);
-
-      return () => {
-        clearInterval(heartbeatInterval);
-        clearInterval(notifInterval);
-      };
+      return () => clearInterval(heartbeatInterval);
     }
-  }, [user?.uid, sendHeartbeat, fetchNotifications]);
+  }, [user?.uid, sendHeartbeat]);
 
   return (
     <div

@@ -10,6 +10,27 @@ export const useNotificationStore = create((set) => ({
   error: null,
   unreadCount: 0,
 
+  // Nhận full list từ SSE initial push
+  setNotificationsFromSSE: (data) => {
+    set({
+      notifications: data,
+      unreadCount: data.filter(n => !n.is_read).length,
+      error: null,
+    });
+  },
+
+  // Nhận 1 notification mới từ SSE push
+  addNotification: (notif) => {
+    set(state => {
+      const exists = state.notifications.some(n => n.id === notif.id);
+      if (exists) return state;
+      return {
+        notifications: [notif, ...state.notifications],
+        unreadCount: state.unreadCount + (notif.is_read ? 0 : 1),
+      };
+    });
+  },
+
   fetchNotifications: async (userId, silent = false) => {
     if (!userId) return;
     if (!silent) set({loading: true, error: null});

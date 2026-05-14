@@ -5,6 +5,8 @@ export const useSocialStore = create((set) => ({
   activeUsers: [],
   isLoading: false,
 
+  setActiveUsers: (users) => set({activeUsers: users}),
+
   fetchActiveUsers: async () => {
     set({ isLoading: true });
     try {

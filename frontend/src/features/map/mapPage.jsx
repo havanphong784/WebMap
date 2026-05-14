@@ -326,15 +326,11 @@ export default function MapPage() {
     }
   }, [user?.uid, debouncedFetch, isVisible, fetchWeather]);
 
+  // Active users giờ được push qua SSE từ App.jsx, không cần poll ở đây nữa.
+  // Chỉ fetch 1 lần khi mount để có data ngay (SSE có thể chưa connect xong).
   useEffect(() => {
     fetchActiveUsers();
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        fetchActiveUsers();
-      }
-    }, mobile ? 120000 : 60000);
-    return () => clearInterval(interval);
-  }, [fetchActiveUsers, mobile]);
+  }, [fetchActiveUsers]);
 
   const handleLocateUser = useCallback(() => {
     setIsLocating(true);
