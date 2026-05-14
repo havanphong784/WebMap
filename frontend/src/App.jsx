@@ -12,7 +12,7 @@ import ToastProvider from "./shared/components/toast/ToastProvider.jsx";
 import useSSE from "./shared/hooks/useSSE.jsx";
 
 const LandingPage = lazy(() => import("./features/landing/landingPage.jsx"));
-const MapPage = lazy(() => import("./features/map/mapPage.jsx"));
+const MapPage = lazy(() => import("./features/map/MapPage.jsx"));
 const DiscoveryFeed = lazy(() => import("./features/discovery/discoveryFeed.jsx"));
 const ProfilePage = lazy(() => import("./features/profile/profilePage.jsx"));
 const Login = lazy(() => import("./features/auth/loginPage.jsx"));
@@ -31,7 +31,7 @@ function App() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
   const isLandingPage = location.pathname === '/';
-  const {user} = useAuthStore();
+  const {user, setUnreadAchievements} = useAuthStore();
   const {sendHeartbeat, setActiveUsers} = useSocialStore();
   const userLocation = useLocationStore(state => state.userLocation);
   const {setNotificationsFromSSE} = useNotificationStore();
@@ -62,7 +62,18 @@ function App() {
       // Forward DM event ra window cho component chat lắng nghe
       window.dispatchEvent(new CustomEvent("aether:new_message", {detail: data}));
     },
-  }), [setNotificationsFromSSE, setActiveUsers]);
+    achievement_unlocked: () => {
+      // Tăng badge count ngay; ProfilePage sẽ fetch lại chi tiết khi user mở tab achievements.
+      if (typeof setUnreadAchievements === "function") {
+        setUnreadAchievements(prev => (prev || 0) + 1);
+      }
+    },
+    daily_task_completed: () => {
+      if (typeof setUnreadAchievements === "function") {
+        setUnreadAchievements(prev => (prev || 0) + 1);
+      }
+    },
+  }), [setNotificationsFromSSE, setActiveUsers, setUnreadAchievements]);
 
   // SSE connection — replaces notification polling and active users polling
   useSSE({

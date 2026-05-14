@@ -45,12 +45,22 @@ export const listActiveUsers = async (limit = 10) => {
 
 // Debounce broadcast active users (tránh spam khi nhiều heartbeat cùng lúc)
 let broadcastTimer = null;
+let lastBroadcastSignature = "";
+
 const scheduleBroadcastActiveUsers = () => {
   if (broadcastTimer) return;
   broadcastTimer = setTimeout(async () => {
     broadcastTimer = null;
     try {
       const users = await listActiveUsers(50);
+      // Signature: chỉ uid set + có lat/lng hay chưa.
+      // Bỏ qua last_seen_at để tránh broadcast vô nghĩa mỗi 5s khi không ai vào/ra.
+      const signature = users
+        .map(u => `${u.firebase_uid}:${u.current_lat ? "L" : "_"}`)
+        .sort()
+        .join("|");
+      if (signature === lastBroadcastSignature) return;
+      lastBroadcastSignature = signature;
       broadcast("active_users", users);
     } catch (err) {
       console.error("Broadcast active users error:", err.message);

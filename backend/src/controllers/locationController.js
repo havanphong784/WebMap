@@ -26,6 +26,18 @@ const geocodingCache = new Map();
 const MAX_CACHE_SIZE = 1000;
 const GEOCODING_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
+// Sweep cache mỗi 1h để xóa entry hết hạn (TTL).
+// setInterval kèm unref() để không chặn process exit.
+const gcInterval = setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of geocodingCache) {
+    if (now - entry.timestamp > GEOCODING_TTL_MS) {
+      geocodingCache.delete(key);
+    }
+  }
+}, 60 * 60 * 1000);
+gcInterval.unref?.();
+
 const getViewerId = (req) => req.user?.uid || null;
 
 export const getLocations = async (req, res) => {

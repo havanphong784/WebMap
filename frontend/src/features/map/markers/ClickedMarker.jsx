@@ -1,22 +1,30 @@
-import { lazy, Suspense, useCallback, useState } from "react";
-import { Marker } from "react-map-gl/maplibre";
-const LocationFormModal = lazy(() => import("./locationFormModal.jsx"));
-import { useLocationStore } from "../store/useLocationsStore.jsx";
-import { useAuthStore } from "../../auth/context/authStore.js";
-import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import { CloseIcon, PinIcon, PlusIcon, RouteIcon, SpinnerIcon } from "../../../shared/components/common/icons.jsx";
+import {lazy, Suspense, useCallback, useState} from "react";
+import {Marker} from "react-map-gl/maplibre";
+import {useNavigate} from "react-router-dom";
+import {AnimatePresence, motion} from "framer-motion";
+import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
+import {useLocationStore} from "../store/useLocationsStore.jsx";
+import {useAuthStore} from "../../auth/context/authStore.js";
+import {useToastStore} from "../../../shared/components/toast/useToastStore.jsx";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
-import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
-import { useToastStore } from "../../../shared/components/toast/useToastStore.jsx";
+import {CloseIcon, PinIcon, PlusIcon, RouteIcon, SpinnerIcon} from "../../../shared/components/common/icons.jsx";
 
-export default function ClickedMarker({ point, setPoint, onLocationSaved }) {
+const LocationFormModal = lazy(() => import("../modals/LocationFormModal.jsx"));
+
+/**
+ * Marker tạm khi user click vào map (POI hoặc empty area).
+ * Hiển thị popup "Thêm địa điểm" / "Chỉ đường", chuyển sang LocationFormModal khi user thêm.
+ */
+export default function ClickedMarker({point, setPoint, onLocationSaved}) {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const { fetchRoute, routeLoading, setRouteLoading, userLocation } = useLocationStore();
-  const { user } = useAuthStore();
+  const fetchRoute = useLocationStore((s) => s.fetchRoute);
+  const routeLoading = useLocationStore((s) => s.routeLoading);
+  const setRouteLoading = useLocationStore((s) => s.setRouteLoading);
+  const userLocation = useLocationStore((s) => s.userLocation);
+  const {user} = useAuthStore();
   const navigate = useNavigate();
-  const addToast = useToastStore(state => state.addToast);
+  const addToast = useToastStore((s) => s.addToast);
   const shouldShowForm = isFormOpen || Boolean(point?.autoOpenForm);
 
   const handleGetDirections = useCallback((e) => {
@@ -24,7 +32,6 @@ export default function ClickedMarker({ point, setPoint, onLocationSaved }) {
     if (routeLoading || !point) return;
 
     const end = [point.lng, point.lat];
-
     if (userLocation) {
       fetchRoute(userLocation, end);
       setPoint(null);
@@ -34,15 +41,14 @@ export default function ClickedMarker({ point, setPoint, onLocationSaved }) {
     setRouteLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const start = [pos.coords.longitude, pos.coords.latitude];
-        fetchRoute(start, end);
+        fetchRoute([pos.coords.longitude, pos.coords.latitude], end);
         setPoint(null);
       },
       () => {
         setRouteLoading(false);
         addToast("Không thể lấy vị trí của bạn. Vui lòng cho phép truy cập vị trí.", "error");
       },
-      { timeout: 5000, enableHighAccuracy: true }
+      {timeout: 5000, enableHighAccuracy: true}
     );
   }, [point, routeLoading, userLocation, fetchRoute, setPoint, setRouteLoading, addToast]);
 
@@ -50,21 +56,20 @@ export default function ClickedMarker({ point, setPoint, onLocationSaved }) {
 
   return (
     <>
-      <Marker longitude={point.lng} latitude={point.lat} anchor="center" style={{ zIndex: 20 }}>
+      <Marker longitude={point.lng} latitude={point.lat} anchor="center" style={{zIndex: 20}}>
         <div className="relative flex items-center justify-center">
-          <div className="absolute w-10 h-10 bg-cyan-glow/20 rounded-full animate-ping"></div>
-          <div className="w-4 h-4 bg-cyan-glow rounded-full shadow-neon border-2 border-text-primary z-10"></div>
+          <div className="absolute w-10 h-10 bg-cyan-glow/20 rounded-full animate-ping" />
+          <div className="w-4 h-4 bg-cyan-glow rounded-full shadow-neon border-2 border-text-primary z-10" />
 
           <AnimatePresence>
             {!shouldShowForm && (
               <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
-                animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
-                exit={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
+                initial={{opacity: 0, y: 10, scale: 0.9, x: "-50%"}}
+                animate={{opacity: 1, y: 0, scale: 1, x: "-50%"}}
+                exit={{opacity: 0, y: 10, scale: 0.9, x: "-50%"}}
                 className="absolute bottom-8 left-1/2 z-10"
               >
-                <GlassPanel
-                  className="w-64 p-5 border-glass-border-bright bg-glass-obsidian backdrop-blur-3xl shadow-glass rounded-2xl overflow-hidden ring-1 ring-glass-border">
+                <GlassPanel className="w-64 p-5 border-glass-border-bright bg-glass-obsidian backdrop-blur-3xl shadow-glass rounded-2xl overflow-hidden ring-1 ring-glass-border">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2">
                       <div className="p-1.5 rounded-xl bg-cyan-glow/10 text-cyan-glow">
@@ -120,15 +125,14 @@ export default function ClickedMarker({ point, setPoint, onLocationSaved }) {
                       disabled={routeLoading}
                       className="w-full flex items-center justify-center gap-2 glass-panel border-glass-border bg-glass-white py-2.5 text-text-secondary hover:text-text-primary hover:bg-white/10 transition-all text-[10px] font-bold uppercase tracking-widest"
                     >
-                      {routeLoading ? (
-                        <SpinnerIcon size={14} className="animate-spin text-cyan-glow" />
-                      ) : <RouteIcon size={14} className="text-cyan-glow" />}
+                      {routeLoading
+                        ? <SpinnerIcon size={14} className="animate-spin text-cyan-glow" />
+                        : <RouteIcon size={14} className="text-cyan-glow" />}
                       Chỉ đường
                     </button>
                   </div>
                 </GlassPanel>
-                <div
-                  className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-glass-obsidian border-b border-r border-glass-border rotate-45"></div>
+                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-glass-obsidian border-b border-r border-glass-border rotate-45" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -139,9 +143,7 @@ export default function ClickedMarker({ point, setPoint, onLocationSaved }) {
         <Suspense fallback={null}>
           <LocationFormModal
             point={point}
-            onSaved={(savedLocation) => {
-              onLocationSaved?.(savedLocation);
-            }}
+            onSaved={(savedLocation) => onLocationSaved?.(savedLocation)}
             onClose={() => {
               setIsFormOpen(false);
               setPoint(null);
@@ -152,4 +154,3 @@ export default function ClickedMarker({ point, setPoint, onLocationSaved }) {
     </>
   );
 }
-

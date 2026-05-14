@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import {sendToUser} from "./sseService.js";
 
 const XP_CONFIG = {
   PHOTO: 10,
@@ -99,6 +100,15 @@ export const updateAchievementProgress = async (userId, action) => {
 
       if (isUnlocked) {
         await addAchievementXP(userId, achievement.xp_reward, achievement.title_vi);
+        // Push realtime "unread badge" tới user
+        try {
+          sendToUser(userId, "achievement_unlocked", {
+            id: achievement.id,
+            key_name: achievement.key_name,
+            title: achievement.title_vi,
+            xp_reward: achievement.xp_reward,
+          });
+        } catch {/* non-critical */}
       }
     }
   } catch (err) {
@@ -149,6 +159,14 @@ export const updateDailyTaskProgress = async (userId, action) => {
 
       if (isCompleted) {
         await addAchievementXP(userId, task.xp_reward, `Hoàn thành nhiệm vụ: ${task.title_vi}`);
+        try {
+          sendToUser(userId, "daily_task_completed", {
+            id: task.id,
+            key_name: task.key_name,
+            title: task.title_vi,
+            xp_reward: task.xp_reward,
+          });
+        } catch {/* non-critical */}
       }
     }
   } catch (err) {

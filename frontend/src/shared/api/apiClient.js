@@ -84,6 +84,7 @@ export const apiClient = {
   get: (endpoint, options) => request(endpoint, {...options, method: "GET"}),
   post: (endpoint, data, options) => request(endpoint, {...options, method: "POST", data}),
   put: (endpoint, data, options) => request(endpoint, {...options, method: "PUT", data}),
-  delete: (endpoint, data, options) => request(endpoint, {...options, method: "DELETE", data}),
+  // DELETE không nên có body — dùng query string nếu cần thêm params.
+  delete: (endpoint, options) => request(endpoint, {...options, method: "DELETE"}),
   API_BASE_URL,
 };

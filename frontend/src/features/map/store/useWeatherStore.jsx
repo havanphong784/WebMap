@@ -26,3 +26,4 @@ export const useWeatherStore = create((set) => ({
     }
   }
 }));
+

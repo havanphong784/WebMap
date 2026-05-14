@@ -94,15 +94,12 @@ export const AuthProvider = ({children}) => {
     }
   }, []);
 
+  // Lần đầu load: fetch unread count để có giá trị ngay.
+  // Sau đó SSE event `achievement_unlocked` / `daily_task_completed` sẽ tự bump counter.
   useEffect(() => {
     if (!user?.uid) return;
-
     const timer = setTimeout(() => fetchUnreadCount(user.uid), 0);
-    const interval = setInterval(() => fetchUnreadCount(user.uid), 60000);
-    return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
-    };
+    return () => clearTimeout(timer);
   }, [user?.uid, fetchUnreadCount]);
 
   return (
