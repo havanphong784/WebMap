@@ -9,9 +9,9 @@ import {
   listUserLocations,
   listFollowingLocations
 } from "../services/locationService.js";
-import { addXP } from "../services/gamificationService.js";
-import { getFollowers } from "../services/followService.js";
-import { createNotification } from "../services/notificationService.js";
+import {addXP} from "../services/gamificationService.js";
+import {getFollowers} from "../services/followService.js";
+import {createNotification} from "../services/notificationService.js";
 import {
   getRouteForPoints,
   getGoongPlaceDetail,
@@ -20,39 +20,44 @@ import {
   reverseGeocodeWithGoong,
   searchAddressWithGoong
 } from "../services/goongMapService.js";
+import {sendError, sendSuccess} from "../utils/apiResponse.js";
 
 const geocodingCache = new Map();
 const MAX_CACHE_SIZE = 1000;
+const GEOCODING_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+const getViewerId = (req) => req.user?.uid || null;
 
 export const getLocations = async (req, res) => {
   try {
-    const { user_id, minLng, maxLng, minLat, maxLat } = req.query;
+    const {minLng, maxLng, minLat, maxLat} = req.query;
 
     if (!minLng || !maxLng || !minLat || !maxLat) {
-      return res.status(200).json({ success: true, data: [], message: "Thiếu tham số tọa độ" });
+      return sendSuccess(res, {data: [], message: "Thiếu tham số tọa độ"});
     }
 
     const data = await listLocations({
-      userId: user_id,
+      userId: getViewerId(req),
       minLng: parseFloat(minLng),
       maxLng: parseFloat(maxLng),
       minLat: parseFloat(minLat),
       maxLat: parseFloat(maxLat)
     });
-    res.status(200).json({ success: true, data });
+    sendSuccess(res, {data});
   } catch (error) {
     console.error("Lỗi lấy danh sách địa điểm:", error);
-    res.status(500).json({ success: false, message: "Lỗi Server", detail: error.message });
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
 export const createLocationEntry = async (req, res) => {
   try {
-    const { tags, ...rest } = req.body;
+    const userId = req.user.uid;
+    const {tags, user_id: _ignored, ...rest} = req.body;
     const normalizedTags = Array.isArray(tags)
       ? tags.map(t => t.trim().toLowerCase()).filter(Boolean)
       : [];
-    const saved = await createLocation({ ...rest, tags: normalizedTags });
+    const saved = await createLocation({...rest, user_id: userId, tags: normalizedTags});
 
     if (saved) {
       await addXP(saved.user_id, "LOCATION_CREATED");
@@ -69,12 +74,11 @@ export const createLocationEntry = async (req, res) => {
         }
       }
 
-      // Notify followers ONLY if public
       if (saved.is_public) {
         const followers = await getFollowers(saved.user_id);
-        for (const f of followers) {
+        for (const follower of followers) {
           await createNotification({
-            recipientId: f.firebase_uid,
+            recipientId: follower.firebase_uid,
             senderId: saved.user_id,
             type: "NEW_POST",
             message: `đã đăng một địa điểm mới: ${saved.name}`,
@@ -84,184 +88,181 @@ export const createLocationEntry = async (req, res) => {
       }
     }
 
-    res.status(201).json({ success: true, data: saved });
+    sendSuccess(res, {status: 201, data: saved});
   } catch (error) {
     console.error("Lỗi khi lưu địa điểm:", error);
-    res.status(500).json({ success: false, message: "Lỗi Server" });
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
 export const getUserLocations = async (req, res) => {
   try {
-    const { uid } = req.params;
-    const { current_user_id } = req.query;
-    const data = await listUserLocations({ uid, currentUserId: current_user_id });
-    res.status(200).json({ success: true, data });
+    const {uid} = req.params;
+    const data = await listUserLocations({uid, currentUserId: getViewerId(req)});
+    sendSuccess(res, {data});
   } catch (error) {
     console.error("Lỗi lấy địa điểm theo User:", error);
-    res.status(500).json({ success: false, message: "Lỗi Server" });
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
 export const getTrendingLocations = async (req, res) => {
   try {
-    const { user_id } = req.query;
-    const data = await listTrendingLocations({ userId: user_id });
-    res.status(200).json({ success: true, data });
+    const data = await listTrendingLocations({userId: getViewerId(req)});
+    sendSuccess(res, {data});
   } catch (error) {
     console.error("Lỗi lấy địa điểm xu hướng:", error);
-    res.status(500).json({ success: false, message: "Lỗi Server" });
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
 export const getFollowingLocations = async (req, res) => {
   try {
-    const { user_id } = req.query;
-    if (!user_id) {
-      return res.status(400).json({ success: false, message: "Thiếu user_id" });
-    }
-    const data = await listFollowingLocations({ userId: user_id });
-    res.status(200).json({ success: true, data });
+    const userId = req.user.uid;
+    const data = await listFollowingLocations({userId});
+    sendSuccess(res, {data});
   } catch (error) {
     console.error("Lỗi lấy địa điểm của người đang theo dõi:", error);
-    res.status(500).json({ success: false, message: "Lỗi Server" });
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
 export const deleteLocationEntry = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { user_id } = req.body;
-    const deleted = await deleteLocation({ locationId: id, userId: user_id });
-    res.status(200).json({ success: true, data: deleted });
+    const {id} = req.params;
+    const deleted = await deleteLocation({locationId: id, userId: req.user.uid});
+    sendSuccess(res, {data: deleted});
   } catch (error) {
     console.error("Lỗi xóa địa điểm:", error);
-    res.status(403).json({ success: false, message: error.message || "Lỗi Server" });
+    sendError(res, {status: 403, code: "LOCATION_DELETE_FORBIDDEN", message: error.message || "Không thể xoá"});
   }
 };
 
 export const getLocationById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { user_id } = req.query;
-    const data = await getLocationDetail({ locationId: id, userId: user_id });
+    const {id} = req.params;
+    const data = await getLocationDetail({locationId: id, userId: getViewerId(req)});
     if (!data) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy địa điểm" });
+      return sendError(res, {status: 404, code: "LOCATION_NOT_FOUND", message: "Không tìm thấy địa điểm"});
     }
-    res.status(200).json({ success: true, data });
+    sendSuccess(res, {data});
   } catch (error) {
     console.error("Lỗi lấy chi tiết địa điểm:", error);
-    res.status(500).json({ success: false, message: "Lỗi Server" });
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
 export const getLocationsByTag = async (req, res) => {
   try {
-    const { tag } = req.params;
-    const { user_id } = req.query;
-    const data = await listLocationsByTag({ tag, userId: user_id });
-    res.status(200).json({ success: true, data });
+    const {tag} = req.params;
+    const data = await listLocationsByTag({tag, userId: getViewerId(req)});
+    sendSuccess(res, {data});
   } catch (error) {
     console.error("Lỗi lọc địa điểm theo tag:", error);
-    res.status(500).json({ success: false, message: "Lỗi Server" });
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
 export const getUniqueTags = async (req, res) => {
   try {
     const data = await listUniqueTags();
-    res.status(200).json({ success: true, data });
+    sendSuccess(res, {data});
   } catch (error) {
     console.error("Lỗi lấy danh sách tag:", error);
-    res.status(500).json({ success: false, message: "Lỗi Server" });
+    sendError(res, {status: 500, message: "Lỗi Server"});
   }
 };
 
 export const reverseGeocode = async (req, res) => {
-  const { lat, lng } = req.query;
+  const {lat, lng} = req.query;
   if (!lat || !lng) {
-    return res.status(400).json({ success: false, message: "Thiếu tọa độ" });
+    return sendError(res, {status: 400, code: "GEO_COORDS_REQUIRED", message: "Thiếu tọa độ"});
   }
 
   const cacheKey = `${parseFloat(lat).toFixed(5)},${parseFloat(lng).toFixed(5)}`;
-  if (geocodingCache.has(cacheKey)) {
-    return res.status(200).json(geocodingCache.get(cacheKey));
+  const cached = geocodingCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < GEOCODING_TTL_MS) {
+    return sendSuccess(res, {data: cached.data});
   }
 
   if (!isConfiguredGoongKey()) {
-    return res.status(503).json({ success: false, message: "Chưa cấu hình GOONG_API_KEY" });
+    return sendError(res, {status: 503, code: "GOONG_NOT_CONFIGURED", message: "Chưa cấu hình GOONG_API_KEY"});
   }
 
   try {
     const result = await reverseGeocodeWithGoong({lat, lng});
-    geocodingCache.set(cacheKey, result);
+    geocodingCache.set(cacheKey, {data: result, timestamp: Date.now()});
     if (geocodingCache.size > MAX_CACHE_SIZE) {
       geocodingCache.delete(geocodingCache.keys().next().value);
     }
-    return res.status(200).json(result);
+    sendSuccess(res, {data: result});
   } catch (error) {
     console.error("Goong reverse geocoding failed:", error.message);
-    return res.status(502).json({ success: false, message: "Không thể xác định địa chỉ từ Goong" });
+    sendError(res, {status: 502, code: "GOONG_REVERSE_FAILED", message: "Không thể xác định địa chỉ từ Goong"});
   }
 };
 
 export const getDirections = async (req, res) => {
   try {
     if (!isConfiguredGoongKey()) {
-      return res.status(503).json({ success: false, message: "Chưa cấu hình GOONG_API_KEY" });
+      return sendError(res, {status: 503, code: "GOONG_NOT_CONFIGURED", message: "Chưa cấu hình GOONG_API_KEY"});
     }
 
-    const { start, end, points } = req.query;
+    const {start, end, points} = req.query;
     const routePoints = points
       ? points.split(";").map(parseLngLatString)
       : [parseLngLatString(start), parseLngLatString(end)];
 
     if (routePoints.length < 2 || routePoints.some(point => !point)) {
-      return res.status(400).json({ success: false, message: "Tọa độ không hợp lệ" });
+      return sendError(res, {status: 400, code: "ROUTE_INVALID", message: "Tọa độ không hợp lệ"});
     }
 
     const route = await getRouteForPoints(routePoints);
-    return res.status(200).json({ success: true, routes: [route] });
+    return res.status(200).json({success: true, routes: [route]});
   } catch (error) {
     console.error("Goong routing failed:", error);
-    res.status(502).json({ success: false, message: "Không thể lấy dữ liệu chỉ đường từ Goong" });
+    sendError(res, {status: 502, code: "GOONG_ROUTING_FAILED", message: "Không thể lấy dữ liệu chỉ đường từ Goong"});
   }
 };
 
 export const searchAddress = async (req, res) => {
   try {
-    const { q, location, origin } = req.query;
+    const {q, location, origin} = req.query;
     if (!q) {
-      return res.status(400).json({ success: false, message: "Thiếu từ khóa tìm kiếm" });
+      return sendError(res, {status: 400, code: "SEARCH_QUERY_REQUIRED", message: "Thiếu từ khóa tìm kiếm"});
     }
 
     if (!isConfiguredGoongKey()) {
-      return res.status(503).json({ success: false, message: "Chưa cấu hình GOONG_API_KEY" });
+      return sendError(res, {status: 503, code: "GOONG_NOT_CONFIGURED", message: "Chưa cấu hình GOONG_API_KEY"});
     }
 
     const data = await searchAddressWithGoong(q, {limit: 5, location, origin});
-    return res.status(200).json(data);
+    sendSuccess(res, {data});
   } catch (error) {
     console.error("Goong address search failed:", error);
-    res.status(502).json({ success: false, message: "Tìm kiếm thất bại trên Goong" });
+    sendError(res, {status: 502, code: "GOONG_SEARCH_FAILED", message: "Tìm kiếm thất bại trên Goong"});
   }
 };
 
 export const getGoongPlace = async (req, res) => {
   try {
-    const { place_id } = req.query;
+    const {place_id} = req.query;
     if (!place_id) {
-      return res.status(400).json({ success: false, message: "Thiếu place_id" });
+      return sendError(res, {status: 400, code: "PLACE_ID_REQUIRED", message: "Thiếu place_id"});
     }
 
     if (!isConfiguredGoongKey()) {
-      return res.status(503).json({ success: false, message: "Chưa cấu hình GOONG_API_KEY" });
+      return sendError(res, {status: 503, code: "GOONG_NOT_CONFIGURED", message: "Chưa cấu hình GOONG_API_KEY"});
     }
 
     const data = await getGoongPlaceDetail(place_id);
-    return res.status(200).json({ success: true, data });
+    sendSuccess(res, {data});
   } catch (error) {
     console.error("Goong place detail failed:", error);
-    res.status(error.status || 502).json({ success: false, message: "Không thể lấy chi tiết địa điểm từ Goong" });
+    sendError(res, {
+      status: error.status || 502,
+      code: error.code || "GOONG_PLACE_FAILED",
+      message: error.message || "Không thể lấy chi tiết địa điểm từ Goong",
+    });
   }
 };

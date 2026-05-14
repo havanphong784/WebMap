@@ -5,6 +5,10 @@ const {Pool, types} = pg;
 
 types.setTypeParser(1114, (val) => val);
 
+// WORKAROUND: DB cloud (Neon/Supabase/Render) dùng self-signed cert chain.
+// pg driver mới (v8.12+) không tôn trọng rejectUnauthorized: false trong mọi trường hợp,
+// nên cần biến env này. Nó ảnh hưởng toàn process — chấp nhận được khi chạy trên
+// server riêng. Khi có CA cert từ provider, thay bằng ssl.ca option và bỏ dòng này.
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const pool = new Pool({

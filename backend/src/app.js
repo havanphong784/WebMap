@@ -16,20 +16,58 @@ import chatbotRoutes from "./routes/chatbotRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import {errorHandler, notFoundHandler} from "./middlewares/errorHandler.js";
 import {normalizeApiResponse} from "./middlewares/normalizeResponse.js";
+import {createRateLimiter} from "./middlewares/rateLimit.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// CORS allowlist (đặt FRONTEND_ORIGINS="https://a.com,https://b.com" trong .env)
+const allowedOrigins = (process.env.FRONTEND_ORIGINS || "")
+  .split(",")
+  .map(item => item.trim())
+  .filter(Boolean);
+
+const isDev = process.env.NODE_ENV !== "production";
+
+const corsOptions = {
+  credentials: true,
+  origin: (origin, callback) => {
+    // Cho phép tools như curl/Postman không gửi origin
+    if (!origin) return callback(null, true);
+    if (isDev && allowedOrigins.length === 0) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`Origin ${origin} không được phép bởi CORS`));
+  },
+};
 
 app.use(helmet({
   contentSecurityPolicy: false,
 }));
 app.use(compression());
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
-app.use(express.json());
+app.use(cors(corsOptions));
+app.use(express.json({limit: "1mb"}));
 app.use(normalizeApiResponse);
+
+// Rate limiters dùng chung
+const authLimiter = createRateLimiter({windowMs: 60_000, max: 30, code: "AUTH_RATE_LIMITED"});
+const heartbeatLimiter = createRateLimiter({windowMs: 60_000, max: 30, code: "HEARTBEAT_RATE_LIMITED"});
+const externalProxyLimiter = createRateLimiter({windowMs: 60_000, max: 60, code: "PROXY_RATE_LIMITED"});
+const chatbotLimiter = createRateLimiter({windowMs: 60_000, max: 20, code: "CHATBOT_RATE_LIMITED"});
+const writeLimiter = createRateLimiter({windowMs: 60_000, max: 60, code: "WRITE_RATE_LIMITED"});
+
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/heartbeat", heartbeatLimiter);
+// Chỉ limit endpoint lấy data thời tiết, KHÔNG limit tiles vì map gọi hàng chục tile cùng lúc.
+app.use("/api/weather", (req, res, next) => {
+  // Bỏ qua rate limit cho tile requests (đã có Cache-Control 1h).
+  if (req.path.startsWith("/tile/")) return next();
+  return externalProxyLimiter(req, res, next);
+});
+app.use("/api/locations/geocoding", externalProxyLimiter);
+app.use("/api/locations/routing", externalProxyLimiter);
+app.use("/api/locations/goong", externalProxyLimiter);
+app.use("/api/chatbot", chatbotLimiter);
+app.use(["/api/likes", "/api/comments", "/api/follows", "/api/messages"], writeLimiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/locations", locationRoutes);

@@ -11,21 +11,22 @@ export const getComments = async (req, res) => {
 };
 
 export const postComment = async (req, res) => {
-  const {user_id, content} = req.body;
+  const userId = req.user.uid;
+  const {content} = req.body;
 
-  if (!user_id || typeof content !== "string" || !content.trim()) {
+  if (typeof content !== "string" || !content.trim()) {
     return sendError(res, {
       status: 400,
       code: "COMMENT_INVALID",
-      message: "Thiếu user_id hoặc nội dung bình luận",
+      message: "Thiếu nội dung bình luận",
     });
   }
 
   try {
     const data = await createComment({
       locationId: req.params.id,
-      userId: user_id,
-      content: content.trim()
+      userId,
+      content: content.trim(),
     });
 
     sendSuccess(res, {data});

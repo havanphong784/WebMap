@@ -9,27 +9,19 @@ import {
 } from "firebase/auth";
 import {auth} from "../../../config/firebase.js";
 import {AuthContext} from "./authStore.js";
-
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+import {apiClient} from "../../../shared/api/apiClient.js";
 
 export const AuthProvider = ({children}) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [unreadAchievements, setUnreadAchievements] = useState(0);
 
-  const syncWithBackend = async (firebaseUser) => {
+  const syncWithBackend = async () => {
     try {
-      const token = await firebaseUser.getIdToken(true);
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.user;
+      // apiClient tự đính Authorization Bearer từ Firebase user hiện tại.
+      const response = await apiClient.post("/auth/login");
+      if (response?.success) {
+        return response.user || response.data?.user || null;
       }
     } catch (error) {
       console.error("Lỗi đồng bộ backend:", error);
@@ -42,7 +34,7 @@ export const AuthProvider = ({children}) => {
       if (firebaseUser) {
         setUser(firebaseUser);
 
-        const backendUser = await syncWithBackend(firebaseUser);
+        const backendUser = await syncWithBackend();
         if (backendUser) {
           setUser({
             ...firebaseUser,
@@ -70,7 +62,7 @@ export const AuthProvider = ({children}) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, {displayName: name});
 
-    const backendUser = await syncWithBackend(userCredential.user);
+    const backendUser = await syncWithBackend();
     if (backendUser) {
       setUser({
         ...userCredential.user,
@@ -90,14 +82,12 @@ export const AuthProvider = ({children}) => {
     await signOut(auth);
   };
 
-  const [unreadAchievements, setUnreadAchievements] = useState(0);
-
   const fetchUnreadCount = useCallback(async (userId) => {
+    if (!userId) return;
     try {
-      const response = await fetch(`${API_URL}/achievements/unread/${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setUnreadAchievements(data.count);
+      const response = await apiClient.get(`/achievements/unread/${userId}`);
+      if (response?.success) {
+        setUnreadAchievements(response.count ?? 0);
       }
     } catch (err) {
       console.error("Lỗi fetch unread count:", err);
@@ -131,5 +121,3 @@ export const AuthProvider = ({children}) => {
     </AuthContext.Provider>
   );
 };
-
-
