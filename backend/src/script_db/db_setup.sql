@@ -255,3 +255,66 @@ CREATE TABLE IF NOT EXISTS chatbot_feedback (
 );
 CREATE INDEX IF NOT EXISTS idx_chatbot_feedback_session_id ON chatbot_feedback(session_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_chatbot_feedback_rating ON chatbot_feedback(rating, created_at DESC);
+
+
+-- =============================================
+-- DENORMALIZED COUNTERS ON LOCATIONS
+-- =============================================
+
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS likes_count INTEGER DEFAULT 0;
+ALTER TABLE locations ADD COLUMN IF NOT EXISTS comments_count INTEGER DEFAULT 0;
+
+-- Backfill existing data
+UPDATE locations SET
+  likes_count = (SELECT COUNT(*) FROM likes WHERE likes.location_id = locations.id),
+  comments_count = (SELECT COUNT(*) FROM comments WHERE comments.location_id = locations.id);
+
+-- Trigger function: update likes_count
+CREATE OR REPLACE FUNCTION update_location_likes_count() RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE locations SET likes_count = likes_count + 1 WHERE id = NEW.location_id;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE locations SET likes_count = GREATEST(0, likes_count - 1) WHERE id = OLD.location_id;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_likes_count ON likes;
+CREATE TRIGGER trg_likes_count
+  AFTER INSERT OR DELETE ON likes
+  FOR EACH ROW EXECUTE FUNCTION update_location_likes_count();
+
+-- Trigger function: update comments_count
+CREATE OR REPLACE FUNCTION update_location_comments_count() RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE locations SET comments_count = comments_count + 1 WHERE id = NEW.location_id;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE locations SET comments_count = GREATEST(0, comments_count - 1) WHERE id = OLD.location_id;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_comments_count ON comments;
+CREATE TRIGGER trg_comments_count
+  AFTER INSERT OR DELETE ON comments
+  FOR EACH ROW EXECUTE FUNCTION update_location_comments_count();
+
+
+-- =============================================
+-- IMPROVED SPATIAL INDEXES (without PostGIS)
+-- =============================================
+
+-- Composite index for bounding-box range queries
+CREATE INDEX IF NOT EXISTS idx_locations_lat_lng ON locations (lat, lng);
+
+-- Partial index for public locations (most common query pattern)
+CREATE INDEX IF NOT EXISTS idx_locations_public_created ON locations (created_at DESC)
+  WHERE is_public = true;
+
+-- Composite for trending sort
+CREATE INDEX IF NOT EXISTS idx_locations_public_likes ON locations (likes_count DESC, created_at DESC)
+  WHERE is_public = true;

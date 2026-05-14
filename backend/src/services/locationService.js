@@ -1,6 +1,6 @@
 import pool from "../config/db.js";
 
-export const listLocations = async ({ userId, minLng, maxLng, minLat, maxLat }) => {
+export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat}) => {
   const query = `
     SELECT l.*,
            u.name AS user_name,
@@ -8,8 +8,6 @@ export const listLocations = async ({ userId, minLng, maxLng, minLat, maxLat }) 
            u.xp AS user_xp,
            u.level AS user_level,
            u.tier AS user_tier,
-           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
-           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $5) AS is_liked
     FROM locations l
     LEFT JOIN users u ON l.user_id = u.firebase_uid
@@ -60,7 +58,7 @@ export const createLocation = async ({
   return result.rows[0];
 };
 
-export const listUserLocations = async ({ uid, currentUserId }) => {
+export const listUserLocations = async ({uid, currentUserId}) => {
   const query = `
     SELECT l.*,
            u.name AS user_name,
@@ -68,8 +66,6 @@ export const listUserLocations = async ({ uid, currentUserId }) => {
            u.xp AS user_xp,
            u.level AS user_level,
            u.tier AS user_tier,
-           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
-           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
     FROM locations l
     LEFT JOIN users u ON l.user_id = u.firebase_uid
@@ -81,7 +77,7 @@ export const listUserLocations = async ({ uid, currentUserId }) => {
   return result.rows;
 };
 
-export const listTrendingLocations = async ({ userId }) => {
+export const listTrendingLocations = async ({userId}) => {
   const query = `
     SELECT l.*,
            u.name AS user_name,
@@ -89,19 +85,17 @@ export const listTrendingLocations = async ({ userId }) => {
            u.xp AS user_xp,
            u.level AS user_level,
            u.tier AS user_tier,
-           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
-           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $1) AS is_liked
     FROM locations l
     LEFT JOIN users u ON l.user_id = u.firebase_uid
     WHERE l.is_public = true
-    ORDER BY likes_count DESC, l.created_at DESC LIMIT 20;
+    ORDER BY l.likes_count DESC, l.created_at DESC LIMIT 20;
   `;
   const result = await pool.query(query, [userId || "guest"]);
   return result.rows;
 };
 
-export const deleteLocation = async ({ locationId, userId }) => {
+export const deleteLocation = async ({locationId, userId}) => {
   const result = await pool.query(
     "DELETE FROM locations WHERE id = $1 AND user_id = $2 RETURNING *",
     [locationId, userId]
@@ -112,7 +106,7 @@ export const deleteLocation = async ({ locationId, userId }) => {
   return result.rows[0];
 };
 
-export const getLocationDetail = async ({ locationId, userId }) => {
+export const getLocationDetail = async ({locationId, userId}) => {
   const query = `
     SELECT l.*,
            u.name AS user_name,
@@ -120,8 +114,6 @@ export const getLocationDetail = async ({ locationId, userId }) => {
            u.xp AS user_xp,
            u.level AS user_level,
            u.tier AS user_tier,
-           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
-           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
     FROM locations l
     LEFT JOIN users u ON l.user_id = u.firebase_uid
@@ -131,7 +123,7 @@ export const getLocationDetail = async ({ locationId, userId }) => {
   return result.rows[0];
 };
 
-export const listLocationsByTag = async ({ tag, userId }) => {
+export const listLocationsByTag = async ({tag, userId}) => {
   const query = `
     SELECT l.*,
            u.name AS user_name,
@@ -139,8 +131,6 @@ export const listLocationsByTag = async ({ tag, userId }) => {
            u.xp AS user_xp,
            u.level AS user_level,
            u.tier AS user_tier,
-           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
-           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $2) AS is_liked
     FROM locations l
     LEFT JOIN users u ON l.user_id = u.firebase_uid
@@ -163,7 +153,7 @@ export const listUniqueTags = async () => {
   return result.rows.map(r => r.tag);
 };
 
-export const listFollowingLocations = async ({ userId }) => {
+export const listFollowingLocations = async ({userId}) => {
   const query = `
     SELECT l.*,
            u.name AS user_name,
@@ -171,8 +161,6 @@ export const listFollowingLocations = async ({ userId }) => {
            u.xp AS user_xp,
            u.level AS user_level,
            u.tier AS user_tier,
-           (SELECT COUNT(*) FROM likes WHERE location_id = l.id) AS likes_count,
-           (SELECT COUNT(*) FROM comments WHERE location_id = l.id) AS comments_count,
            EXISTS (SELECT 1 FROM likes WHERE location_id = l.id AND user_id = $1) AS is_liked
     FROM locations l
     JOIN follows f ON l.user_id = f.followed_id
