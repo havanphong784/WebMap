@@ -6,9 +6,13 @@
 // Map<userId, Set<Response>>
 const connections = new Map();
 
-/**
- * Đăng ký một SSE connection cho user.
- */
+const dropConnection = (userId, res) => {
+  const userConns = connections.get(userId);
+  if (!userConns) return;
+  userConns.delete(res);
+  if (userConns.size === 0) connections.delete(userId);
+};
+
 export const addConnection = (userId, res) => {
   if (!connections.has(userId)) {
     connections.set(userId, new Set());
@@ -16,16 +20,15 @@ export const addConnection = (userId, res) => {
   connections.get(userId).add(res);
 };
 
-/**
- * Hủy đăng ký khi client disconnect.
- */
-export const removeConnection = (userId, res) => {
-  const userConns = connections.get(userId);
-  if (userConns) {
-    userConns.delete(res);
-    if (userConns.size === 0) {
-      connections.delete(userId);
-    }
+export const removeConnection = (userId, res) => dropConnection(userId, res);
+
+const safeWrite = (res, payload, userId) => {
+  try {
+    res.write(payload);
+    return true;
+  } catch {
+    if (userId) dropConnection(userId, res);
+    return false;
   }
 };
 
@@ -37,22 +40,9 @@ export const sendToUser = (userId, event, data) => {
   if (!userConns || userConns.size === 0) return;
 
   const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-  for (const res of userConns) {
-    try {
-      res.write(payload);
-    } catch {
-      // Connection đã đóng, cleanup
-      userConns.delete(res);
-    }
-  }
-};
-
-/**
- * Gửi event tới nhiều users.
- */
-export const sendToUsers = (userIds, event, data) => {
-  for (const userId of userIds) {
-    sendToUser(userId, event, data);
+  // Snapshot để tránh mutate trong khi iterate
+  for (const res of [...userConns]) {
+    safeWrite(res, payload, userId);
   }
 };
 
@@ -61,34 +51,14 @@ export const sendToUsers = (userIds, event, data) => {
  */
 export const broadcast = (event, data) => {
   const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-  for (const [, userConns] of connections) {
-    for (const res of userConns) {
-      try {
-        res.write(payload);
-      } catch {
-        userConns.delete(res);
-      }
+  for (const userId of [...connections.keys()]) {
+    const userConns = connections.get(userId);
+    if (!userConns) continue;
+    for (const res of [...userConns]) {
+      safeWrite(res, payload, userId);
     }
   }
 };
 
-/**
- * Lấy danh sách userId đang online (có ít nhất 1 SSE connection).
- */
-export const getOnlineUserIds = () => [...connections.keys()];
-
-/**
- * Kiểm tra user có đang online không.
- */
-export const isUserOnline = (userId) => connections.has(userId) && connections.get(userId).size > 0;
-
-/**
- * Đếm tổng connections.
- */
-export const getConnectionCount = () => {
-  let count = 0;
-  for (const [, userConns] of connections) {
-    count += userConns.size;
-  }
-  return count;
-};
+export const isUserOnline = (userId) =>
+  connections.has(userId) && connections.get(userId).size > 0;

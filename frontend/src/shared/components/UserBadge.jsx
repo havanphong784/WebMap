@@ -208,17 +208,6 @@ const UserBadge = memo(({user = {}, size = 64, hideLevelBadge = false, isOnline 
           style={{width: size * 0.25, height: size * 0.25}}
         />
       )}
-
-      {!mobile && (
-        <style dangerouslySetInnerHTML={{
-          __html: `
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `
-        }}/>
-      )}
     </motion.div>
   );
 });

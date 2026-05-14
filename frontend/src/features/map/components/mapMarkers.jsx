@@ -11,9 +11,13 @@ const MapMarkers = memo(({ viewMode, onLocationClick, activeLocation }) => {
 
   useEffect(() => {
     if (!map) return;
-    const onMove = () => setZoom(map.getZoom());
-    map.on('move', onMove);
-    return () => map.off('move', onMove);
+    const onMoveEnd = () => setZoom(map.getZoom());
+    map.on('moveend', onMoveEnd);
+    map.on('zoomend', onMoveEnd);
+    return () => {
+      map.off('moveend', onMoveEnd);
+      map.off('zoomend', onMoveEnd);
+    };
   }, [map]);
 
   const activeMarker = useMemo(() => {

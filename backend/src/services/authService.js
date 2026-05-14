@@ -61,7 +61,11 @@ const scheduleBroadcastActiveUsers = () => {
 export const updateLastSeen = async (uid, location = {}) => {
   const lat = Number.parseFloat(location?.lat);
   const lng = Number.parseFloat(location?.lng);
-  const hasLocation = Number.isFinite(lat) && Number.isFinite(lng);
+  // Validate range để tránh DB numeric overflow
+  const hasLocation =
+    Number.isFinite(lat) && Number.isFinite(lng)
+    && lat >= -90 && lat <= 90
+    && lng >= -180 && lng <= 180;
 
   const query = hasLocation
     ? `

@@ -1,7 +1,5 @@
 import pool from "../config/db.js";
-
-// Schema đã được quản lý trong db_setup.sql. Giữ hàm này để tương thích ngược.
-export const ensureMessageTables = async () => {};
+import {sendToUser} from "./sseService.js";
 
 const sanitizeMessage = (content) => {
   if (typeof content !== "string") return "";
@@ -29,7 +27,6 @@ const ensureFriends = async ({userId, peerId}) => {
 };
 
 export const listConversation = async ({userId, peerId, limit = 80}) => {
-  await ensureMessageTables();
   await ensureFriends({userId, peerId});
   const safeLimit = Math.min(Math.max(Number.parseInt(limit, 10) || 80, 1), 150);
 
@@ -60,8 +57,6 @@ export const listConversation = async ({userId, peerId, limit = 80}) => {
 };
 
 export const listMessageThreads = async ({userId}) => {
-  await ensureMessageTables();
-
   const result = await pool.query(
     `WITH scoped_messages AS (
        SELECT
@@ -119,7 +114,6 @@ export const listMessageThreads = async ({userId}) => {
 };
 
 export const sendDirectMessage = async ({senderId, recipientId, content}) => {
-  await ensureMessageTables();
   await ensureFriends({userId: senderId, peerId: recipientId});
   const normalizedContent = sanitizeMessage(content);
   if (!normalizedContent) {
@@ -143,11 +137,23 @@ export const sendDirectMessage = async ({senderId, recipientId, content}) => {
     [senderId, recipientId, normalizedContent]
   );
 
-  return result.rows[0];
+  const message = result.rows[0];
+
+  // Push realtime DM tới cả sender (multi-tab) và recipient
+  if (message) {
+    const payload = {...message, peer_id_for_sender: recipientId, peer_id_for_recipient: senderId};
+    try {
+      sendToUser(recipientId, "new_message", payload);
+      sendToUser(senderId, "new_message", payload);
+    } catch {
+      /* non-critical */
+    }
+  }
+
+  return message;
 };
 
 export const markConversationRead = async ({userId, peerId}) => {
-  await ensureMessageTables();
   await ensureFriends({userId, peerId});
   await pool.query(
     `UPDATE direct_messages

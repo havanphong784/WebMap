@@ -145,9 +145,14 @@ export default function LocationFormModal({point, onClose, onSaved}) {
       return;
     }
 
-    setPreviewUrl(URL.createObjectURL(file));
+    // Revoke object URL cũ trước khi tạo mới để tránh leak
+    setPreviewUrl(prev => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
     setImageFile(file);
-    
+    setCompressedFile(null);
+
     // Background compression for manually selected image
     setIsCompressing(true);
     const result = await compressImage(file);

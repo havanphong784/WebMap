@@ -6,7 +6,7 @@ const WeatherLayers = () => {
 
   if (!isVisible) return null;
 
-  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
   const tileUrl = `${API_BASE}/weather/tile/${activeLayer}/{z}/{x}/{y}`;
 
   // Tăng mạnh Opacity để nhìn rõ hơn

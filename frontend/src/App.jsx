@@ -1,4 +1,4 @@
-import {lazy, Suspense, useCallback, useEffect, useMemo, useRef} from 'react';
+import {lazy, Suspense, useEffect, useMemo, useRef} from 'react';
 import {Route, Routes, useLocation} from 'react-router-dom';
 import {AnimatePresence} from 'framer-motion';
 import BottomNav from "./shared/components/layout/bottomNav.jsx";
@@ -57,6 +57,10 @@ function App() {
       if (Array.isArray(data)) {
         setActiveUsers(data);
       }
+    },
+    new_message: (data) => {
+      // Forward DM event ra window cho component chat lắng nghe
+      window.dispatchEvent(new CustomEvent("aether:new_message", {detail: data}));
     },
   }), [setNotificationsFromSSE, setActiveUsers]);
 

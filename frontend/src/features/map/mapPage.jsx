@@ -26,7 +26,6 @@ import WeatherWidget from "./components/WeatherWidget.jsx";
 import WeatherLayers from "./components/WeatherLayers.jsx";
 import WeatherEffects from "./components/WeatherEffects.jsx";
 import { useWeatherStore } from "./store/useWeatherStore.jsx";
-import { useSocialStore } from "./store/useSocialStore.jsx";
 import MapChatbot from "../chatbot/components/mapChatbot.jsx";
 import { withNearbyGroup } from "./utils/locationGrouping.js";
 import useWindowSize from "../../shared/hooks/useWindowSize.jsx";
@@ -85,13 +84,10 @@ export default function MapPage() {
   const { width } = useWindowSize();
   const mobile = width <= 768;
   const addToast = useToastStore(state => state.addToast);
-  const heartbeatLocationRef = useRef(0);
   const weatherFetchRef = useRef(0);
 
   const setUserLocation = useLocationStore(state => state.setUserLocation);
   const setAccuracy = useLocationStore(state => state.setAccuracy);
-  const sendHeartbeat = useSocialStore(state => state.sendHeartbeat);
-  const fetchActiveUsers = useSocialStore(state => state.fetchActiveUsers);
   const fetchLocations = useLocationStore(state => state.fetchLocations);
   const locations = useLocationStore(state => state.locations);
   const mapLoading = useLocationStore(state => state.mapLoading);
@@ -129,16 +125,12 @@ export default function MapPage() {
       (pos) => {
         setUserLocation([pos.coords.longitude, pos.coords.latitude]);
         setAccuracy(pos.coords.accuracy);
-        if (Date.now() - heartbeatLocationRef.current > 15000) {
-          heartbeatLocationRef.current = Date.now();
-          sendHeartbeat([pos.coords.longitude, pos.coords.latitude]);
-        }
       },
       () => { },
       { enableHighAccuracy: true }
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [setUserLocation, setAccuracy, sendHeartbeat]);
+  }, [setUserLocation, setAccuracy]);
 
   useEffect(() => {
     const focusLocation = routerLocation.state?.focusLocation;
@@ -156,7 +148,7 @@ export default function MapPage() {
       flyToLocation(lng, lat, 16, 1600, true);
     }, 100);
     return () => clearTimeout(timer);
-  }, [routerLocation.state, isMapReady, flyToLocation, fetchLocationDetail, user?.uid]);
+  }, [routerLocation.state, isMapReady, flyToLocation, fetchLocationDetail]);
 
   useEffect(() => {
     if (!isMapReady) return;
@@ -180,7 +172,7 @@ export default function MapPage() {
       setInfoClicked({ lng, lat, address: diachi });
     }, 300);
     return () => clearTimeout(timer);
-  }, [isMapReady, routerLocation.search, flyToLocation, fetchLocationDetail, user?.uid]);
+  }, [isMapReady, routerLocation.search, flyToLocation, fetchLocationDetail]);
 
   useEffect(() => {
     const coordinates = routeData?.coordinates;
@@ -206,7 +198,7 @@ export default function MapPage() {
       const group = groupedLocation.group?.length ? groupedLocation.group.map(item => item.id === detail.id ? { ...item, ...detail } : item) : null;
       setActiveLocation(group?.length > 1 ? { ...detail, group } : detail);
     }
-  }, [flyToLocation, fetchLocationDetail, locations, user?.uid]);
+  }, [flyToLocation, fetchLocationDetail, locations]);
 
   const handleClick = useCallback(async (e) => {
     // Ưu tiên các tính năng đặc thù (POI, Markers)
@@ -326,11 +318,8 @@ export default function MapPage() {
     }
   }, [user?.uid, debouncedFetch, isVisible, fetchWeather]);
 
-  // Active users giờ được push qua SSE từ App.jsx, không cần poll ở đây nữa.
-  // Chỉ fetch 1 lần khi mount để có data ngay (SSE có thể chưa connect xong).
-  useEffect(() => {
-    fetchActiveUsers();
-  }, [fetchActiveUsers]);
+  // Active users được push qua SSE từ App.jsx, không cần fetch thủ công nữa.
+  // SSE init đẩy danh sách ngay khi connect.
 
   const handleLocateUser = useCallback(() => {
     setIsLocating(true);

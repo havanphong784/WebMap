@@ -160,36 +160,36 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
     if (!silent) setIsLoadingMessages(false);
   }, [currentUserId, loadThreads]);
 
+  // Khi mở pane: tải friends/threads/conversation 1 lần. Realtime đến qua SSE event `new_message`.
   useEffect(() => {
     if (!isOpen) return;
-    const refreshTimer = globalThis.setTimeout(() => {
-      loadFriends();
-      loadThreads();
-    }, 0);
-    const interval = setInterval(() => {
-      loadFriends({silent: true});
-      loadThreads();
-    }, 10000);
-    return () => {
-      globalThis.clearTimeout(refreshTimer);
-      clearInterval(interval);
-    };
+    loadFriends();
+    loadThreads();
   }, [isOpen, loadFriends, loadThreads]);
 
   useEffect(() => {
     if (!isOpen || !activeChatUser?.firebase_uid) return;
-    const peerId = activeChatUser.firebase_uid;
-    const refreshTimer = globalThis.setTimeout(() => {
-      loadConversation(peerId);
-    }, 0);
-    const interval = setInterval(() => {
-      loadConversation(peerId, {silent: true});
-    }, 5000);
-    return () => {
-      globalThis.clearTimeout(refreshTimer);
-      clearInterval(interval);
-    };
+    loadConversation(activeChatUser.firebase_uid);
   }, [activeChatUser?.firebase_uid, isOpen, loadConversation]);
+
+  // Lắng nghe SSE: khi có DM mới, append/refresh.
+  useEffect(() => {
+    if (!currentUserId) return;
+    const handler = (event) => {
+      const message = event.detail;
+      if (!message) return;
+      const peerId = message.sender_id === currentUserId ? message.recipient_id : message.sender_id;
+      setMessagesByUser((prev) => {
+        const existing = prev[peerId] || [];
+        if (existing.some((m) => String(m.id) === String(message.id))) return prev;
+        return {...prev, [peerId]: [...existing, normalizeMessage(message)]};
+      });
+      // Refresh thread list để cập nhật last message + unread count
+      loadThreads();
+    };
+    window.addEventListener("aether:new_message", handler);
+    return () => window.removeEventListener("aether:new_message", handler);
+  }, [currentUserId, loadThreads]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({behavior: "smooth", block: "end"});

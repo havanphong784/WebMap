@@ -22,8 +22,7 @@ export const useNotificationStore = create((set) => ({
   // Nhận 1 notification mới từ SSE push
   addNotification: (notif) => {
     set(state => {
-      const exists = state.notifications.some(n => n.id === notif.id);
-      if (exists) return state;
+      if (state.notifications.some(n => n.id === notif.id)) return state;
       return {
         notifications: [notif, ...state.notifications],
         unreadCount: state.unreadCount + (notif.is_read ? 0 : 1),
