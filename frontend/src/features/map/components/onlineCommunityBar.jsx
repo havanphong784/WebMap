@@ -11,7 +11,7 @@ const OnlineCommunityBar = memo(() => {
   const { width: windowWidth } = useWindowSize();
 
   return (
-    <div className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 z-10 w-[95%] sm:w-[90%] max-w-xl pointer-events-none px-2">
+    <div className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 z-40 w-[95%] sm:w-[90%] max-w-xl pointer-events-none px-2">
       <GlassPanel className="py-2.5 sm:py-3 px-4 sm:px-6 rounded-2xl bg-obsidian border-glass-border flex items-center justify-between shadow-glass">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-sunset animate-pulse shadow-sunset"></div>

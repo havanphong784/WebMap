@@ -75,7 +75,7 @@ const ChatArrowTab = ({isOpen, onClick}) => {
           : "0px",
       }}
       transition={{type: "spring", damping: 25, stiffness: 120}}
-      className="fixed top-1/2 z-[9999] flex h-14 w-11 -translate-y-1/2 items-center justify-center rounded-r-2xl border border-l-0 border-cyan-glow/25 bg-white text-cyan-glow shadow-floating ring-1 ring-white/80 transition-colors hover:bg-cyan-glow hover:text-white"
+      className="fixed top-1/2 z-[60] flex h-14 w-11 -translate-y-1/2 items-center justify-center rounded-r-2xl border border-l-0 border-cyan-glow/25 bg-white text-cyan-glow shadow-floating ring-1 ring-white/80 transition-colors hover:bg-cyan-glow hover:text-white"
       aria-label={isOpen ? "Thu gọn chat" : "Mở chat bạn bè"}
     >
       <span className="relative h-5 w-5">
@@ -290,7 +290,7 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
         initial={false}
         animate={{x: isOpen ? 0 : "-100%", opacity: isOpen ? 1 : 0.98}}
         transition={{type: "spring", damping: 25, stiffness: 120}}
-        className={`fixed inset-y-0 left-0 z-[9998] w-full p-3 sm:w-[520px] sm:p-5 ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+        className={`fixed inset-y-0 left-0 z-[60] w-full p-3 sm:w-[520px] sm:p-5 ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
         aria-hidden={!isOpen}
       >
         <GlassPanel

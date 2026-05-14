@@ -33,7 +33,7 @@ const WeatherWidget = () => {
         initial={{opacity: 0, x: -20}}
         animate={{opacity: 1, x: 0}}
         exit={{opacity: 0, x: -20}}
-        className={`fixed ${mobile ? 'top-20' : 'top-24'} left-4 z-[1000] flex flex-col items-start gap-2 sm:gap-2.5 pointer-events-none`}
+        className={`fixed ${mobile ? 'top-20' : 'top-24'} left-4 z-30 flex flex-col items-start gap-2 sm:gap-2.5 pointer-events-none`}
       >
         <GlassPanel
           className="p-3 sm:p-4 border-glass-border-bright bg-white/95 backdrop-blur-2xl rounded-[2.2rem] pointer-events-auto flex items-center gap-4 shadow-glass ring-1 ring-black/5">

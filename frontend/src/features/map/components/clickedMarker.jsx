@@ -50,7 +50,7 @@ export default function ClickedMarker({ point, setPoint, onLocationSaved }) {
 
   return (
     <>
-      <Marker longitude={point.lng} latitude={point.lat} anchor="center" style={{ zIndex: 500 }}>
+      <Marker longitude={point.lng} latitude={point.lat} anchor="center" style={{ zIndex: 20 }}>
         <div className="relative flex items-center justify-center">
           <div className="absolute w-10 h-10 bg-cyan-glow/20 rounded-full animate-ping"></div>
           <div className="w-4 h-4 bg-cyan-glow rounded-full shadow-neon border-2 border-text-primary z-10"></div>
@@ -61,7 +61,7 @@ export default function ClickedMarker({ point, setPoint, onLocationSaved }) {
                 initial={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
                 animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
                 exit={{ opacity: 0, y: 10, scale: 0.9, x: "-50%" }}
-                className="absolute bottom-8 left-1/2 z-200"
+                className="absolute bottom-8 left-1/2 z-10"
               >
                 <GlassPanel
                   className="w-64 p-5 border-glass-border-bright bg-glass-obsidian backdrop-blur-3xl shadow-glass rounded-2xl overflow-hidden ring-1 ring-glass-border">

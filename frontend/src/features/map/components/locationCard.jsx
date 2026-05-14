@@ -19,7 +19,7 @@ const LocationCard = memo(({ location, onClick, viewMode = 'mini', count = 1, al
       latitude={Number(location.lat)}
       anchor="bottom"
       style={{
-        zIndex: isHovered ? 3000 : (isExpanded ? 2500 : 2000),
+        zIndex: isHovered ? 25 : (isExpanded ? 22 : 20),
         pointerEvents: "auto",
       }}
       onClick={(e) => {

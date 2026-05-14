@@ -29,7 +29,7 @@ const MapControls = memo(({
   const activeButton = "border-cyan-glow/40 bg-cyan-glow/15 text-cyan-glow";
 
   return (
-    <div className="absolute right-3 top-40 z-[700] flex flex-col gap-2 sm:right-6 sm:top-1/2 sm:-translate-y-1/2 sm:gap-3">
+    <div className="absolute right-3 top-40 z-30 flex flex-col gap-2 sm:right-6 sm:top-1/2 sm:-translate-y-1/2 sm:gap-3">
       <ActionButton
         variant="icon"
         size="icon"

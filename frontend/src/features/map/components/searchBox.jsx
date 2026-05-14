@@ -44,7 +44,7 @@ export default function SearchBox({ onSelectLocation }) {
   };
 
   return (
-    <div className="absolute left-1/2 top-4 z-[800] w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 sm:top-6">
+    <div className="absolute left-1/2 top-4 z-30 w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 sm:top-6">
       <form onSubmit={handleSearch} className="relative">
         <GlassPanel
           animate={false}

@@ -1,38 +1,38 @@
-import {AnimatePresence, motion} from "framer-motion";
-import {useEffect, useRef, useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {useLocationStore} from "../store/useLocationsStore.jsx";
-import {useAuthStore} from "../../auth/context/authStore.js";
-import {apiClient} from "../../../shared/api/apiClient.js";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useLocationStore } from "../store/useLocationsStore.jsx";
+import { useAuthStore } from "../../auth/context/authStore.js";
+import { apiClient } from "../../../shared/api/apiClient.js";
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import {
-  ArrowIcon,
-  CheckIcon,
-  CloseIcon,
-  CloudIcon,
-  CommentIcon,
-  CopyIcon,
-  DateIcon,
-  DropletsIcon,
-  ExternalLinkIcon,
-  HashIcon,
-  LikeIcon,
-  LocateIcon,
-  PinIcon,
-  PlusIcon,
-  RouteIcon,
-  SendIcon,
-  ShareIcon,
-  SpinnerIcon,
-  StarIcon,
-  TagIcon,
-  WindIcon
+    ArrowIcon,
+    CheckIcon,
+    CloseIcon,
+    CloudIcon,
+    CommentIcon,
+    CopyIcon,
+    DateIcon,
+    DropletsIcon,
+    ExternalLinkIcon,
+    HashIcon,
+    LikeIcon,
+    LocateIcon,
+    PinIcon,
+    PlusIcon,
+    RouteIcon,
+    SendIcon,
+    ShareIcon,
+    SpinnerIcon,
+    StarIcon,
+    TagIcon,
+    WindIcon
 } from "../../../shared/components/common/icons.jsx";
-import {parseDBDate} from "../../../shared/utils/dateUtils.js";
-import Skeleton, {SkeletonTheme} from "react-loading-skeleton";
+import { parseDBDate } from "../../../shared/utils/dateUtils.js";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
-import {isMobile} from "../../../shared/utils/deviceUtils.js";
+import { isMobile } from "../../../shared/utils/deviceUtils.js";
 
 const toRadians = (value) => (value * Math.PI) / 180;
 
@@ -67,11 +67,11 @@ const formatCoordinates = (location) => {
     return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
 };
 
-export default function LocationSidebar({location, onAddReview, onClose}) {
+export default function LocationSidebar({ location, onAddReview, onClose }) {
     const mobile = isMobile();
-    const {user} = useAuthStore();
+    const { user } = useAuthStore();
     const navigate = useNavigate();
-    const {fetchRoute, routeLoading, toggleLike, postComment, userLocation} = useLocationStore();
+    const { fetchRoute, routeLoading, toggleLike, postComment, userLocation } = useLocationStore();
 
     const [commentText, setCommentText] = useState("");
     const [comments, setComments] = useState([]);
@@ -115,10 +115,10 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
         ? displayLocation.address_components.filter(component => component?.long_name || component?.short_name)
         : [];
     const goongDetailRows = [
-        {label: "Place ID", value: displayLocation?.place_id},
-        {label: "Reference", value: displayLocation?.reference},
-        {label: "Tọa độ", value: coordinateText},
-        {label: "Plus code", value: displayLocation?.plus_code?.compound_code || displayLocation?.plus_code?.global_code || displayLocation?.plus_code},
+        { label: "Place ID", value: displayLocation?.place_id },
+        { label: "Reference", value: displayLocation?.reference },
+        { label: "Tọa độ", value: coordinateText },
+        { label: "Plus code", value: displayLocation?.plus_code?.compound_code || displayLocation?.plus_code?.global_code || displayLocation?.plus_code },
     ].filter(row => row.value);
 
     const formatImageUrl = (url) => {
@@ -351,10 +351,10 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
         }
 
         const previousLiked = localLiked;
-        setLikeOverride({id: displayLocation.id, value: !previousLiked});
+        setLikeOverride({ id: displayLocation.id, value: !previousLiked });
         const res = await toggleLike(displayLocation.id, user.uid);
         if (!res?.success) {
-            setLikeOverride({id: displayLocation.id, value: previousLiked});
+            setLikeOverride({ id: displayLocation.id, value: previousLiked });
             showToast(res?.message || "Không thể cập nhật lượt thích");
         }
     };
@@ -382,19 +382,19 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
     return (
         <motion.div
-            initial={mobile ? {y: "100%", opacity: 1} : {
+            initial={mobile ? { y: "100%", opacity: 1 } : {
                 x: window.innerWidth < 640 ? 0 : "-100%",
                 y: window.innerWidth < 640 ? "100%" : 0,
                 opacity: 0
             }}
-            animate={{x: 0, y: 0, opacity: 1}}
-            exit={mobile ? {y: "100%"} : {
+            animate={{ x: 0, y: 0, opacity: 1 }}
+            exit={mobile ? { y: "100%" } : {
                 x: window.innerWidth < 640 ? 0 : "-100%",
                 y: window.innerWidth < 640 ? "100%" : 0,
                 opacity: 0
             }}
-            transition={mobile ? {duration: 0.3} : {type: "spring", damping: 25, stiffness: 120}}
-            className="fixed inset-x-0 bottom-0 z-[2000] w-full pointer-events-none sm:inset-y-0 sm:left-0 sm:w-[520px] sm:p-5"
+            transition={mobile ? { duration: 0.3 } : { type: "spring", damping: 25, stiffness: 120 }}
+            className="fixed inset-x-0 bottom-0 z-[100] w-full pointer-events-none sm:inset-y-0 sm:left-0 sm:w-[520px] sm:p-5"
         >
             <GlassPanel
                 animate={false}
@@ -402,7 +402,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                 pad="none"
                 className="relative flex h-[min(88dvh,760px)] flex-col overflow-hidden rounded-b-none rounded-t-[2rem] border-glass-border bg-white/95 shadow-floating ring-1 ring-glass-border pointer-events-auto sm:h-full sm:rounded-[2rem] group/sidebar">
 
-                <div className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-black/10 sm:hidden"/>
+                <div className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-black/10 sm:hidden" />
 
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none"></div>
 
@@ -411,9 +411,9 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                         className="relative h-[26dvh] min-h-40 max-h-56 overflow-hidden rounded-[1.5rem] border border-black/5 shadow-lg sm:h-56 sm:rounded-[1.8rem] group/img">
                         <motion.div
                             key={`${displayLocation.id}-${displayLocation.image_url}`}
-                            animate={!mobile ? {scale: 1, opacity: 1} : {}}
-                            initial={!mobile ? {scale: 1.1, opacity: 0} : {}}
-                            transition={{duration: 0.8, ease: "easeOut"}}
+                            animate={!mobile ? { scale: 1, opacity: 1 } : {}}
+                            initial={!mobile ? { scale: 1.1, opacity: 0 } : {}}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
                             className="w-full h-full"
                         >
                             {displayLocation.image_url ? (
@@ -427,7 +427,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                     className="w-full h-full bg-black/[0.03] flex flex-col items-center justify-center gap-3">
                                     <div
                                         className="w-16 h-16 rounded-full bg-black/[0.02] border border-black/5 flex items-center justify-center">
-                                        <PinIcon size={24} className="text-text-dim/40"/>
+                                        <PinIcon size={24} className="text-text-dim/40" />
                                     </div>
                                     <span
                                         className="text-[10px] font-jakarta font-black uppercase tracking-[0.2em] text-text-dim/50">Không có ảnh</span>
@@ -445,7 +445,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                     className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 text-black backdrop-blur-xl border border-white/10 hover:border-cyan-glow/40 hover:bg-obsidian/60 hover:scale-110 transition-all active:scale-95 z-20 group/nav shadow-2xl"
                                 >
                                     <ArrowIcon size={14}
-                                               className="rotate-180 group-hover/nav:-translate-x-0.5 transition-transform"/>
+                                        className="rotate-180 group-hover/nav:-translate-x-0.5 transition-transform" />
                                 </button>
 
                                 <button
@@ -456,7 +456,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                     className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 text-black backdrop-blur-xl border border-white/10 hover:border-cyan-glow/40 hover:bg-obsidian/60 hover:scale-110 transition-all active:scale-95 z-20 group/nav shadow-2xl"
                                 >
                                     <ArrowIcon size={14}
-                                               className="group-hover/nav:translate-x-0.5 transition-transform"/>
+                                        className="group-hover/nav:translate-x-0.5 transition-transform" />
                                 </button>
 
                                 <div
@@ -471,23 +471,23 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
                         <div className="absolute top-3 left-3 right-3 flex justify-between items-center z-10">
                             <motion.button
-                                whileHover={!mobile ? {scale: 1.1, rotate: 90} : {}}
-                                whileTap={{scale: 0.9}}
+                                whileHover={!mobile ? { scale: 1.1, rotate: 90 } : {}}
+                                whileTap={{ scale: 0.9 }}
                                 onClick={onClose}
                                 className="rounded-xl border border-glass-border-bright bg-white/85 p-2 text-text-primary shadow-glass backdrop-blur-2xl transition-colors hover:bg-white"
                                 aria-label="Đóng chi tiết địa điểm"
                             >
-                                <CloseIcon size={14}/>
+                                <CloseIcon size={14} />
                             </motion.button>
                             <div className="flex gap-2">
                                 <motion.button
-                                    whileHover={{scale: 1.1, y: -2}}
-                                    whileTap={{scale: 0.9}}
+                                    whileHover={{ scale: 1.1, y: -2 }}
+                                    whileTap={{ scale: 0.9 }}
                                     onClick={handleShare}
                                     className="rounded-xl border border-glass-border-bright bg-white/85 p-2 text-text-primary shadow-glass backdrop-blur-2xl transition-colors hover:bg-white"
                                     aria-label="Chia sẻ địa điểm"
                                 >
-                                    <ShareIcon size={12}/>
+                                    <ShareIcon size={12} />
                                 </motion.button>
                             </div>
                         </div>
@@ -498,25 +498,25 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                     <div className="flex items-center justify-between mb-4">
                         {!isGoongPlace ? (
                             <motion.div
-                                animate={{x: 0, opacity: 1}}
-                                initial={mobile ? false : {x: -10, opacity: 0}}
+                                animate={{ x: 0, opacity: 1 }}
+                                initial={mobile ? false : { x: -10, opacity: 0 }}
                                 className="flex items-center gap-3 cursor-pointer group/user"
                                 onClick={() => handleOpenProfile(locationOwner.firebase_uid)}
                             >
                                 <div className="relative">
-                                    <UserBadge user={locationOwner} size={36} hideLevelBadge={true}/>
+                                    <UserBadge user={locationOwner} size={36} hideLevelBadge={true} />
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <div className="flex flex-col">
-                  <span
-                      className="text-[13px] font-jakarta font-bold text-text-primary leading-none group-hover/user:text-cyan-glow transition-colors">
-                    {locationOwner.name || 'Explorer'}
-                  </span>
-                                    <span
-                                        className={`text-[8px] font-bold uppercase tracking-widest mt-1.5 text-text-secondary`}>
-                    Lvl.{level} {locationOwner.tier || 'Wanderer'}
-                  </span>
-                                </div>
+                                        <span
+                                            className="text-[13px] font-jakarta font-bold text-text-primary leading-none group-hover/user:text-cyan-glow transition-colors">
+                                            {locationOwner.name || 'Explorer'}
+                                        </span>
+                                        <span
+                                            className={`text-[8px] font-bold uppercase tracking-widest mt-1.5 text-text-secondary`}>
+                                            Lvl.{level} {locationOwner.tier || 'Wanderer'}
+                                        </span>
+                                    </div>
                                     {user?.uid && user.uid !== locationOwner.firebase_uid && (
                                         <button
                                             onClick={handleToggleFollow}
@@ -524,15 +524,15 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                             className={`w-6 h-6 flex items-center justify-center rounded-full border shadow-sm transition-all duration-300 shrink-0 ${isFollowing
                                                 ? 'bg-white border-glass-border text-text-primary hover:bg-white hover:scale-110'
                                                 : 'bg-cyan-glow border-cyan-glow/50 text-white hover:bg-cyan-glow/80 hover:scale-110 shadow-neon-sm'
-                                            }`}
+                                                }`}
                                         >
                                             {isFollowLoading ? (
                                                 <div
-                                                    className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"/>
+                                                    className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
                                             ) : isFollowing ? (
-                                                <CheckIcon size={12} strokeWidth={3}/>
+                                                <CheckIcon size={12} strokeWidth={3} />
                                             ) : (
-                                                <PlusIcon size={12} strokeWidth={3}/>
+                                                <PlusIcon size={12} strokeWidth={3} />
                                             )}
                                         </button>
                                     )}
@@ -540,12 +540,12 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                             </motion.div>
                         ) : (
                             <motion.div
-                                animate={{x: 0, opacity: 1}}
-                                initial={mobile ? false : {x: -10, opacity: 0}}
+                                animate={{ x: 0, opacity: 1 }}
+                                initial={mobile ? false : { x: -10, opacity: 0 }}
                                 className="flex items-center gap-3"
                             >
                                 <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-cyan-glow/15 bg-cyan-glow/8 text-cyan-glow">
-                                    <PinIcon size={16}/>
+                                    <PinIcon size={16} />
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-[13px] font-jakarta font-bold text-text-primary leading-none">Goong Map</span>
@@ -555,8 +555,8 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                         )}
 
                         <motion.div
-                            initial={{x: 10, opacity: 0}}
-                            animate={{x: 0, opacity: 1}}
+                            initial={{ x: 10, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
                             className="flex gap-2"
                         >
                             <div
@@ -573,8 +573,8 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                     </div>
 
                     <motion.h2
-                        initial={{y: 5, opacity: 0}}
-                        animate={{y: 0, opacity: 1}}
+                        initial={{ y: 5, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
                         className="text-xl font-jakarta font-black tracking-tight text-text-primary leading-tight mb-2"
                     >
                         {displayTitle}
@@ -582,37 +582,37 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
 
                     {!isGoongPlace && displayLocation.tags?.length > 0 && (
                         <motion.div
-                            initial={{y: 8, opacity: 0}}
-                            animate={{y: 0, opacity: 1}}
-                            transition={{delay: 0.6}}
+                            initial={{ y: 8, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.6 }}
                             className="flex items-center gap-2 mt-3 flex-wrap"
                         >
-                            <TagIcon size={11} className="text-text-dim shrink-0"/>
+                            <TagIcon size={11} className="text-text-dim shrink-0" />
                             {displayLocation.tags.map(tag => (
                                 <span
                                     key={tag}
                                     className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/4 border border-glass-border text-text-muted hover:bg-cyan-glow/5 hover:border-cyan-glow/20 hover:text-cyan-glow transition-all duration-300 text-[10px] font-bold cursor-default"
                                 >
-                  <HashIcon size={8}/>
+                                    <HashIcon size={8} />
                                     {tag}
-                </span>
+                                </span>
                             ))}
                         </motion.div>
                     )}
                 </div>
 
                 <div className="flex-1 space-y-5 overflow-y-auto p-4 pt-0 custom-scrollbar sm:p-6 sm:pt-0"
-                     ref={scrollRef}>
+                    ref={scrollRef}>
                     {!isGoongPlace ? (
                         <motion.div
-                            initial={{opacity: 0}}
-                            animate={{opacity: 1}}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
                             className="relative group/review"
                         >
                             <div
                                 className="relative p-4 glass-panel border-glass-border bg-white/30 rounded-[1.2rem] hover:bg-white/50 transition-all duration-300">
                                 <div className="absolute top-0 right-0 p-2 opacity-[0.05]">
-                                    <CommentIcon size={40} className="text-text-primary"/>
+                                    <CommentIcon size={40} className="text-text-primary" />
                                 </div>
                                 <p className="text-text-primary text-[13px] leading-relaxed font-medium italic relative z-10">
                                     "{displayLocation.review_text || "Chưa có review chi tiết."}"
@@ -621,8 +621,8 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                         </motion.div>
                     ) : (
                         <motion.div
-                            initial={{opacity: 0}}
-                            animate={{opacity: 1}}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
                             className="space-y-4 rounded-[1.2rem] border border-cyan-glow/10 bg-cyan-glow/5 p-4"
                         >
                             <div>
@@ -668,7 +668,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                         <div className="flex items-center gap-3 text-text-secondary">
                             <div
                                 className="w-8 h-8 rounded-xl bg-cyan-glow/5 border border-cyan-glow/10 flex items-center justify-center shrink-0">
-                                <PinIcon size={14} className="text-cyan-glow"/>
+                                <PinIcon size={14} className="text-cyan-glow" />
                             </div>
                             <p className="text-[12px] font-medium leading-tight truncate">{displayAddress}</p>
                         </div>
@@ -677,7 +677,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                             <div className="flex items-center gap-3 text-text-dim">
                                 <div
                                     className="w-8 h-8 rounded-xl bg-sunset/5 border border-sunset/10 flex items-center justify-center shrink-0">
-                                    <DateIcon size={14} className="text-sunset"/>
+                                    <DateIcon size={14} className="text-sunset" />
                                 </div>
                                 <p className="text-[12px] font-medium">
                                     Đã đăng vào {parseDBDate(displayLocation.created_at).toLocaleDateString('vi-VN')}
@@ -688,7 +688,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                         <div className="grid grid-cols-2 gap-2 pt-1">
                             <div
                                 className="min-h-14 rounded-2xl border border-cyan-glow/10 bg-cyan-glow/5 px-3 py-2 flex items-center gap-2">
-                                <LocateIcon size={15} className="text-cyan-glow shrink-0"/>
+                                <LocateIcon size={15} className="text-cyan-glow shrink-0" />
                                 <div className="min-w-0">
                                     <p className="text-[8px] font-black uppercase tracking-[0.2em] text-text-muted">Cách
                                         bạn</p>
@@ -701,7 +701,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                 onClick={handleOpenGoongMaps}
                                 className="min-h-14 rounded-2xl border border-glass-border bg-white/70 px-3 py-2 flex items-center gap-2 text-left transition-all hover:border-cyan-glow/25 hover:bg-white active:scale-[0.98]"
                             >
-                                <ExternalLinkIcon size={15} className="text-cyan-glow shrink-0"/>
+                                <ExternalLinkIcon size={15} className="text-cyan-glow shrink-0" />
                                 <div className="min-w-0">
                                     <p className="text-[8px] font-black uppercase tracking-[0.2em] text-text-muted">Mở
                                         ngoài</p>
@@ -716,7 +716,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                 onClick={() => copyText(displayAddress, "Đã sao chép địa chỉ")}
                                 className="rounded-2xl border border-glass-border bg-white/55 px-3 py-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-secondary transition-all hover:bg-white hover:text-text-primary active:scale-[0.98]"
                             >
-                                <CopyIcon size={13} className="text-cyan-glow"/>
+                                <CopyIcon size={13} className="text-cyan-glow" />
                                 Địa chỉ
                             </button>
                             <button
@@ -724,7 +724,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                 onClick={() => copyText(coordinateText, "Đã sao chép tọa độ")}
                                 className="rounded-2xl border border-glass-border bg-white/55 px-3 py-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-secondary transition-all hover:bg-white hover:text-text-primary active:scale-[0.98]"
                             >
-                                <PinIcon size={13} className="text-cyan-glow"/>
+                                <PinIcon size={13} className="text-cyan-glow" />
                                 Tọa độ
                             </button>
                         </div>
@@ -763,7 +763,7 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                                     <div className="space-y-2">
                                         {goongAddressComponents.slice(0, 6).map((component, index) => (
                                             <div key={`${component.long_name || component.short_name}-${index}`} className="flex items-start gap-2 text-[11px]">
-                                                <HashIcon size={12} className="mt-0.5 shrink-0 text-cyan-glow"/>
+                                                <HashIcon size={12} className="mt-0.5 shrink-0 text-cyan-glow" />
                                                 <div className="min-w-0">
                                                     <p className="font-bold text-text-primary">{component.long_name || component.short_name}</p>
                                                     {component.types?.length > 0 && (
@@ -782,19 +782,19 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                         {localWeather && (
                             <div className="grid grid-cols-3 gap-2 animate-in fade-in slide-in-from-left-2">
                                 <div className="rounded-2xl border border-cyan-glow/10 bg-cyan-glow/5 px-3 py-2">
-                                    <CloudIcon size={14} className="text-cyan-glow mb-1"/>
+                                    <CloudIcon size={14} className="text-cyan-glow mb-1" />
                                     <p className="text-[13px] font-black text-text-primary">{Math.round(localWeather.main.temp)}°C</p>
                                     <p className="text-[8px] font-bold text-text-muted uppercase tracking-widest truncate">
                                         {localWeather.weather[0].description}
                                     </p>
                                 </div>
                                 <div className="rounded-2xl border border-glass-border bg-white/55 px-3 py-2">
-                                    <DropletsIcon size={14} className="text-cyan-glow mb-1"/>
+                                    <DropletsIcon size={14} className="text-cyan-glow mb-1" />
                                     <p className="text-[13px] font-black text-text-primary">{localWeather.main.humidity || 0}%</p>
                                     <p className="text-[8px] font-bold text-text-muted uppercase tracking-widest">Ẩm</p>
                                 </div>
                                 <div className="rounded-2xl border border-glass-border bg-white/55 px-3 py-2">
-                                    <WindIcon size={14} className="text-cyan-glow mb-1"/>
+                                    <WindIcon size={14} className="text-cyan-glow mb-1" />
                                     <p className="text-[13px] font-black text-text-primary">{Math.round(localWeather.wind?.speed || 0)}</p>
                                     <p className="text-[8px] font-bold text-text-muted uppercase tracking-widest">m/s</p>
                                 </div>
@@ -803,109 +803,109 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                     </div>
 
                     {!isGoongPlace && (
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <h4
-                                className="text-[10px] font-black text-text-primary uppercase tracking-[0.35em] flex items-center gap-3">
-                                <div
-                                    className="w-1.5 h-4 bg-gradient-to-b from-sunset to-sunset/20 rounded-full shadow-sunset"></div>
-                                Thảo luận ({comments.length || displayLocation.comments_count || 0})
-                            </h4>
-                        </div>
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h4
+                                    className="text-[10px] font-black text-text-primary uppercase tracking-[0.35em] flex items-center gap-3">
+                                    <div
+                                        className="w-1.5 h-4 bg-gradient-to-b from-sunset to-sunset/20 rounded-full shadow-sunset"></div>
+                                    Thảo luận ({comments.length || displayLocation.comments_count || 0})
+                                </h4>
+                            </div>
 
-                        {user && (
-                            <motion.form
-                                initial={{y: 10, opacity: 0}}
-                                animate={{y: 0, opacity: 1}}
-                                onSubmit={handleSendComment}
-                                className="flex gap-2"
-                            >
-                                <div
-                                    className="flex-1 glass-panel flex items-center px-4 py-0.5 border-glass-border bg-glass-white rounded-xl focus-within:border-cyan-glow/30 focus-within:bg-white/[0.04] transition-all duration-500">
-                                    <input
-                                        type="text"
-                                        value={commentText}
-                                        onChange={(e) => setCommentText(e.target.value)}
-                                        placeholder="Gửi tin nhắn..."
-                                        className="bg-transparent border-none outline-none flex-1 text-[12px] text-text-primary placeholder-text-dim py-2.5 font-medium"
-                                    />
-                                    <button
-                                        type="submit"
-                                        disabled={!commentText.trim() || isSubmittingComment}
-                                        className="text-cyan-glow disabled:text-zinc-800 transition-all hover:scale-110 active:scale-90"
-                                    >
-                                        {isSubmittingComment ? (
-                                            <SpinnerIcon size={18} className="animate-spin"/>
-                                        ) : (
-                                            <SendIcon size={18} className="drop-shadow-neon"/>
-                                        )}
-                                    </button>
-                                </div>
-                            </motion.form>
-                        )}
+                            {user && (
+                                <motion.form
+                                    initial={{ y: 10, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    onSubmit={handleSendComment}
+                                    className="flex gap-2"
+                                >
+                                    <div
+                                        className="flex-1 glass-panel flex items-center px-4 py-0.5 border-glass-border bg-glass-white rounded-xl focus-within:border-cyan-glow/30 focus-within:bg-white/[0.04] transition-all duration-500">
+                                        <input
+                                            type="text"
+                                            value={commentText}
+                                            onChange={(e) => setCommentText(e.target.value)}
+                                            placeholder="Gửi tin nhắn..."
+                                            className="bg-transparent border-none outline-none flex-1 text-[12px] text-text-primary placeholder-text-dim py-2.5 font-medium"
+                                        />
+                                        <button
+                                            type="submit"
+                                            disabled={!commentText.trim() || isSubmittingComment}
+                                            className="text-cyan-glow disabled:text-zinc-800 transition-all hover:scale-110 active:scale-90"
+                                        >
+                                            {isSubmittingComment ? (
+                                                <SpinnerIcon size={18} className="animate-spin" />
+                                            ) : (
+                                                <SendIcon size={18} className="drop-shadow-neon" />
+                                            )}
+                                        </button>
+                                    </div>
+                                </motion.form>
+                            )}
 
-                        <div className="space-y-6 pb-2">
-                            {loadingComments ? (
-                                <div className="space-y-4">
-                                    <SkeletonTheme baseColor="rgba(255,255,255,0.05)"
-                                                   highlightColor="rgba(255,255,255,0.1)">
-                                        {[...Array(3)].map((_, i) => (
-                                            <div key={i} className="flex gap-2.5">
-                                                <Skeleton circle width={32} height={32}/>
-                                                <div className="flex-1">
-                                                    <div className="flex justify-between mb-1">
-                                                        <Skeleton width={80} height={10}/>
-                                                        <Skeleton width={40} height={10}/>
+                            <div className="space-y-6 pb-2">
+                                {loadingComments ? (
+                                    <div className="space-y-4">
+                                        <SkeletonTheme baseColor="rgba(255,255,255,0.05)"
+                                            highlightColor="rgba(255,255,255,0.1)">
+                                            {[...Array(3)].map((_, i) => (
+                                                <div key={i} className="flex gap-2.5">
+                                                    <Skeleton circle width={32} height={32} />
+                                                    <div className="flex-1">
+                                                        <div className="flex justify-between mb-1">
+                                                            <Skeleton width={80} height={10} />
+                                                            <Skeleton width={40} height={10} />
+                                                        </div>
+                                                        <Skeleton height={48} borderRadius={12} />
                                                     </div>
-                                                    <Skeleton height={48} borderRadius={12}/>
+                                                </div>
+                                            ))}
+                                        </SkeletonTheme>
+                                    </div>
+                                ) : commentsError ? (
+                                    <div className="text-center py-10 bg-white/[0.02] rounded-2xl border border-sunset/20">
+                                        <CommentIcon size={20} className="text-sunset/70 mx-auto mb-3" />
+                                        <p className="text-text-primary text-[9px] font-black uppercase tracking-[0.3em] mb-2">Không
+                                            thể tải bình luận</p>
+                                        <p className="text-text-muted text-[11px] font-medium">{commentsError}</p>
+                                    </div>
+                                ) : comments.length > 0 ? (
+                                    comments.map((c) => (
+                                        <motion.div
+                                            key={c.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className={`flex gap-2.5 group cursor-pointer transition-opacity duration-300 ${c.is_optimistic ? 'opacity-50 grayscale' : ''}`}
+                                            onClick={() => handleOpenProfile(c.firebase_uid)}
+                                        >
+                                            <UserBadge user={{ ...c, avatar_url: formatImageUrl(c.avatar_url) }} size={32} />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between mb-0.5">
+                                                    <span
+                                                        className="text-[11px] font-bold text-text-primary truncate mr-2 group-hover:text-cyan-glow transition-colors">{c.name}</span>
+                                                    <span
+                                                        className="text-[7px] text-text-muted font-bold uppercase shrink-0">
+                                                        {parseDBDate(c.created_at).toLocaleDateString('vi-VN')}
+                                                    </span>
+                                                </div>
+                                                <div
+                                                    className="bg-white/10 rounded-lg rounded-tl-none p-2.5 border border-glass-border text-[11px] text-text-secondary leading-relaxed">
+                                                    {c.content}
                                                 </div>
                                             </div>
-                                        ))}
-                                    </SkeletonTheme>
-                                </div>
-                            ) : commentsError ? (
-                                <div className="text-center py-10 bg-white/[0.02] rounded-2xl border border-sunset/20">
-                                    <CommentIcon size={20} className="text-sunset/70 mx-auto mb-3"/>
-                                    <p className="text-text-primary text-[9px] font-black uppercase tracking-[0.3em] mb-2">Không
-                                        thể tải bình luận</p>
-                                    <p className="text-text-muted text-[11px] font-medium">{commentsError}</p>
-                                </div>
-                            ) : comments.length > 0 ? (
-                                comments.map((c) => (
-                                    <motion.div
-                                        key={c.id}
-                                        initial={{opacity: 0, y: 10}}
-                                        animate={{opacity: 1, y: 0}}
-                                        className={`flex gap-2.5 group cursor-pointer transition-opacity duration-300 ${c.is_optimistic ? 'opacity-50 grayscale' : ''}`}
-                                        onClick={() => handleOpenProfile(c.firebase_uid)}
-                                    >
-                                        <UserBadge user={{...c, avatar_url: formatImageUrl(c.avatar_url)}} size={32}/>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between mb-0.5">
-                        <span
-                            className="text-[11px] font-bold text-text-primary truncate mr-2 group-hover:text-cyan-glow transition-colors">{c.name}</span>
-                                                <span
-                                                    className="text-[7px] text-text-muted font-bold uppercase shrink-0">
-                          {parseDBDate(c.created_at).toLocaleDateString('vi-VN')}
-                        </span>
-                                            </div>
-                                            <div
-                                                className="bg-white/10 rounded-lg rounded-tl-none p-2.5 border border-glass-border text-[11px] text-text-secondary leading-relaxed">
-                                                {c.content}
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))
-                            ) : (
-                                <div
-                                    className="text-center py-12 bg-white/[0.01] rounded-2xl border border-glass-border border-dashed">
-                                    <CommentIcon size={20} className="text-text-dim mx-auto mb-3"/>
-                                    <p className="text-text-muted text-[8px] font-black uppercase tracking-[0.4em]">Trống
-                                        thảo luận</p>
-                                </div>
-                            )}
+                                        </motion.div>
+                                    ))
+                                ) : (
+                                    <div
+                                        className="text-center py-12 bg-white/[0.01] rounded-2xl border border-glass-border border-dashed">
+                                        <CommentIcon size={20} className="text-text-dim mx-auto mb-3" />
+                                        <p className="text-text-muted text-[8px] font-black uppercase tracking-[0.4em]">Trống
+                                            thảo luận</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </div>
                     )}
                 </div>
 
@@ -922,8 +922,8 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                             className="flex-1 border-sunset/20 bg-sunset/5! text-sunset! shadow-sunset-sm hover:bg-sunset/10! group/review-btn"
                         >
                             <div
-                                className="absolute inset-0 bg-sunset opacity-0 group-hover/review-btn:opacity-5 transition-opacity"/>
-                            <StarIcon size={18} className="fill-current drop-shadow-sunset"/>
+                                className="absolute inset-0 bg-sunset opacity-0 group-hover/review-btn:opacity-5 transition-opacity" />
+                            <StarIcon size={18} className="fill-current drop-shadow-sunset" />
                             <span
                                 className="hidden sm:inline uppercase text-[12px] font-black tracking-widest">
                                 {isGoongPlace ? "Lưu review" : "Review"}
@@ -939,20 +939,20 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
                             <div
                                 className="absolute inset-0 bg-linear-to-r from-white/0 via-white/5 to-white/0 -translate-x-full group-hover/btn:animate-[shimmer_2s_infinite]"></div>
                             <RouteIcon size={18}
-                                       className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform text-cyan-glow"/>
+                                className="group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform text-cyan-glow" />
                             <span className="uppercase text-[13px] font-black tracking-widest">Chỉ đường</span>
                         </ActionButton>
 
                         {!isGoongPlace && (
                             <motion.button
-                                whileHover={{scale: 1.05, y: -2}}
-                                whileTap={{scale: 0.95}}
+                                whileHover={{ scale: 1.05, y: -2 }}
+                                whileTap={{ scale: 0.95 }}
                                 onClick={handleToggleLike}
                                 className={`flex h-12 w-12 items-center justify-center rounded-2xl border border-glass-border bg-white/80 transition-all duration-500 sm:w-auto sm:px-6 ${localLiked ? 'bg-sunset/10 text-sunset border-sunset/20 shadow-sunset' : 'text-text-muted hover:text-text-primary hover:bg-white'}`}
                                 aria-label="Thích địa điểm"
                             >
                                 <LikeIcon size={24} fill={localLiked ? "currentColor" : "none"}
-                                          className={localLiked ? "drop-shadow-[0_0_8px_rgba(255,75,43,0.3)]" : ""}/>
+                                    className={localLiked ? "drop-shadow-[0_0_8px_rgba(255,75,43,0.3)]" : ""} />
                             </motion.button>
                         )}
                     </div>
@@ -962,9 +962,9 @@ export default function LocationSidebar({location, onAddReview, onClose}) {
             <AnimatePresence>
                 {toast && (
                     <motion.div
-                        initial={{opacity: 0, y: 20}}
-                        animate={{opacity: 1, y: 0}}
-                        exit={{opacity: 0, y: 20}}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
                         className="absolute bottom-28 left-1/2 -translate-x-1/2 bg-cyan-glow text-white px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest shadow-neon z-50 whitespace-nowrap"
                     >
                         {toast}

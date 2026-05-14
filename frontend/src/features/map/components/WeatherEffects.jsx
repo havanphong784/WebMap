@@ -27,7 +27,7 @@ const WeatherEffects = () => {
   const isCloudy = condition.includes('cloud');
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[1500] overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-[70] overflow-hidden">
       <AnimatePresence>
         {isRaining && (
           <motion.div

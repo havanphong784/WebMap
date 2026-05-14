@@ -468,7 +468,7 @@ export default function MapPage() {
       {(!mobile || !activeLocation) && <OnlineFriendsPane onFlyToUser={handleFlyToOnlineUser} />}
       {!mobile && <OnlineCommunityBar />}
       {(mapLoading || mapError || routeError) && (
-        <div className="absolute left-3 top-32 z-[750] max-w-[calc(100%-6rem)] sm:left-6 sm:top-24 sm:max-w-sm pointer-events-none">
+        <div className="absolute left-3 top-32 z-[60] max-w-[calc(100%-6rem)] sm:left-6 sm:top-24 sm:max-w-sm pointer-events-none">
           <div className={`rounded-2xl border px-4 py-3 text-xs font-bold shadow-glass backdrop-blur-2xl ${mapError || routeError ? 'border-sunset/25 bg-white/95 text-sunset' : 'border-cyan-glow/20 bg-white/90 text-cyan-glow'
             }`}>
             {mapError || routeError || 'Đang cập nhật địa điểm...'}
