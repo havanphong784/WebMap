@@ -32,9 +32,9 @@ export const useNotificationStore = create((set) => ({
     }
   },
 
-  markRead: async (notifId, userId) => {
+  markRead: async (notifId) => {
     try {
-      const response = await apiClient.put(`/notifications/${notifId}/read`, {user_id: userId});
+      const response = await apiClient.put(`/notifications/${notifId}/read`);
       if (response?.success === false) return response;
 
       set(state => ({
@@ -50,9 +50,9 @@ export const useNotificationStore = create((set) => ({
     }
   },
 
-  markAllRead: async (userId) => {
+  markAllRead: async () => {
     try {
-      const response = await apiClient.put(`/notifications/read-all`, {user_id: userId});
+      const response = await apiClient.put("/notifications/read-all");
       if (response?.success === false) return response;
 
       set(state => ({

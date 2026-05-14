@@ -50,12 +50,12 @@ const DiscoveryFeed = () => {
   useEffect(() => {
     if (feedType === 'global') {
       if (activeCategory === 'All') {
-        fetchTrending(user?.uid);
+        fetchTrending();
       } else {
-        fetchByTag(activeCategory, user?.uid);
+        fetchByTag(activeCategory);
       }
     } else {
-      fetchFollowing(user?.uid);
+      fetchFollowing();
     }
   }, [fetchTrending, fetchByTag, fetchFollowing, activeCategory, user?.uid, feedType]);
 
@@ -67,7 +67,7 @@ const DiscoveryFeed = () => {
       navigate('/login');
       return;
     }
-    toggleLike(post.id, user.uid);
+    toggleLike(post.id);
   }, [user, navigate, toggleLike]);
 
   const currentLocationsList = feedType === 'global' ? trendingLocations : followingLocations;
@@ -210,10 +210,10 @@ const DiscoveryFeed = () => {
               onClick={() => {
                 if (feedType === 'global') {
                   activeCategory === 'All'
-                    ? fetchTrending(user?.uid)
-                    : fetchByTag(activeCategory, user?.uid);
+                    ? fetchTrending()
+                    : fetchByTag(activeCategory);
                 } else {
-                  fetchFollowing(user?.uid);
+                  fetchFollowing();
                 }
               }}
               className="text-white bg-sunset px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sunset hover:brightness-105 active:scale-95 transition-all"

@@ -86,9 +86,8 @@ CREATE INDEX IF NOT EXISTS idx_chatbot_feedback_session_id ON chatbot_feedback(s
 CREATE INDEX IF NOT EXISTS idx_chatbot_feedback_rating ON chatbot_feedback(rating, created_at DESC);
 `;
 
-export const ensureChatbotTables = async () => {
-  await pool.query(CHATBOT_TABLES_SQL);
-};
+// Schema đã được quản lý trong db_setup.sql. Giữ hàm này để tương thích ngược.
+export const ensureChatbotTables = async () => {};
 
 export const createSessionId = () => randomUUID();
 

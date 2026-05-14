@@ -203,7 +203,6 @@ export default function LocationFormModal({point, onClose, onSaved}) {
       }
 
       const result = await addLocation({
-        user_id: user.uid,
         name,
         address,
         category,

@@ -1,21 +1,7 @@
 import pool from "../config/db.js";
 
-export const ensureMessageTables = async () => {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS direct_messages (
-      id BIGSERIAL PRIMARY KEY,
-      sender_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
-      recipient_id VARCHAR(128) NOT NULL REFERENCES users(firebase_uid) ON DELETE CASCADE,
-      content TEXT NOT NULL,
-      is_read BOOLEAN DEFAULT false,
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE INDEX IF NOT EXISTS idx_direct_messages_pair
-      ON direct_messages(sender_id, recipient_id, created_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_direct_messages_recipient
-      ON direct_messages(recipient_id, is_read, created_at DESC);
-  `);
-};
+// Schema đã được quản lý trong db_setup.sql. Giữ hàm này để tương thích ngược.
+export const ensureMessageTables = async () => {};
 
 const sanitizeMessage = (content) => {
   if (typeof content !== "string") return "";

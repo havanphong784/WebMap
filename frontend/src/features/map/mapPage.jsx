@@ -147,7 +147,7 @@ export default function MapPage() {
     const lat = parseFloat(focusLocation.lat);
     if (Number.isNaN(lng) || Number.isNaN(lat)) return;
     const fetchDetail = async () => {
-      const detail = await fetchLocationDetail(focusLocation.id, user?.uid);
+      const detail = await fetchLocationDetail(focusLocation.id);
       setActiveLocation(detail || focusLocation);
     };
     const timer = setTimeout(() => {
@@ -168,7 +168,7 @@ export default function MapPage() {
     const timer = setTimeout(async () => {
       flyToLocation(lng, lat, 16, 1600, true);
       if (locationId) {
-        const detail = await fetchLocationDetail(locationId, user?.uid);
+        const detail = await fetchLocationDetail(locationId);
         if (detail) {
           setActiveLocation(detail);
           setInfoClicked(null);
@@ -201,7 +201,7 @@ export default function MapPage() {
     const groupedLocation = locData.group?.length ? locData : withNearbyGroup(locData, locations);
     setActiveLocation(groupedLocation);
     flyToLocation(groupedLocation.lng, groupedLocation.lat, 16, 2000, true);
-    const detail = await fetchLocationDetail(groupedLocation.id, user?.uid);
+    const detail = await fetchLocationDetail(groupedLocation.id);
     if (detail) {
       const group = groupedLocation.group?.length ? groupedLocation.group.map(item => item.id === detail.id ? { ...item, ...detail } : item) : null;
       setActiveLocation(group?.length > 1 ? { ...detail, group } : detail);

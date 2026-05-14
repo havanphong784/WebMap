@@ -203,7 +203,7 @@ export default function LocationSidebar({ location, onAddReview, onClose }) {
         const fetchFollowStatus = async () => {
             if (isGoongPlace || !user?.uid || !displayLocation?.user_id || user.uid === displayLocation.user_id) return;
             try {
-                const followRes = await apiClient.get(`/follows/status?followerId=${user.uid}&followedId=${displayLocation.user_id}`);
+                const followRes = await apiClient.get(`/follows/status?followedId=${displayLocation.user_id}`);
                 if (followRes.success) setIsFollowing(followRes.data.isFollowing);
             } catch (e) {
                 console.error(e);
@@ -236,7 +236,6 @@ export default function LocationSidebar({ location, onAddReview, onClose }) {
         setIsFollowLoading(true);
         try {
             const res = await apiClient.post('/follows/toggle', {
-                follower_id: user.uid,
                 followed_id: displayLocation.user_id
             });
             if (res.success) {
@@ -276,7 +275,7 @@ export default function LocationSidebar({ location, onAddReview, onClose }) {
         setIsSubmittingComment(true);
 
         try {
-            const res = await postComment(displayLocation.id, user.uid, content);
+            const res = await postComment(displayLocation.id, content);
             if (res?.success) {
                 const refreshRes = await apiClient.get(`/comments/${displayLocation.id}/comments`);
                 if (refreshRes.success) {
@@ -352,7 +351,7 @@ export default function LocationSidebar({ location, onAddReview, onClose }) {
 
         const previousLiked = localLiked;
         setLikeOverride({ id: displayLocation.id, value: !previousLiked });
-        const res = await toggleLike(displayLocation.id, user.uid);
+        const res = await toggleLike(displayLocation.id);
         if (!res?.success) {
             setLikeOverride({ id: displayLocation.id, value: previousLiked });
             showToast(res?.message || "Không thể cập nhật lượt thích");

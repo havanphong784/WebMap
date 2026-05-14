@@ -50,7 +50,7 @@ export default function ProfilePage() {
         setError(response.message || "Không thể tải hồ sơ");
         return;
       }
-      await fetchUserLocations(uid, currentUserId);
+      await fetchUserLocations(uid);
 
       const achResponse = await apiClient.get(`/achievements/${uid}`);
       if (achResponse.success) {
@@ -62,7 +62,7 @@ export default function ProfilePage() {
       }
 
       if (currentUserId && uid !== currentUserId) {
-        const followRes = await apiClient.get(`/follows/status?followerId=${currentUserId}&followedId=${uid}`);
+        const followRes = await apiClient.get(`/follows/status?followedId=${uid}`);
         if (followRes.success) setIsFollowing(followRes.data.isFollowing);
       }
     } catch (err) {
@@ -82,7 +82,7 @@ export default function ProfilePage() {
     if (!currentUserId) return navigate('/login');
     setIsFollowLoading(true);
     try {
-      const res = await apiClient.post('/follows/toggle', {follower_id: currentUserId, followed_id: uid});
+      const res = await apiClient.post('/follows/toggle', {followed_id: uid});
       if (res.success) setIsFollowing(res.data.followed);
     } catch (err) {
       console.error(err);
@@ -96,7 +96,7 @@ export default function ProfilePage() {
     if (!window.confirm('Bạn có chắc muốn xóa địa điểm này?')) return;
     setDeletingId(locId);
     try {
-      await removeLocation(locId, currentUserId);
+      await removeLocation(locId);
     } catch (err) {
       console.error(err);
     } finally {

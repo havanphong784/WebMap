@@ -41,7 +41,7 @@ export default function NotificationsPage() {
             <motion.button
               whileHover={{scale: 1.05}}
               whileTap={{scale: 0.95}}
-              onClick={() => markAllRead(user.uid)}
+              onClick={() => markAllRead()}
               className="flex items-center gap-2 px-3 py-1.5 glass-panel bg-white/10 border-glass-border hover:bg-cyan-glow/10 hover:border-cyan-glow/30 transition-all group shrink-0"
             >
               <CheckIcon size={12} className="text-cyan-glow group-hover:scale-125 transition-transform"/>
@@ -97,7 +97,7 @@ export default function NotificationsPage() {
               <GlassPanel
                 className={`p-5 flex items-start gap-4 border-glass-border cursor-pointer hover:border-cyan-glow/30 transition-all duration-300 relative overflow-hidden ${!notif.is_read ? 'bg-cyan-glow/[0.04]' : ''}`}
                 onClick={() => {
-                  if (!notif.is_read) markRead(notif.id, user.uid);
+                  if (!notif.is_read) markRead(notif.id);
                   if (notif.type === 'FOLLOW') {
                     navigate(`/profile/${notif.sender_id}`);
                   } else {

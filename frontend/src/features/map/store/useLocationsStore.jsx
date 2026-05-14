@@ -9,8 +9,7 @@ let latestMapRequestId = 0;
 const getErrorMessage = (result, fallback = "Không thể tải dữ liệu") =>
   result?.message || result?.error?.message || fallback;
 
-const makeBoundsCacheKey = (userId, bounds) => [
-  userId || "guest",
+const makeBoundsCacheKey = (bounds) => [
   bounds.getWest().toFixed(3),
   bounds.getEast().toFixed(3),
   bounds.getSouth().toFixed(3),
@@ -44,10 +43,10 @@ export const useLocationStore = create((set) => ({
   setAccuracy: (acc) => set({accuracy: acc}),
   setRouteData: (state) => (set({routeData: state})),
 
-  fetchTrending: async (userId) => {
+  fetchTrending: async () => {
     set({isLoading: true, error: null});
     try {
-      const result = await apiClient.get(`/locations/trending?user_id=${userId || "guest"}`);
+      const result = await apiClient.get("/locations/trending");
       if (result.success) {
         set({trendingLocations: result.data, error: null});
       } else {
@@ -61,11 +60,10 @@ export const useLocationStore = create((set) => ({
     }
   },
 
-  fetchFollowing: async (userId) => {
-    if (!userId) return;
+  fetchFollowing: async () => {
     set({isLoading: true, error: null});
     try {
-      const result = await apiClient.get(`/locations/following?user_id=${userId}`);
+      const result = await apiClient.get("/locations/following");
       if (result.success) {
         set({followingLocations: result.data, error: null});
       } else {
@@ -90,10 +88,10 @@ export const useLocationStore = create((set) => ({
     }
   },
 
-  fetchByTag: async (tag, userId) => {
+  fetchByTag: async (tag) => {
     set({isLoading: true, error: null});
     try {
-      const result = await apiClient.get(`/locations/tag/${tag}?user_id=${userId || "guest"}`);
+      const result = await apiClient.get(`/locations/tag/${tag}`);
       if (result.success) {
         set({trendingLocations: result.data, error: null});
       } else {
@@ -107,10 +105,10 @@ export const useLocationStore = create((set) => ({
     }
   },
 
-  fetchUserLocations: async (targetUid, currentUserId) => {
+  fetchUserLocations: async (targetUid) => {
     set({isLoading: true, error: null});
     try {
-      const result = await apiClient.get(`/locations/user/${targetUid}?current_user_id=${currentUserId || ""}`);
+      const result = await apiClient.get(`/locations/user/${targetUid}`);
       if (result.success) {
         set({userLocations: result.data, error: null});
       } else {
@@ -126,7 +124,7 @@ export const useLocationStore = create((set) => ({
 
   fetchLocations: async (userId, bounds) => {
     if (!bounds) return;
-    const cacheKey = makeBoundsCacheKey(userId, bounds);
+    const cacheKey = makeBoundsCacheKey(bounds);
     const cached = mapLocationsCache.get(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < MAP_CACHE_TTL) {
@@ -138,7 +136,6 @@ export const useLocationStore = create((set) => ({
     set({mapLoading: true, mapError: null});
     try {
       const params = new URLSearchParams({
-        user_id: userId || "",
         minLng: bounds.getWest(),
         maxLng: bounds.getEast(),
         minLat: bounds.getSouth(),
@@ -212,7 +209,7 @@ export const useLocationStore = create((set) => ({
       if (result && result.routes && result.routes.length > 0) {
         const route = result.routes[0];
         const geometry = route.geometry;
-        
+
         if (geometry?.type === "LineString" && Array.isArray(geometry.coordinates)) {
           set({routeData: geometry});
         } else {
@@ -231,9 +228,9 @@ export const useLocationStore = create((set) => ({
 
   clearRoute: () => set({routeData: null, routeError: null}),
 
-  toggleLike: async (locationId, userId) => {
+  toggleLike: async (locationId) => {
     try {
-      const result = await apiClient.post(`/likes/${locationId}/like`, {user_id: userId});
+      const result = await apiClient.post(`/likes/${locationId}/like`);
 
       if (result.success) {
         const updateLoc = (list) => list.map(loc =>
@@ -262,9 +259,9 @@ export const useLocationStore = create((set) => ({
     }
   },
 
-  postComment: async (locationId, userId, content) => {
+  postComment: async (locationId, content) => {
     try {
-      const result = await apiClient.post(`/comments/${locationId}/comments`, {user_id: userId, content});
+      const result = await apiClient.post(`/comments/${locationId}/comments`, {content});
 
       if (result.success) {
         const updateLoc = (list) => list.map(loc =>
@@ -287,9 +284,9 @@ export const useLocationStore = create((set) => ({
     }
   },
 
-  removeLocation: async (locationId, userId) => {
+  removeLocation: async (locationId) => {
     try {
-      const result = await apiClient.delete(`/locations/${locationId}`, {user_id: userId});
+      const result = await apiClient.delete(`/locations/${locationId}`);
       if (result.success) {
         mapLocationsCache.clear();
         set((state) => ({
@@ -306,9 +303,9 @@ export const useLocationStore = create((set) => ({
     }
   },
 
-  fetchLocationDetail: async (locationId, userId) => {
+  fetchLocationDetail: async (locationId) => {
     try {
-      const result = await apiClient.get(`/locations/${locationId}?user_id=${userId || ""}`);
+      const result = await apiClient.get(`/locations/${locationId}`);
       if (result.success) {
         set((state) => {
           const exists = state.locations.find(l => l.id === result.data.id);

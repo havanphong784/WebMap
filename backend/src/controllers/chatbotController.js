@@ -1,9 +1,9 @@
 import * as chatbotService from "../services/chatbotService.js";
 import {
-  ensureChatbotTables,
   ensureChatSession,
   listChatMessages,
   listChatSessions,
+  logAiUsage,
   saveChatFeedback,
   saveChatMessage,
 } from "../services/chatbotPersistenceService.js";
@@ -11,8 +11,7 @@ import {sendError, sendSuccess} from "../utils/apiResponse.js";
 
 export const chat = async (req, res) => {
   try {
-    await ensureChatbotTables();
-    const { message, context, sessionId } = req.body;
+    const {message, context, sessionId} = req.body;
     const userId = req.user?.uid;
 
     if (!message) {
@@ -31,14 +30,16 @@ export const chat = async (req, res) => {
       userId,
       role: "user",
       content: message,
-      metadata: {contextSummary: {
-        locationCount: context?.locations?.length || 0,
-        hasWeather: Boolean(context?.weather),
-        hasUserLocation: Array.isArray(context?.userLocation),
-      }},
+      metadata: {
+        contextSummary: {
+          locationCount: context?.locations?.length || 0,
+          hasWeather: Boolean(context?.weather),
+          hasUserLocation: Array.isArray(context?.userLocation),
+        },
+      },
     });
 
-    const response = await chatbotService.generateChatbotResponse(message, {
+    const aiResult = await chatbotService.generateChatbotResponse(message, {
       ...context,
       history: history.map(item => ({
         role: item.role,
@@ -46,18 +47,39 @@ export const chat = async (req, res) => {
       })),
     });
 
+    // Log AI usage
+    await logAiUsage({
+      userId,
+      sessionId: session.id,
+      provider: "google",
+      model: aiResult.model,
+      requestType: "chat",
+      usageMetadata: aiResult.usageMetadata,
+      durationMs: aiResult.durationMs,
+      status: aiResult.status,
+      errorMessage: aiResult.errorMessage || null,
+    }).catch(err => console.error("logAiUsage error:", err));
+
+    if (aiResult.status === "error" || !aiResult.text) {
+      return sendError(res, {
+        status: 502,
+        code: "AI_GENERATION_FAILED",
+        message: "Không thể kết nối với trí tuệ nhân tạo của EVE. Thử lại sau nhé!",
+      });
+    }
+
     const assistantMessage = await saveChatMessage({
       sessionId: session.id,
       userId,
       role: "assistant",
-      content: response,
-      metadata: {source: "gemini"},
+      content: aiResult.text,
+      metadata: {source: "gemini", model: aiResult.model},
     });
 
     sendSuccess(res, {
       data: {
         sessionId: session.id,
-        response,
+        response: aiResult.text,
         userMessage,
         assistantMessage,
       },
@@ -69,7 +91,6 @@ export const chat = async (req, res) => {
 
 export const sessions = async (req, res) => {
   try {
-    await ensureChatbotTables();
     const data = await listChatSessions({userId: req.user.uid, limit: req.query.limit});
     sendSuccess(res, {data});
   } catch (error) {
@@ -79,7 +100,6 @@ export const sessions = async (req, res) => {
 
 export const messages = async (req, res) => {
   try {
-    await ensureChatbotTables();
     const data = await listChatMessages({
       userId: req.user.uid,
       sessionId: req.params.sessionId,
@@ -93,7 +113,6 @@ export const messages = async (req, res) => {
 
 export const feedback = async (req, res) => {
   try {
-    await ensureChatbotTables();
     const data = await saveChatFeedback({
       userId: req.user.uid,
       sessionId: req.body.sessionId,

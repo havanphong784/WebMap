@@ -1,15 +1,13 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import dotenv from "dotenv";
-
-dotenv.config();
+import {GoogleGenerativeAI} from "@google/generative-ai";
+import "dotenv/config";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export const generateChatbotResponse = async (userMessage, context = {}) => {
-  const { weather, locations, userLocation, history = [] } = context;
+  const {weather, locations, userLocation, history = []} = context;
 
   const model = genAI.getGenerativeModel({
-    model: "gemini-flash-latest",
+    model: "gemini-2.0-flash",
     systemInstruction: `Bạn là EVE, một trợ lý ảo thông minh và vui tính của ứng dụng Aether Geo-Social.
 Nhiệm vụ của bạn là giúp người dùng khám phá các địa điểm, lên lịch trình và cung cấp thông tin hữu ích dựa trên thời tiết và vị trí.
 
@@ -51,12 +49,31 @@ Nếu bạn gợi ý bất kỳ địa điểm cụ thể nào từ danh sách "
 LƯU Ý: Không nhắc đến mã JSON trong phần văn bản trả lời người dùng.`,
   });
 
+  const startTime = Date.now();
   try {
     const result = await model.generateContent(userMessage);
     const response = await result.response;
-    return response.text();
+    const text = response.text();
+    const durationMs = Date.now() - startTime;
+    const usageMetadata = response.usageMetadata || {};
+
+    return {
+      text,
+      durationMs,
+      usageMetadata,
+      model: "gemini-2.0-flash",
+      status: "success",
+    };
   } catch (error) {
+    const durationMs = Date.now() - startTime;
     console.error("Error calling Gemini API:", error);
-    throw new Error("Không thể kết nối với trí tuệ nhân tạo của EVE. Thử lại sau nhé!");
+    return {
+      text: null,
+      durationMs,
+      usageMetadata: {},
+      model: "gemini-2.0-flash",
+      status: "error",
+      errorMessage: error.message,
+    };
   }
 };
