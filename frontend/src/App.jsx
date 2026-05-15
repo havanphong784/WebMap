@@ -84,6 +84,9 @@ function App() {
   // Heartbeat — still needed to update last_seen in DB (triggers SSE broadcast)
   useEffect(() => {
     if (user?.uid) {
+      // Fetch active users ngay lập tức (fallback khi SSE chưa connect)
+      useSocialStore.getState().fetchActiveUsers();
+      
       sendHeartbeat(userLocationRef.current);
       const heartbeatInterval = setInterval(() => sendHeartbeat(userLocationRef.current), 60000);
       return () => clearInterval(heartbeatInterval);
