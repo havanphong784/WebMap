@@ -61,17 +61,61 @@ export default function MapPage() {
     setActiveLocation(null);
     setRouteData(null);
     flyToLocation(lng, lat, 17);
+    
+    // Hiện loading state
     setInfoClicked({lng, lat, name: poiName, address: {display_name: "Đang tải địa chỉ..."}});
 
-    const addr = await getAddress(lat, lng);
-    const detail = addr?.place_id ? await getPlaceDetail(addr.place_id) : null;
-    if (detail?.lat && detail?.lng) {
-      setInfoClicked(null);
-      setActiveLocation({...detail, name: poiName || detail.name});
-    } else {
-      setInfoClicked({lng, lat, name: poiName, address: addr});
+    try {
+      // Reverse geocode để lấy địa chỉ + place_id
+      const addr = await getAddress(lat, lng);
+      
+      // Nếu có place_id, fetch detail từ Goong
+      let detail = null;
+      if (addr?.place_id) {
+        detail = await getPlaceDetail(addr.place_id);
+      }
+
+      // Nếu detail có lat/lng, dùng nó; nếu không, dùng tọa độ từ click event
+      if (detail?.lat && detail?.lng) {
+        setInfoClicked(null);
+        setActiveLocation({
+          ...detail,
+          name: poiName || detail.name,
+          lat: Number(detail.lat),
+          lng: Number(detail.lng),
+        });
+      } else {
+        // Fallback: hiện popup với địa chỉ từ reverse geocode
+        setInfoClicked({
+          lng,
+          lat,
+          name: poiName,
+          address: addr || {display_name: "Không xác định được địa chỉ"},
+        });
+      }
+    } catch (err) {
+      console.error("POI click error:", err);
+      
+      // Determine error type and provide helpful message
+      let errorMessage = "Không thể tải thông tin địa chỉ";
+      if (err.message?.includes("network") || err.message?.includes("fetch")) {
+        errorMessage = "Lỗi kết nối. Vui lòng kiểm tra internet.";
+      } else if (err.message?.includes("timeout")) {
+        errorMessage = "Yêu cầu hết thời gian. Vui lòng thử lại.";
+      }
+      
+      // Fallback: hiện popup với tọa độ
+      setInfoClicked({
+        lng,
+        lat,
+        name: poiName,
+        address: {display_name: errorMessage},
+      });
+      
+      // Show toast notification for better visibility
+      addToast(errorMessage, "error");
     }
-  }, [flyToLocation, setRouteData]);
+  }, [flyToLocation, setRouteData, addToast]);
 
   const handleEmptyAreaClick = useCallback(async (e) => {
     setActiveLocation(null);
@@ -79,8 +123,18 @@ export default function MapPage() {
     const {lng, lat} = e.lngLat;
     flyToLocation(lng, lat, 16);
     setInfoClicked({lng, lat, address: {display_name: "Đang xác định vị trí..."}});
-    const addr = await getAddress(lat, lng);
-    setInfoClicked({lng, lat, address: addr});
+    
+    try {
+      const addr = await getAddress(lat, lng);
+      setInfoClicked({lng, lat, address: addr});
+    } catch (err) {
+      console.error("Empty area click error:", err);
+      setInfoClicked({
+        lng, 
+        lat, 
+        address: {display_name: "Không thể xác định vị trí"}
+      });
+    }
   }, [flyToLocation, setRouteData]);
 
   const handleSearchSelect = useCallback(async (item) => {
@@ -161,12 +215,25 @@ export default function MapPage() {
       if (gps) {
         flyToLocation(gps.lng, gps.lat, 17);
         setInfoClicked({lng: gps.lng, lat: gps.lat, address: null, imageFile: file, autoOpenForm: true});
-        const addr = await getAddress(gps.lat, gps.lng);
-        setInfoClicked({lng: gps.lng, lat: gps.lat, address: addr, imageFile: file, autoOpenForm: true});
+        try {
+          const addr = await getAddress(gps.lat, gps.lng);
+          setInfoClicked({lng: gps.lng, lat: gps.lat, address: addr, imageFile: file, autoOpenForm: true});
+        } catch (err) {
+          console.error("Error getting address from photo GPS:", err);
+          // Still show the form even if address fetch fails
+          setInfoClicked({
+            lng: gps.lng, 
+            lat: gps.lat, 
+            address: {display_name: "Không thể xác định địa chỉ"}, 
+            imageFile: file, 
+            autoOpenForm: true
+          });
+        }
       } else {
         addToast("Ảnh này không chứa thông tin vị trí (GPS metadata).", "error");
       }
-    } catch {
+    } catch (err) {
+      console.error("Photo extraction error:", err);
       addToast("Không thể trích xuất vị trí từ ảnh.", "error");
     } finally {
       setIsExtractingPhoto(false);

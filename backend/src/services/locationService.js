@@ -18,7 +18,29 @@ const LOCATION_FROM_CLAUSE = (viewerParam) => `
   LEFT JOIN likes lk_viewer ON lk_viewer.location_id = l.id AND lk_viewer.user_id = ${viewerParam}
 `;
 
-export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat}) => {
+// Pagination helper
+const getPaginationParams = (page = 1, limit = 20) => {
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+  const offset = (pageNum - 1) * limitNum;
+  return {pageNum, limitNum, offset};
+};
+
+export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat, page = 1, limit = 20}) => {
+  const {pageNum, limitNum, offset} = getPaginationParams(page, limit);
+  
+  // Get total count
+  const countQuery = `
+    SELECT COUNT(*) as total
+    FROM locations l
+    WHERE l.lat BETWEEN $1 AND $2
+      AND l.lng BETWEEN $3 AND $4
+      AND (l.is_public = true OR l.user_id = $5)
+  `;
+  const countResult = await pool.query(countQuery, [minLat, maxLat, minLng, maxLng, userId || "guest"]);
+  const total = parseInt(countResult.rows[0].total, 10);
+  
+  // Get paginated data
   const query = `
     SELECT ${LOCATION_SELECT_COLUMNS}
     ${LOCATION_FROM_CLAUSE("$5")}
@@ -26,11 +48,20 @@ export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat}) =>
       AND l.lng BETWEEN $3 AND $4
       AND (l.is_public = true OR l.user_id = $5)
     ORDER BY l.created_at DESC
-    LIMIT 500;
+    LIMIT $6 OFFSET $7;
   `;
-  const values = [minLat, maxLat, minLng, maxLng, userId || "guest"];
+  const values = [minLat, maxLat, minLng, maxLng, userId || "guest", limitNum, offset];
   const result = await pool.query(query, values);
-  return result.rows;
+  
+  return {
+    data: result.rows,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum)
+    }
+  };
 };
 
 export const createLocation = async ({
@@ -69,27 +100,70 @@ export const createLocation = async ({
   return result.rows[0];
 };
 
-export const listUserLocations = async ({uid, currentUserId}) => {
+export const listUserLocations = async ({uid, currentUserId, page = 1, limit = 20}) => {
+  const {pageNum, limitNum, offset} = getPaginationParams(page, limit);
+  
+  // Get total count
+  const countQuery = `
+    SELECT COUNT(*) as total
+    FROM locations l
+    WHERE l.user_id = $1
+  `;
+  const countResult = await pool.query(countQuery, [uid]);
+  const total = parseInt(countResult.rows[0].total, 10);
+  
+  // Get paginated data
   const query = `
     SELECT ${LOCATION_SELECT_COLUMNS}
     ${LOCATION_FROM_CLAUSE("$2")}
     WHERE l.user_id = $1
-    ORDER BY l.created_at DESC;
+    ORDER BY l.created_at DESC
+    LIMIT $3 OFFSET $4;
   `;
-  const result = await pool.query(query, [uid, currentUserId || "guest"]);
-  return result.rows;
+  const result = await pool.query(query, [uid, currentUserId || "guest", limitNum, offset]);
+  
+  return {
+    data: result.rows,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum)
+    }
+  };
 };
 
-export const listTrendingLocations = async ({userId}) => {
+export const listTrendingLocations = async ({userId, page = 1, limit = 20}) => {
+  const {pageNum, limitNum, offset} = getPaginationParams(page, limit);
+  
+  // Get total count
+  const countQuery = `
+    SELECT COUNT(*) as total
+    FROM locations l
+    WHERE l.is_public = true
+  `;
+  const countResult = await pool.query(countQuery);
+  const total = parseInt(countResult.rows[0].total, 10);
+  
+  // Get paginated data
   const query = `
     SELECT ${LOCATION_SELECT_COLUMNS}
     ${LOCATION_FROM_CLAUSE("$1")}
     WHERE l.is_public = true
     ORDER BY l.likes_count DESC, l.created_at DESC
-    LIMIT 20;
+    LIMIT $2 OFFSET $3;
   `;
-  const result = await pool.query(query, [userId || "guest"]);
-  return result.rows;
+  const result = await pool.query(query, [userId || "guest", limitNum, offset]);
+  
+  return {
+    data: result.rows,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum)
+    }
+  };
 };
 
 export const deleteLocation = async ({locationId, userId}) => {
@@ -113,17 +187,39 @@ export const getLocationDetail = async ({locationId, userId}) => {
   return result.rows[0];
 };
 
-export const listLocationsByTag = async ({tag, userId}) => {
+export const listLocationsByTag = async ({tag, userId, page = 1, limit = 20}) => {
+  const {pageNum, limitNum, offset} = getPaginationParams(page, limit);
+  
+  // Get total count
+  const countQuery = `
+    SELECT COUNT(*) as total
+    FROM locations l
+    WHERE $1 = ANY(l.tags)
+      AND (l.is_public = true OR l.user_id = $2)
+  `;
+  const countResult = await pool.query(countQuery, [tag, userId || "guest"]);
+  const total = parseInt(countResult.rows[0].total, 10);
+  
+  // Get paginated data
   const query = `
     SELECT ${LOCATION_SELECT_COLUMNS}
     ${LOCATION_FROM_CLAUSE("$2")}
     WHERE $1 = ANY(l.tags)
       AND (l.is_public = true OR l.user_id = $2)
     ORDER BY l.created_at DESC
-    LIMIT 100;
+    LIMIT $3 OFFSET $4;
   `;
-  const result = await pool.query(query, [tag, userId || "guest"]);
-  return result.rows;
+  const result = await pool.query(query, [tag, userId || "guest", limitNum, offset]);
+  
+  return {
+    data: result.rows,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum)
+    }
+  };
 };
 
 export const listUniqueTags = async () => {
@@ -137,7 +233,20 @@ export const listUniqueTags = async () => {
   return result.rows.map(r => r.tag);
 };
 
-export const listFollowingLocations = async ({userId}) => {
+export const listFollowingLocations = async ({userId, page = 1, limit = 20}) => {
+  const {pageNum, limitNum, offset} = getPaginationParams(page, limit);
+  
+  // Get total count
+  const countQuery = `
+    SELECT COUNT(*) as total
+    FROM locations l
+    JOIN follows f ON l.user_id = f.followed_id
+    WHERE f.follower_id = $1 AND l.is_public = true
+  `;
+  const countResult = await pool.query(countQuery, [userId]);
+  const total = parseInt(countResult.rows[0].total, 10);
+  
+  // Get paginated data
   const query = `
     SELECT ${LOCATION_SELECT_COLUMNS}
     FROM locations l
@@ -146,8 +255,17 @@ export const listFollowingLocations = async ({userId}) => {
     LEFT JOIN likes lk_viewer ON lk_viewer.location_id = l.id AND lk_viewer.user_id = $1
     WHERE f.follower_id = $1 AND l.is_public = true
     ORDER BY l.created_at DESC
-    LIMIT 50;
+    LIMIT $2 OFFSET $3;
   `;
-  const result = await pool.query(query, [userId]);
-  return result.rows;
+  const result = await pool.query(query, [userId, limitNum, offset]);
+  
+  return {
+    data: result.rows,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages: Math.ceil(total / limitNum)
+    }
+  };
 };

@@ -15,6 +15,7 @@ import {
   getFollowingLocations
 } from "../controllers/locationController.js";
 import {optionalVerifyToken, verifyToken} from "../middlewares/authMiddleware.js";
+import {validateLocationCreation} from "../middlewares/validateLocation.js";
 
 const router = express.Router();
 
@@ -37,7 +38,7 @@ router.get("/routing", verifyToken, getDirections);
 router.get("/:id", optionalVerifyToken, getLocationById);
 
 // Write endpoints: bắt buộc auth, lấy userId từ req.user.uid.
-router.post("/", verifyToken, createLocationEntry);
+router.post("/", verifyToken, validateLocationCreation, createLocationEntry);
 router.delete("/:id", verifyToken, deleteLocationEntry);
 
 export default router;

@@ -22,40 +22,26 @@ import {
 } from "../services/goongMapService.js";
 import {sendError, sendSuccess} from "../utils/apiResponse.js";
 
-const geocodingCache = new Map();
-const MAX_CACHE_SIZE = 1000;
-const GEOCODING_TTL_MS = 24 * 60 * 60 * 1000; // 24h
-
-// Sweep cache mỗi 1h để xóa entry hết hạn (TTL).
-// setInterval kèm unref() để không chặn process exit.
-const gcInterval = setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of geocodingCache) {
-    if (now - entry.timestamp > GEOCODING_TTL_MS) {
-      geocodingCache.delete(key);
-    }
-  }
-}, 60 * 60 * 1000);
-gcInterval.unref?.();
-
 const getViewerId = (req) => req.user?.uid || null;
 
 export const getLocations = async (req, res) => {
   try {
-    const {minLng, maxLng, minLat, maxLat} = req.query;
+    const {minLng, maxLng, minLat, maxLat, page, limit} = req.query;
 
     if (!minLng || !maxLng || !minLat || !maxLat) {
-      return sendSuccess(res, {data: [], message: "Thiếu tham số tọa độ"});
+      return sendSuccess(res, {data: [], pagination: {page: 1, limit: 20, total: 0, totalPages: 0}, message: "Thiếu tham số tọa độ"});
     }
 
-    const data = await listLocations({
+    const result = await listLocations({
       userId: getViewerId(req),
       minLng: parseFloat(minLng),
       maxLng: parseFloat(maxLng),
       minLat: parseFloat(minLat),
-      maxLat: parseFloat(maxLat)
+      maxLat: parseFloat(maxLat),
+      page: parseInt(page, 10) || 1,
+      limit: parseInt(limit, 10) || 20
     });
-    sendSuccess(res, {data});
+    sendSuccess(res, result);
   } catch (error) {
     console.error("Lỗi lấy danh sách địa điểm:", error);
     sendError(res, {status: 500, message: "Lỗi Server"});
@@ -88,15 +74,21 @@ export const createLocationEntry = async (req, res) => {
 
       if (saved.is_public) {
         const followers = await getFollowers(saved.user_id);
-        for (const follower of followers) {
-          await createNotification({
-            recipientId: follower.firebase_uid,
-            senderId: saved.user_id,
-            type: "NEW_POST",
-            message: `đã đăng một địa điểm mới: ${saved.name}`,
-            locationId: saved.id
-          });
-        }
+        // Use Promise.all for parallel notification creation instead of sequential
+        await Promise.all(
+          followers.map(follower =>
+            createNotification({
+              recipientId: follower.firebase_uid,
+              senderId: saved.user_id,
+              type: "NEW_POST",
+              message: `đã đăng một địa điểm mới: ${saved.name}`,
+              locationId: saved.id
+            }).catch(err => {
+              console.error(`Failed to notify ${follower.firebase_uid}:`, err);
+              // Don't throw, continue with other notifications
+            })
+          )
+        );
       }
     }
 
@@ -110,8 +102,14 @@ export const createLocationEntry = async (req, res) => {
 export const getUserLocations = async (req, res) => {
   try {
     const {uid} = req.params;
-    const data = await listUserLocations({uid, currentUserId: getViewerId(req)});
-    sendSuccess(res, {data});
+    const {page, limit} = req.query;
+    const result = await listUserLocations({
+      uid,
+      currentUserId: getViewerId(req),
+      page: parseInt(page, 10) || 1,
+      limit: parseInt(limit, 10) || 20
+    });
+    sendSuccess(res, result);
   } catch (error) {
     console.error("Lỗi lấy địa điểm theo User:", error);
     sendError(res, {status: 500, message: "Lỗi Server"});
@@ -120,8 +118,13 @@ export const getUserLocations = async (req, res) => {
 
 export const getTrendingLocations = async (req, res) => {
   try {
-    const data = await listTrendingLocations({userId: getViewerId(req)});
-    sendSuccess(res, {data});
+    const {page, limit} = req.query;
+    const result = await listTrendingLocations({
+      userId: getViewerId(req),
+      page: parseInt(page, 10) || 1,
+      limit: parseInt(limit, 10) || 20
+    });
+    sendSuccess(res, result);
   } catch (error) {
     console.error("Lỗi lấy địa điểm xu hướng:", error);
     sendError(res, {status: 500, message: "Lỗi Server"});
@@ -131,8 +134,13 @@ export const getTrendingLocations = async (req, res) => {
 export const getFollowingLocations = async (req, res) => {
   try {
     const userId = req.user.uid;
-    const data = await listFollowingLocations({userId});
-    sendSuccess(res, {data});
+    const {page, limit} = req.query;
+    const result = await listFollowingLocations({
+      userId,
+      page: parseInt(page, 10) || 1,
+      limit: parseInt(limit, 10) || 20
+    });
+    sendSuccess(res, result);
   } catch (error) {
     console.error("Lỗi lấy địa điểm của người đang theo dõi:", error);
     sendError(res, {status: 500, message: "Lỗi Server"});
@@ -167,8 +175,14 @@ export const getLocationById = async (req, res) => {
 export const getLocationsByTag = async (req, res) => {
   try {
     const {tag} = req.params;
-    const data = await listLocationsByTag({tag, userId: getViewerId(req)});
-    sendSuccess(res, {data});
+    const {page, limit} = req.query;
+    const result = await listLocationsByTag({
+      tag,
+      userId: getViewerId(req),
+      page: parseInt(page, 10) || 1,
+      limit: parseInt(limit, 10) || 20
+    });
+    sendSuccess(res, result);
   } catch (error) {
     console.error("Lỗi lọc địa điểm theo tag:", error);
     sendError(res, {status: 500, message: "Lỗi Server"});
@@ -191,22 +205,12 @@ export const reverseGeocode = async (req, res) => {
     return sendError(res, {status: 400, code: "GEO_COORDS_REQUIRED", message: "Thiếu tọa độ"});
   }
 
-  const cacheKey = `${parseFloat(lat).toFixed(5)},${parseFloat(lng).toFixed(5)}`;
-  const cached = geocodingCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < GEOCODING_TTL_MS) {
-    return sendSuccess(res, {data: cached.data});
-  }
-
   if (!isConfiguredGoongKey()) {
     return sendError(res, {status: 503, code: "GOONG_NOT_CONFIGURED", message: "Chưa cấu hình GOONG_API_KEY"});
   }
 
   try {
     const result = await reverseGeocodeWithGoong({lat, lng});
-    geocodingCache.set(cacheKey, {data: result, timestamp: Date.now()});
-    if (geocodingCache.size > MAX_CACHE_SIZE) {
-      geocodingCache.delete(geocodingCache.keys().next().value);
-    }
     sendSuccess(res, {data: result});
   } catch (error) {
     console.error("Goong reverse geocoding failed:", error.message);
