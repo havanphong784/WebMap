@@ -4,10 +4,21 @@ import "dotenv/config";
 if (!admin.apps.length) {
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  // Handle different formats of private key from env
+  if (privateKey) {
+    // Remove surrounding quotes if present
+    privateKey = privateKey.replace(/^["']|["']$/g, '');
+    // Replace literal \n with actual newlines
+    privateKey = privateKey.replace(/\\n/g, '\n');
+  }
 
   if (!projectId || !clientEmail || !privateKey) {
-    console.error("❌ Firebase Error: Thiếu biến môi trường! Vui lòng kiểm tra FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, và FIREBASE_PRIVATE_KEY trên Render.");
+    console.error("❌ Firebase Error: Thiếu biến môi trường!");
+    console.error("  FIREBASE_PROJECT_ID:", projectId ? "✅" : "❌ MISSING");
+    console.error("  FIREBASE_CLIENT_EMAIL:", clientEmail ? "✅" : "❌ MISSING");
+    console.error("  FIREBASE_PRIVATE_KEY:", privateKey ? `✅ (${privateKey.length} chars)` : "❌ MISSING");
   } else {
     try {
       admin.initializeApp({
@@ -17,7 +28,7 @@ if (!admin.apps.length) {
           privateKey,
         }),
       });
-      console.log("✅ Firebase Admin đã được khởi tạo thành công!");
+      console.log("✅ Firebase Admin initialized successfully");
     } catch (error) {
       console.error("❌ Firebase Initialization Error:", error.message);
     }
