@@ -56,8 +56,11 @@ export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat, pag
   const values = [minLat, maxLat, minLng, maxLng, userId || "guest", limitNum, offset];
   const result = await pool.query(query, values);
   
+  // Group locations gần nhau (< ~30m) thành 1 điểm đại diện
+  const grouped = groupNearbyLocations(result.rows);
+  
   return {
-    data: result.rows,
+    data: grouped,
     pagination: {
       page: pageNum,
       limit: limitNum,
@@ -66,6 +69,62 @@ export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat, pag
     }
   };
 };
+
+/**
+ * Group locations có lat/lng gần nhau (< THRESHOLD degrees ≈ ~30m).
+ * Mỗi group trả về location đại diện (mới nhất hoặc nhiều like nhất) + mảng `group` chứa tất cả.
+ * Frontend sẽ hiện 1 marker, khi click mở sidebar với tabs cho từng review.
+ */
+const GROUP_THRESHOLD = 0.0003; // ~30 meters
+
+function groupNearbyLocations(locations) {
+  if (!locations || locations.length === 0) return [];
+  
+  const groups = [];
+  const assigned = new Set();
+  
+  for (let i = 0; i < locations.length; i++) {
+    if (assigned.has(i)) continue;
+    
+    const anchor = locations[i];
+    const anchorLat = Number(anchor.lat);
+    const anchorLng = Number(anchor.lng);
+    const group = [anchor];
+    assigned.add(i);
+    
+    // Tìm các locations gần anchor
+    for (let j = i + 1; j < locations.length; j++) {
+      if (assigned.has(j)) continue;
+      const candidate = locations[j];
+      const dLat = Math.abs(Number(candidate.lat) - anchorLat);
+      const dLng = Math.abs(Number(candidate.lng) - anchorLng);
+      
+      if (dLat <= GROUP_THRESHOLD && dLng <= GROUP_THRESHOLD) {
+        group.push(candidate);
+        assigned.add(j);
+      }
+    }
+    
+    if (group.length === 1) {
+      // Không có neighbor → trả nguyên
+      groups.push(anchor);
+    } else {
+      // Có nhiều reviews cùng vị trí → chọn đại diện (nhiều like nhất)
+      const representative = group.reduce((best, loc) => 
+        (Number(loc.likes_count) || 0) > (Number(best.likes_count) || 0) ? loc : best
+      , group[0]);
+      
+      // Gắn group vào representative
+      groups.push({
+        ...representative,
+        group: group,
+        review_count: group.length,
+      });
+    }
+  }
+  
+  return groups;
+}
 
 export const createLocation = async ({
   user_id,

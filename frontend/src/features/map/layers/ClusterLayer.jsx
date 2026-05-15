@@ -23,6 +23,8 @@ const buildGeoJson = (locations) => ({
         name: loc.name,
         category: loc.category,
         rating: loc.rating || 5,
+        review_count: loc.review_count || 1,
+        has_group: Boolean(loc.group?.length > 1),
       },
     })),
 });

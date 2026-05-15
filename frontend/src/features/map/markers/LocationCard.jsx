@@ -10,6 +10,7 @@ import {StarIcon} from "../../../shared/components/common/icons.jsx";
 const LocationCard = memo(({location, onClick, viewMode = "mini"}) => {
   const [isHovered, setIsHovered] = useState(false);
   const isExpanded = viewMode === "full" || isHovered;
+  const reviewCount = location.review_count || (location.group?.length) || 1;
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -37,6 +38,12 @@ const LocationCard = memo(({location, onClick, viewMode = "mini"}) => {
         onClick={handleClick}
         className="relative cursor-pointer group"
       >
+        {/* Badge hiện số reviews nếu > 1 */}
+        {reviewCount > 1 && (
+          <div className="absolute -top-1 -right-1 z-30 bg-cyan-glow text-white text-[9px] font-black min-w-[18px] h-[18px] flex items-center justify-center rounded-full shadow-neon border border-white/30 px-1">
+            {reviewCount}
+          </div>
+        )}
         <motion.div
           layout
           initial={false}

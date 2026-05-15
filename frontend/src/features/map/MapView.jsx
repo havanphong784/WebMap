@@ -66,15 +66,29 @@ const MapView = forwardRef(function MapView(
 
   /**
    * Click vào saved location (bubble unclustered từ ClusterLayer).
-   * Mở sidebar và fetch detail.
+   * Tìm location đầy đủ trong store (có thể có group data), mở sidebar.
    */
-  const handleSavedPointClick = useCallback(async (location) => {
-    if (!location?.id) return;
+  const handleSavedPointClick = useCallback(async (pointData) => {
+    if (!pointData?.id) return;
     setInfoClicked(null);
-    setActiveLocation(location);
-    flyToLocation(location.lng, location.lat, 16, 2000, true);
-    const detail = await fetchLocationDetail(location.id);
-    if (detail) setActiveLocation(detail);
+    
+    // Tìm location đầy đủ trong store (bao gồm group nếu có)
+    const locations = useLocationStore.getState().locations;
+    const fullLocation = locations.find(loc => String(loc.id) === String(pointData.id));
+    const locationToShow = fullLocation || pointData;
+    
+    setActiveLocation(locationToShow);
+    flyToLocation(locationToShow.lng, locationToShow.lat, 16, 2000, true);
+    
+    // Fetch detail mới nhất từ server
+    const detail = await fetchLocationDetail(locationToShow.id);
+    if (detail) {
+      // Giữ lại group data nếu có
+      setActiveLocation(locationToShow.group 
+        ? {...detail, group: locationToShow.group, review_count: locationToShow.review_count}
+        : detail
+      );
+    }
   }, [flyToLocation, fetchLocationDetail, setActiveLocation, setInfoClicked]);
 
   /**
