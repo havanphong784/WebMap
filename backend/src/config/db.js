@@ -11,87 +11,56 @@ types.setTypeParser(1114, (val) => val);
  * Database SSL Configuration
  * 
  * Priority:
- * 1. Use CA certificate if DB_CA_CERT_PATH is provided (production)
- * 2. Use CA certificate from Aiven if DB_CA_CERT is provided (production)
- * 3. Fallback to workaround for development (NODE_TLS_REJECT_UNAUTHORIZED = "0")
- * 
- * For production:
- * - Download CA certificate from Aiven console
- * - Set DB_CA_CERT_PATH=/path/to/ca.pem or DB_CA_CERT=<cert-content>
- * - Remove NODE_TLS_REJECT_UNAUTHORIZED workaround
+ * 1. CA certificate from DB_CA_CERT_PATH (file path)
+ * 2. CA certificate from DB_CA_CERT (env variable content)
+ * 3. Fallback: rejectUnauthorized=false + NODE_TLS_REJECT_UNAUTHORIZED=0
  */
 
 let sslConfig = {};
-const isDev = process.env.NODE_ENV !== "production";
 
-// Try to use CA certificate from file path
+// Option 1: CA cert from file
 if (process.env.DB_CA_CERT_PATH) {
   try {
-    const caPath = path.resolve(process.env.DB_CA_CERT_PATH);
-    const ca = fs.readFileSync(caPath, 'utf8');
-    sslConfig = {
-      rejectUnauthorized: true,
-      ca: [ca]
-    };
-    console.log("✅ Using CA certificate from file:", process.env.DB_CA_CERT_PATH);
+    const ca = fs.readFileSync(path.resolve(process.env.DB_CA_CERT_PATH), "utf8");
+    sslConfig = {rejectUnauthorized: true, ca: [ca]};
+    console.log("✅ SSL: Using CA certificate from file");
   } catch (err) {
-    console.warn("⚠️ Failed to read CA certificate file:", err.message);
-    console.warn("Falling back to development workaround...");
-    // Fall through to workaround
+    console.warn("⚠️ SSL: Failed to read CA cert file:", err.message);
   }
 }
 
-// Try to use CA certificate from environment variable
+// Option 2: CA cert from env variable
 if (!sslConfig.ca && process.env.DB_CA_CERT) {
-  try {
-    sslConfig = {
-      rejectUnauthorized: true,
-      ca: [process.env.DB_CA_CERT]
-    };
-    console.log("✅ Using CA certificate from environment variable");
-  } catch (err) {
-    console.warn("⚠️ Failed to parse CA certificate from env:", err.message);
-  }
+  sslConfig = {rejectUnauthorized: true, ca: [process.env.DB_CA_CERT]};
+  console.log("✅ SSL: Using CA certificate from env");
 }
 
-// Fallback to development workaround if no CA certificate is available
+// Option 3: Fallback — disable verification (Aiven free tier uses self-signed certs)
 if (!sslConfig.ca) {
-  if (isDev) {
-    console.warn("⚠️ Using development SSL workaround (NODE_TLS_REJECT_UNAUTHORIZED = 0)");
-    console.warn("⚠️ This is NOT secure for production!");
-    console.warn("⚠️ For production, set DB_CA_CERT_PATH or DB_CA_CERT environment variable");
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-    sslConfig = {
-      rejectUnauthorized: false
-    };
-  } else {
-    console.error("❌ Production mode requires CA certificate!");
-    console.error("❌ Set DB_CA_CERT_PATH or DB_CA_CERT environment variable");
-    process.exit(1);
-  }
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  sslConfig = {rejectUnauthorized: false};
+  console.warn("⚠️ SSL: Using rejectUnauthorized=false (no CA cert provided)");
 }
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: sslConfig,
-  // Connection pool settings
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
 });
 
 pool.on("error", (err) => {
-  console.error("Lỗi PostgreSQL Pool bất ngờ:", err.message);
+  console.error("PostgreSQL Pool error:", err.message);
 });
 
-// Kiểm tra kết nối khi khởi tạo
 pool.connect()
   .then(client => {
-    console.log("✅ Database: Kết nối PostgreSQL thành công !");
+    console.log("✅ Database: Connected");
     client.release();
   })
   .catch(err => {
-    console.error("❌ Database: Lỗi kết nối !", err.stack);
+    console.error("❌ Database: Connection failed!", err.message);
   });
 
 export default pool;
