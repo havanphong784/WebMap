@@ -26,8 +26,11 @@ const getPaginationParams = (page = 1, limit = 20) => {
   return {pageNum, limitNum, offset};
 };
 
-export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat, page = 1, limit = 20}) => {
-  const {pageNum, limitNum, offset} = getPaginationParams(page, limit);
+export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat, page = 1, limit = 500}) => {
+  // Map view cần load nhiều hơn — cap ở 500 thay vì 100
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(500, Math.max(1, parseInt(limit, 10) || 500));
+  const offset = (pageNum - 1) * limitNum;
   
   // Get total count
   const countQuery = `

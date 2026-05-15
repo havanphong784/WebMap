@@ -39,7 +39,7 @@ export const getLocations = async (req, res) => {
       minLat: parseFloat(minLat),
       maxLat: parseFloat(maxLat),
       page: parseInt(page, 10) || 1,
-      limit: parseInt(limit, 10) || 20
+      limit: parseInt(limit, 10) || 500
     });
     sendSuccess(res, result);
   } catch (error) {

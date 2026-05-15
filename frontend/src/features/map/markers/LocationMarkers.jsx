@@ -39,6 +39,8 @@ const LocationMarkers = memo(({viewMode, onLocationClick, activeLocation}) => {
         setVisibleIds((prev) => (prev.size ? new Set() : prev));
         return;
       }
+      // Check if layer exists before querying (avoids console errors)
+      if (!map.getLayer(LAYER_IDS.UNCLUSTERED_POINT)) return;
       try {
         const features = map.queryRenderedFeatures({layers: [LAYER_IDS.UNCLUSTERED_POINT]});
         const ids = new Set();
@@ -49,7 +51,7 @@ const LocationMarkers = memo(({viewMode, onLocationClick, activeLocation}) => {
         }
         setVisibleIds(ids);
       } catch {
-        // queryRenderedFeatures throws khi layer chưa sẵn sàng
+        // Layer may not be ready yet
       }
     };
 
