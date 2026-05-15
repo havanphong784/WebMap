@@ -12,13 +12,17 @@ if (!admin.apps.length) {
     privateKey = privateKey.replace(/^["']|["']$/g, '');
     // Replace literal \n with actual newlines
     privateKey = privateKey.replace(/\\n/g, '\n');
+    // If key still doesn't have proper PEM format, try base64 decode
+    if (!privateKey.includes('-----BEGIN')) {
+      console.error("❌ FIREBASE_PRIVATE_KEY doesn't look like a PEM key");
+    }
   }
 
   if (!projectId || !clientEmail || !privateKey) {
     console.error("❌ Firebase Error: Thiếu biến môi trường!");
     console.error("  FIREBASE_PROJECT_ID:", projectId ? "✅" : "❌ MISSING");
     console.error("  FIREBASE_CLIENT_EMAIL:", clientEmail ? "✅" : "❌ MISSING");
-    console.error("  FIREBASE_PRIVATE_KEY:", privateKey ? `✅ (${privateKey.length} chars)` : "❌ MISSING");
+    console.error("  FIREBASE_PRIVATE_KEY:", privateKey ? `✅ (${privateKey.length} chars, starts with: ${privateKey.substring(0, 30)}...)` : "❌ MISSING");
   } else {
     try {
       admin.initializeApp({
