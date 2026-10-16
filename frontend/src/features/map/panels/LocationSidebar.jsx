@@ -30,6 +30,7 @@ import {
     WindIcon
 } from "../../../shared/components/common/icons.jsx";
 import { parseDBDate } from "../../../shared/utils/dateUtils.js";
+import {registerBackHandler} from "../../../platform/backStack.js";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
 import { isMobile } from "../../../shared/utils/deviceUtils.js";
@@ -68,6 +69,10 @@ const formatCoordinates = (location) => {
 };
 
 export default function LocationSidebar({ location, onAddReview, onClose }) {
+    useEffect(() => registerBackHandler("location-sidebar", () => {
+        onClose();
+        return true;
+    }, 20), [onClose]);
     const mobile = isMobile();
     const { user } = useAuthStore();
     const navigate = useNavigate();

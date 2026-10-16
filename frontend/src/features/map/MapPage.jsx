@@ -265,7 +265,7 @@ export default function MapPage() {
   const showOverlay = !mobile || !activeLocation;
 
   return (
-    <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
+    <div className="app-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
       <MapView
         ref={mapViewRef}
         mobile={mobile}

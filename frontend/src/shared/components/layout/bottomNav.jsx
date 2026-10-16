@@ -29,7 +29,7 @@ const BottomNav = memo(() => {
   ], [user, unreadCount, unreadAchievements]);
 
   return (
-    <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] sm:w-[80%] max-w-lg">
+    <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50 w-[95%] sm:w-[80%] max-w-lg">
       <nav className="glass-panel py-1 sm:py-1.5 px-4 sm:px-6 flex justify-between items-center shadow-2xl border-white/5 bg-obsidian/85 backdrop-blur-3xl rounded-2xl sm:rounded-xl">
         {navItems.map((item) => (
           <NavLink
@@ -72,4 +72,3 @@ const BottomNav = memo(() => {
 BottomNav.displayName = "BottomNav";
 
 export default BottomNav;
-

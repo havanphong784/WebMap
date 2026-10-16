@@ -1,5 +1,5 @@
-import {lazy, Suspense, useEffect, useMemo, useRef} from 'react';
-import {Route, Routes, useLocation} from 'react-router-dom';
+import {lazy, Suspense, useCallback, useEffect, useMemo, useRef} from 'react';
+import {Route, Routes, useLocation, useNavigate} from 'react-router-dom';
 import {AnimatePresence} from 'framer-motion';
 import BottomNav from "./shared/components/layout/bottomNav.jsx";
 import ProtectedRoute from "./shared/components/layout/protectedRoute.jsx";
@@ -9,7 +9,9 @@ import {useSocialStore} from "./features/map/store/useSocialStore.jsx";
 import {useLocationStore} from "./features/map/store/useLocationsStore.jsx";
 import {useNotificationStore} from "./features/notifications/store/useNotificationStore.jsx";
 import ToastProvider from "./shared/components/toast/ToastProvider.jsx";
+import {useToastStore} from "./shared/components/toast/useToastStore.jsx";
 import useSSE from "./shared/hooks/useSSE.jsx";
+import useAndroidLifecycle from "./platform/useAndroidLifecycle.js";
 
 const LandingPage = lazy(() => import("./features/landing/landingPage.jsx"));
 const MapPage = lazy(() => import("./features/map/MapPage.jsx"));
@@ -29,12 +31,17 @@ const LoadingFallback = () => (
 
 function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isLoginPage = location.pathname === '/login';
   const isLandingPage = location.pathname === '/';
   const {user, setUnreadAchievements} = useAuthStore();
   const {sendHeartbeat, setActiveUsers} = useSocialStore();
   const userLocation = useLocationStore(state => state.userLocation);
   const {setNotificationsFromSSE} = useNotificationStore();
+  const addToast = useToastStore(state => state.addToast);
+  const notifyExit = useCallback(() => {
+    addToast("Nhấn Back lần nữa để thoát ứng dụng", "info");
+  }, [addToast]);
   const userLocationRef = useRef(userLocation);
 
   useEffect(() => {
@@ -92,6 +99,12 @@ function App() {
       return () => clearInterval(heartbeatInterval);
     }
   }, [user?.uid, sendHeartbeat]);
+
+  useAndroidLifecycle({
+    navigate,
+    location,
+    notifyExit,
+  });
 
   return (
     <div

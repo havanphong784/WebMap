@@ -39,6 +39,11 @@
 }
 
 @layer base {
+    html, body, #root {
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+
     body {
         @apply bg-map-bg text-text-primary font-jakarta antialiased overflow-x-hidden selection:bg-cyan-glow selection:text-white custom-scrollbar;
         /* Kích hoạt các tính năng font cao cấp */
@@ -78,6 +83,11 @@
         opacity: 0.5;
         background-clip: content-box;
     }
+}
+
+@utility app-screen {
+    height: 100vh;
+    height: 100dvh;
 }
 
 @utility glass-panel {

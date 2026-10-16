@@ -15,6 +15,7 @@ import {
 import {apiClient} from "../../../shared/api/apiClient.js";
 import {useAuthStore} from "../../auth/context/authStore.js";
 import {isMobile} from "../../../shared/utils/deviceUtils.js";
+import {registerBackHandler} from "../../../platform/backStack.js";
 
 const hasPosition = (user) => {
   const lat = Number.parseFloat(user?.current_lat ?? user?.peer_current_lat);
@@ -102,6 +103,18 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [chatError, setChatError] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    return registerBackHandler("online-friends", () => {
+      if (activeChatId) {
+        setActiveChatId(null);
+      } else {
+        setIsOpen(false);
+      }
+      return true;
+    }, activeChatId ? 35 : 25);
+  }, [activeChatId, isOpen]);
 
   const threadMap = useMemo(() => new Map(threads.map((thread) => [thread.peer_id, thread])), [threads]);
 
