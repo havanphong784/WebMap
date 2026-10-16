@@ -26,9 +26,14 @@ export const createLocationAdapter = ({
 
     const current = await plugin.checkPermissions();
     if (current.location === "granted") return "granted";
-    if (current.location !== "prompt") return "denied";
+    if (!["prompt", "prompt-with-rationale"].includes(current.location)) return "denied";
     const requested = await plugin.requestPermissions();
     return requested.location === "granted" ? "granted" : "denied";
+  };
+
+  const getLocationPermissionState = async () => {
+    if (!nativeAndroid) return browserGeolocation ? "prompt" : "denied";
+    return (await plugin.checkPermissions()).location;
   };
 
   const ensureAvailable = async () => {
@@ -71,10 +76,11 @@ export const createLocationAdapter = ({
     return async () => browserGeolocation.clearWatch(id);
   };
 
-  return {requestLocationPermission, getCurrentPosition, watchPosition};
+  return {getLocationPermissionState, requestLocationPermission, getCurrentPosition, watchPosition};
 };
 
 const locationAdapter = createLocationAdapter();
 export const requestLocationPermission = locationAdapter.requestLocationPermission;
+export const getLocationPermissionState = locationAdapter.getLocationPermissionState;
 export const getCurrentPosition = locationAdapter.getCurrentPosition;
 export const watchPosition = locationAdapter.watchPosition;

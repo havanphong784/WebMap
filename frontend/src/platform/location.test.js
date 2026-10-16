@@ -35,12 +35,28 @@ describe("location adapter", () => {
     expect(plugin.requestPermissions).toHaveBeenCalledOnce();
   });
 
-  it.each(["denied", "prompt-with-rationale"])("normalizes native %s permission to denied", async (state) => {
+  it("requests native permission when Android requires a rationale", async () => {
+    const plugin = {
+      checkPermissions: vi.fn().mockResolvedValue({location: "prompt-with-rationale"}),
+      requestPermissions: vi.fn().mockResolvedValue({location: "granted"}),
+    };
+    const adapter = createLocationAdapter({nativeAndroid: true, plugin});
+
+    await expect(adapter.requestLocationPermission()).resolves.toBe("granted");
+    expect(plugin.requestPermissions).toHaveBeenCalledOnce();
+  });
+
+  it("does not loop the permission prompt after permanent denial", async () => {
     const adapter = createLocationAdapter({
       nativeAndroid: true,
-      plugin: {checkPermissions: vi.fn().mockResolvedValue({location: state})},
+      plugin: {
+        checkPermissions: vi.fn().mockResolvedValue({location: "denied"}),
+        requestPermissions: vi.fn(),
+      },
     });
     await expect(adapter.requestLocationPermission()).resolves.toBe("denied");
+    expect(adapter.getLocationPermissionState()).resolves.toBe("denied");
+    expect(adapter.requestLocationPermission).not.toBeUndefined();
   });
 
   it("clears a native position watch", async () => {

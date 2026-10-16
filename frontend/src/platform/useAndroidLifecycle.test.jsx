@@ -1,7 +1,19 @@
 import {describe, expect, it, vi} from "vitest";
-import {createAndroidBackHandler} from "./useAndroidLifecycle.js";
+import {createAndroidBackHandler, subscribeAndroidBackButton} from "./useAndroidLifecycle.js";
 
 describe("Android Back behavior", () => {
+  it("removes a listener that resolves after disposal", async () => {
+    let resolveListener;
+    const remove = vi.fn();
+    const addListener = vi.fn(() => new Promise((resolve) => { resolveListener = resolve; }));
+    const dispose = subscribeAndroidBackButton({addListener}, vi.fn());
+
+    dispose();
+    resolveListener({remove});
+    await Promise.resolve();
+
+    expect(remove).toHaveBeenCalledOnce();
+  });
   it("closes an overlay before navigating", () => {
     const navigate = vi.fn();
     const exitApp = vi.fn();

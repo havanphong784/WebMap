@@ -33,6 +33,8 @@ import { parseDBDate } from "../../../shared/utils/dateUtils.js";
 import {registerBackHandler} from "../../../platform/backStack.js";
 import {getCurrentPosition} from "../../../platform/location.js";
 import {copyText as copyPlatformText, openExternalUrl, shareContent} from "../../../platform/actions.js";
+import {buildLocationShareUrl} from "../../../platform/actions.js";
+import {runtimeConfig} from "../../../config/runtimeConfig.js";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
 import { isMobile } from "../../../shared/utils/deviceUtils.js";
@@ -148,8 +150,11 @@ export default function LocationSidebar({ location, onAddReview, onClose }) {
     };
 
     const handleShare = async () => {
-        const locationIdParam = isGoongPlace ? "" : `&locationId=${displayLocation.id}`;
-        const shareUrl = `${window.location.origin}/?lat=${displayLocation.lat}&lng=${displayLocation.lng}${locationIdParam}`;
+        const shareUrl = buildLocationShareUrl(runtimeConfig.publicWebUrl, {
+            lat: displayLocation.lat,
+            lng: displayLocation.lng,
+            locationId: isGoongPlace ? undefined : displayLocation.id,
+        });
         const shareData = {
             title: displayTitle,
             text: `Khám phá địa điểm "${displayTitle}" trên Aether Geo!`,

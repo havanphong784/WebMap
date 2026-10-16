@@ -47,6 +47,8 @@ export default function MapPage() {
   const mapLoading = useLocationStore((s) => s.mapLoading);
   const mapError = useLocationStore((s) => s.mapError);
   const routeError = useLocationStore((s) => s.routeError);
+  const locationPermission = useLocationStore((s) => s.locationPermission);
+  const setLocationPermission = useLocationStore((s) => s.setLocationPermission);
 
   const isWeatherVisible = useWeatherStore((s) => s.isVisible);
   const toggleWeather = useWeatherStore((s) => s.toggleVisibility);
@@ -179,15 +181,19 @@ export default function MapPage() {
         const {longitude, latitude, accuracy} = pos.coords;
         setUserLocation([longitude, latitude]);
         setAccuracy(accuracy);
+        setLocationPermission("granted");
         flyToLocation(longitude, latitude, 16, 2000);
         setIsLocating(false);
       },
-      () => {
+      (error) => {
         setIsLocating(false);
-        addToast("Không thể truy cập vị trí của bạn. Vui lòng cấp quyền.", "error");
+        setLocationPermission(error?.code === "LOCATION_DENIED" ? "denied" : "unavailable");
+        addToast(error?.code === "LOCATION_DENIED"
+          ? "Quyền vị trí đang tắt. Hãy cấp quyền trong Cài đặt rồi thử lại."
+          : "Không lấy được GPS. Hãy bật định vị rồi thử lại.", "error");
       },
     );
-  }, [addToast, flyToLocation, setUserLocation, setAccuracy]);
+  }, [addToast, flyToLocation, setUserLocation, setAccuracy, setLocationPermission]);
 
   const handleFlyToOnlineUser = useCallback((onlineUser) => {
     const lat = Number.parseFloat(onlineUser?.current_lat);
@@ -298,6 +304,17 @@ export default function MapPage() {
         />
       )}
       {showOverlay && <SearchBox onSelectLocation={handleSearchSelect} />}
+
+      {showOverlay && !["checking", "granted"].includes(locationPermission) && (
+        <div className="absolute left-1/2 top-[calc(5rem+var(--app-safe-top))] z-30 w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 rounded-2xl border border-cyan-glow/30 bg-white/95 p-3 text-xs text-text-primary shadow-floating backdrop-blur-xl">
+          <p>{locationPermission === "denied"
+            ? "Aether cần quyền vị trí để hiển thị bạn trên bản đồ. Bạn vẫn có thể dùng bản đồ khi chưa cấp quyền."
+            : "Chưa thể đọc GPS. Hãy bật dịch vụ vị trí rồi thử lại."}</p>
+          <button type="button" onClick={handleLocateUser} className="mt-2 font-bold text-cyan-glow">
+            {locationPermission === "denied" ? "Cấp quyền / thử lại" : "Thử lại GPS"}
+          </button>
+        </div>
+      )}
       {showOverlay && <OnlineFriendsPane onFlyToUser={handleFlyToOnlineUser} />}
       {!mobile && <OnlineCommunityBar />}
 

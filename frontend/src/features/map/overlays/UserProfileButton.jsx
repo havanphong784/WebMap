@@ -9,7 +9,7 @@ const UserProfileButton = memo(() => {
   const { user } = useAuthStore();
 
   return (
-    <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-30">
+    <div className="absolute top-[calc(1rem+var(--app-safe-top))] right-[calc(1rem+var(--app-safe-right))] sm:top-[calc(1.5rem+var(--app-safe-top))] sm:right-[calc(1.5rem+var(--app-safe-right))] z-30">
       <motion.div
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}

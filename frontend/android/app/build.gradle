@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 apply plugin: 'com.android.application'
 
 def keystorePropertiesFile = rootProject.file('keystore.properties')
@@ -51,7 +53,9 @@ gradle.taskGraph.whenReady { graph ->
     def releaseRequested = graph.allTasks.any {
         it.project == project && it.name in ['bundleRelease', 'assembleRelease']
     }
-    if (releaseRequested && !releaseSigningReady) {
+    if (!releaseRequested) return
+
+    if (!releaseSigningReady) {
         def detail = keystorePropertiesFile.exists()
             ? "missing keys: ${missingSigningKeys.join(', ')}"
             : "missing ${keystorePropertiesFile}"
@@ -59,6 +63,42 @@ gradle.taskGraph.whenReady { graph ->
             "Release signing is not configured (${detail}). " +
             "Copy keystore.properties.example to keystore.properties and provide the release keystore values."
         )
+    }
+
+    def markerFile = file('src/main/assets/public/aether-android-release.json')
+    if (!markerFile.exists()) {
+        throw new GradleException(
+            "Validated Android web assets are missing. Run npm run android:sync from frontend before the release build."
+        )
+    }
+    def marker = new JsonSlurper().parse(markerFile)
+    def releaseUrls = [marker.apiBaseUrl, marker.publicWebUrl]
+    if (marker.schemaVersion != 1 || releaseUrls.any {
+        !(it instanceof String) || !it.startsWith('https://') ||
+            it.toLowerCase().contains('localhost') || it.toLowerCase().contains('example') ||
+            it.toLowerCase().contains('replace')
+    }) {
+        throw new GradleException(
+            "Android web assets contain invalid or placeholder release URLs. Rebuild them with production .env.android values."
+        )
+    }
+
+    def servicesJSON = file('google-services.json')
+    if (!servicesJSON.exists() || !servicesJSON.text.trim()) {
+        throw new GradleException(
+            "Native Google sign-in requires app/google-services.json for release. Download it from Firebase for com.aether.geo."
+        )
+    }
+    try {
+        def googleConfig = new JsonSlurper().parse(servicesJSON)
+        def packageNames = googleConfig.client?.collect { it.client_info?.android_client_info?.package_name }
+        if (!packageNames?.contains('com.aether.geo')) {
+            throw new GradleException("google-services.json does not contain Android client com.aether.geo.")
+        }
+    } catch (GradleException error) {
+        throw error
+    } catch (Exception error) {
+        throw new GradleException("google-services.json is not valid JSON: ${error.message}")
     }
 }
 
@@ -84,9 +124,9 @@ apply from: 'capacitor.build.gradle'
 
 try {
     def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
+    if (servicesJSON.exists() && servicesJSON.text.trim()) {
         apply plugin: 'com.google.gms.google-services'
     }
 } catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+    logger.info("google-services.json not found or invalid; native Google sign-in is unavailable in this build")
 }

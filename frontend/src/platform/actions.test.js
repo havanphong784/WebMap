@@ -1,7 +1,14 @@
 import {describe, expect, it, vi} from "vitest";
-import {createActionsAdapter} from "./actions.js";
+import {buildLocationShareUrl, createActionsAdapter} from "./actions.js";
 
 describe("platform actions", () => {
+  it("builds native share links from the public web origin", () => {
+    expect(buildLocationShareUrl("https://aether.vn", {
+      lat: 10.75,
+      lng: 106.67,
+      locationId: "place 1",
+    })).toBe("https://aether.vn/?lat=10.75&lng=106.67&locationId=place+1");
+  });
   it("uses native share, clipboard, and browser on Android", async () => {
     const share = {share: vi.fn().mockResolvedValue({activityType: "messages"})};
     const clipboard = {write: vi.fn()};

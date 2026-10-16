@@ -21,6 +21,14 @@ const validateExternalUrl = (value) => {
   return url.toString();
 };
 
+export const buildLocationShareUrl = (publicWebUrl, {lat, lng, locationId} = {}) => {
+  const url = new URL("/", validateExternalUrl(publicWebUrl));
+  url.searchParams.set("lat", lat);
+  url.searchParams.set("lng", lng);
+  if (locationId) url.searchParams.set("locationId", locationId);
+  return url.toString();
+};
+
 export const createActionsAdapter = ({
   nativeAndroid = isNativeAndroid(),
   share = Share,

@@ -2,7 +2,8 @@ import {describe, expect, it} from "vitest";
 import {getRuntimeConfig} from "./runtimeConfig.js";
 
 const completeEnv = (overrides = {}) => ({
-  VITE_API_BASE_URL: "https://api.aether.example/api",
+  VITE_API_BASE_URL: "https://api.aether.vn/api",
+  VITE_PUBLIC_WEB_URL: "https://aether.vn",
   VITE_FIREBASE_API_KEY: "firebase-api-key",
   VITE_FIREBASE_AUTH_DOMAIN: "aether.firebaseapp.com",
   VITE_FIREBASE_PROJECT_ID: "aether-project",
@@ -26,7 +27,8 @@ describe("getRuntimeConfig", () => {
     const config = getRuntimeConfig(completeEnv(), {release: true});
 
     expect(config).toEqual({
-      apiBaseUrl: "https://api.aether.example/api",
+      apiBaseUrl: "https://api.aether.vn/api",
+      publicWebUrl: "https://aether.vn",
       firebaseConfig: {
         apiKey: "firebase-api-key",
         authDomain: "aether.firebaseapp.com",
@@ -45,10 +47,22 @@ describe("getRuntimeConfig", () => {
     ["cleartext", "http://api.aether.example/api"],
     ["localhost", "https://localhost:3000/api"],
     ["loopback", "https://127.0.0.1:3000/api"],
+    ["reserved example domain", "https://api.aether.example/api"],
   ])("rejects a %s release API URL", (_label, apiBaseUrl) => {
     expect(() => getRuntimeConfig(completeEnv({
       VITE_API_BASE_URL: apiBaseUrl,
     }), {release: true})).toThrow(/VITE_API_BASE_URL/);
+  });
+
+  it.each([
+    ["missing", ""],
+    ["cleartext", "http://aether.vn"],
+    ["localhost", "https://localhost"],
+    ["reserved example domain", "https://aether.example"],
+  ])("rejects a %s public release URL", (_label, publicWebUrl) => {
+    expect(() => getRuntimeConfig(completeEnv({
+      VITE_PUBLIC_WEB_URL: publicWebUrl,
+    }), {release: true})).toThrow(/VITE_PUBLIC_WEB_URL/);
   });
 
   it.each([

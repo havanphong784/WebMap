@@ -38,9 +38,11 @@ export const useLocationStore = create((set) => ({
   tags: [],
   userLocation: null,
   accuracy: null,
+  locationPermission: "checking",
 
   setUserLocation: (loc) => set({userLocation: loc}),
   setAccuracy: (acc) => set({accuracy: acc}),
+  setLocationPermission: (permission) => set({locationPermission: permission}),
   setRouteData: (state) => (set({routeData: state})),
 
   fetchTrending: async () => {

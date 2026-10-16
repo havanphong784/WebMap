@@ -1,4 +1,4 @@
-import {useEffect} from "react";
+import {useEffect, useRef} from "react";
 import {App as CapacitorApp} from "@capacitor/app";
 import {isNativeAndroid} from "./runtime.js";
 import {closeTopOverlay as closeRegisteredOverlay} from "./backStack.js";
@@ -6,6 +6,20 @@ import {closeTopOverlay as closeRegisteredOverlay} from "./backStack.js";
 const EXIT_WINDOW_MS = 2_000;
 const ROOT_PATHS = new Set(["/map", "/discover", "/notifications", "/profile"]);
 const isRootPath = (pathname) => ROOT_PATHS.has(pathname) || /^\/profile\/[^/]+$/.test(pathname);
+const exitNativeApp = () => CapacitorApp.exitApp();
+
+export const subscribeAndroidBackButton = (app, handler) => {
+  let disposed = false;
+  let listener;
+  void app.addListener("backButton", handler).then((handle) => {
+    if (disposed) void handle.remove();
+    else listener = handle;
+  });
+  return () => {
+    disposed = true;
+    void listener?.remove();
+  };
+};
 
 export const createAndroidBackHandler = ({
   getPathname,
@@ -43,26 +57,24 @@ export default function useAndroidLifecycle({
   navigate,
   location,
   closeTopOverlay = closeRegisteredOverlay,
-  exitApp = () => CapacitorApp.exitApp(),
+  exitApp = exitNativeApp,
   notifyExit,
 }) {
+  const current = useRef({navigate, location, closeTopOverlay, exitApp, notifyExit});
+  useEffect(() => {
+    current.current = {navigate, location, closeTopOverlay, exitApp, notifyExit};
+  }, [navigate, location, closeTopOverlay, exitApp, notifyExit]);
+
   useEffect(() => {
     if (!isNativeAndroid()) return undefined;
 
     const handler = createAndroidBackHandler({
-      getPathname: () => location.pathname,
-      closeTopOverlay,
-      navigate,
-      exitApp,
-      notifyExit,
+      getPathname: () => current.current.location.pathname,
+      closeTopOverlay: () => current.current.closeTopOverlay(),
+      navigate: (...args) => current.current.navigate(...args),
+      exitApp: () => current.current.exitApp(),
+      notifyExit: () => current.current.notifyExit?.(),
     });
-    let listener;
-    void CapacitorApp.addListener("backButton", handler).then((handle) => {
-      listener = handle;
-    });
-
-    return () => {
-      void listener?.remove();
-    };
-  }, [closeTopOverlay, exitApp, location.pathname, navigate, notifyExit]);
+    return subscribeAndroidBackButton(CapacitorApp, handler);
+  }, []);
 }
