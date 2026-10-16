@@ -8,6 +8,7 @@ import {isMobile} from '../../../shared/utils/deviceUtils.js';
 import {useLocationStore} from '../../map/store/useLocationsStore.jsx';
 import {useWeatherStore} from '../../map/store/useWeatherStore.jsx';
 import {apiClient} from '../../../shared/api/apiClient.js';
+import {registerBackHandler} from '../../../platform/backStack.js';
 
 const ROWS = {
   STARTUP: 0,
@@ -232,6 +233,15 @@ const MapChatbot = ({ onLocationClick }) => {
   const isDragging = useRef(false);
   const [mobile, setMobile] = useState(() => isMobile());
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    return registerBackHandler("map-chatbot", () => {
+      setIsOpen(false);
+      setActiveRow(ROWS.STARTUP);
+      return true;
+    }, 30);
+  }, [isOpen]);
 
   useEffect(() => {
     const handleResize = () => setMobile(isMobile());

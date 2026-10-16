@@ -6,10 +6,25 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:android:web": "node scripts/build-android-web.mjs",
+    "android:sync": "npm run build:android:web && cap sync android",
+    "android:open": "cap open android",
+    "android:bundle": "npm run android:sync && cd android && ./gradlew bundleRelease",
     "lint": "eslint .",
+    "test": "vitest",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor-firebase/authentication": "8.5.2",
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/browser": "8.0.5",
+    "@capacitor/clipboard": "8.0.1",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/geolocation": "8.2.3",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4",
     "@tailwindcss/vite": "^4.2.4",
     "browser-image-compression": "^2.0.2",
     "date-fns": "^4.1.0",
@@ -27,6 +42,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.3",
     "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -36,6 +52,9 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
-    "vite": "^8.0.10"
+    "jsdom": "^28.1.0",
+    "typescript": "5.9.3",
+    "vite": "^8.0.10",
+    "vitest": "^4.1.12"
   }
 }

@@ -1,7 +1,8 @@
-import {useCallback, useEffect, useRef} from "react";
+import {useEffect, useRef} from "react";
 import {auth} from "../../config/firebase.js";
+import {runtimeConfig} from "../../config/runtimeConfig.js";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+const API_BASE_URL = runtimeConfig.apiBaseUrl;
 const RECONNECT_DELAY_MS = 5000;
 const MAX_RECONNECT_DELAY_MS = 30000;
 
@@ -18,59 +19,68 @@ export default function useSSE({enabled = false, handlers = {}}) {
   const reconnectTimerRef = useRef(null);
   const reconnectAttemptsRef = useRef(0);
   const handlersRef = useRef(handlers);
-  handlersRef.current = handlers;
 
-  // Cleanup helpers tách ra để tránh stale closure
-  const cleanupConnection = useCallback(() => {
-    if (readerRef.current) {
+  useEffect(() => {
+    handlersRef.current = handlers;
+  }, [handlers]);
+
+  useEffect(() => {
+    let disposed = false;
+
+    const cleanupConnection = () => {
+      if (!readerRef.current) return;
       try {
         readerRef.current.cancel();
       } catch {
         /* noop */
       }
       readerRef.current = null;
-    }
-  }, []);
+    };
 
-  const cleanupTimers = useCallback(() => {
-    if (reconnectTimerRef.current) {
+    const cleanupTimer = () => {
+      if (!reconnectTimerRef.current) return;
       clearTimeout(reconnectTimerRef.current);
       reconnectTimerRef.current = null;
-    }
-  }, []);
+    };
 
-  const connect = useCallback(async () => {
-    cleanupConnection();
-    if (!enabled || !auth.currentUser) return;
+    const scheduleReconnect = (connect) => {
+      if (disposed || !enabled || reconnectTimerRef.current) return;
+      const attempts = reconnectAttemptsRef.current;
+      const delay = Math.min(RECONNECT_DELAY_MS * Math.pow(2, attempts), MAX_RECONNECT_DELAY_MS);
+      reconnectAttemptsRef.current = attempts + 1;
+      reconnectTimerRef.current = setTimeout(() => {
+        reconnectTimerRef.current = null;
+        if (!disposed) void connect();
+      }, delay);
+    };
 
-    try {
-      // forceRefresh nếu đã reconnect lỗi nhiều lần (token có thể hết hạn).
-      const forceRefresh = reconnectAttemptsRef.current >= 1;
-      const token = await auth.currentUser.getIdToken(forceRefresh);
-      const response = await fetch(`${API_BASE_URL}/sse/stream`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Accept": "text/event-stream",
-        },
-      });
-
-      if (!response.ok) {
-        // 401 => sẽ force refresh ở lần kế tiếp
-        throw new Error(`SSE connect failed: ${response.status}`);
-      }
-
-      // Connect thành công, reset backoff
-      reconnectAttemptsRef.current = 0;
-
-      const reader = response.body.getReader();
-      readerRef.current = reader;
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let currentEvent = "message";
-      let currentData = "";
+    const connect = async () => {
+      cleanupConnection();
+      if (disposed || !enabled || !auth.currentUser) return;
 
       try {
-        while (true) {
+        const forceRefresh = reconnectAttemptsRef.current >= 1;
+        const token = await auth.currentUser.getIdToken(forceRefresh);
+        const response = await fetch(`${API_BASE_URL}/sse/stream`, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Accept": "text/event-stream",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`SSE connect failed: ${response.status}`);
+        }
+
+        reconnectAttemptsRef.current = 0;
+        const reader = response.body.getReader();
+        readerRef.current = reader;
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let currentEvent = "message";
+        let currentData = "";
+
+        while (!disposed) {
           const {done, value} = await reader.read();
           if (done) break;
 
@@ -83,14 +93,12 @@ export default function useSSE({enabled = false, handlers = {}}) {
             if (line.startsWith("event: ")) {
               currentEvent = line.slice(7).trim();
             } else if (line.startsWith("data: ")) {
-              currentData = line.slice(6);
+              currentData += line.slice(6);
             } else if (line === "" && currentData) {
               try {
-                const parsed = JSON.parse(currentData);
-                const handler = handlersRef.current[currentEvent];
-                if (handler) handler(parsed);
+                handlersRef.current[currentEvent]?.(JSON.parse(currentData));
               } catch {
-                /* heartbeat comments hoặc dòng không hợp lệ */
+                /* heartbeat comments hoặc dữ liệu không hợp lệ */
               }
               currentEvent = "message";
               currentData = "";
@@ -98,41 +106,22 @@ export default function useSSE({enabled = false, handlers = {}}) {
           }
         }
       } catch (err) {
-        if (err.name !== "AbortError") {
-          console.warn("SSE stream interrupted:", err.message);
+        if (!disposed && err.name !== "AbortError") {
+          console.warn("SSE connection error:", err.message);
         }
+      } finally {
+        readerRef.current = null;
+        scheduleReconnect(connect);
       }
-    } catch (err) {
-      console.warn("SSE connection error:", err.message);
-    } finally {
-      readerRef.current = null;
-      scheduleReconnect();
-    }
-  }, [enabled, cleanupConnection]);
+    };
 
-  const scheduleReconnect = useCallback(() => {
-    if (!enabled || reconnectTimerRef.current) return;
-    const attempts = reconnectAttemptsRef.current;
-    const delay = Math.min(RECONNECT_DELAY_MS * Math.pow(2, attempts), MAX_RECONNECT_DELAY_MS);
-    reconnectAttemptsRef.current = attempts + 1;
-    reconnectTimerRef.current = setTimeout(() => {
-      reconnectTimerRef.current = null;
-      if (enabled) connect();
-    }, delay);
-  }, [enabled, connect]);
-
-  useEffect(() => {
-    if (enabled) {
-      reconnectAttemptsRef.current = 0;
-      connect();
-    } else {
-      cleanupConnection();
-      cleanupTimers();
-    }
+    reconnectAttemptsRef.current = 0;
+    if (enabled) void connect();
 
     return () => {
+      disposed = true;
       cleanupConnection();
-      cleanupTimers();
+      cleanupTimer();
     };
-  }, [enabled, connect, cleanupConnection, cleanupTimers]);
+  }, [enabled]);
 }

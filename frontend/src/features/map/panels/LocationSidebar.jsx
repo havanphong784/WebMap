@@ -30,6 +30,11 @@ import {
     WindIcon
 } from "../../../shared/components/common/icons.jsx";
 import { parseDBDate } from "../../../shared/utils/dateUtils.js";
+import {registerBackHandler} from "../../../platform/backStack.js";
+import {getCurrentPosition} from "../../../platform/location.js";
+import {copyText as copyPlatformText, openExternalUrl, shareContent} from "../../../platform/actions.js";
+import {buildLocationShareUrl} from "../../../platform/actions.js";
+import {runtimeConfig} from "../../../config/runtimeConfig.js";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
 import { isMobile } from "../../../shared/utils/deviceUtils.js";
@@ -68,6 +73,10 @@ const formatCoordinates = (location) => {
 };
 
 export default function LocationSidebar({ location, onAddReview, onClose }) {
+    useEffect(() => registerBackHandler("location-sidebar", () => {
+        onClose();
+        return true;
+    }, 20), [onClose]);
     const mobile = isMobile();
     const { user } = useAuthStore();
     const navigate = useNavigate();
@@ -141,23 +150,24 @@ export default function LocationSidebar({ location, onAddReview, onClose }) {
     };
 
     const handleShare = async () => {
-        const locationIdParam = isGoongPlace ? "" : `&locationId=${displayLocation.id}`;
-        const shareUrl = `${window.location.origin}/?lat=${displayLocation.lat}&lng=${displayLocation.lng}${locationIdParam}`;
+        const shareUrl = buildLocationShareUrl(runtimeConfig.publicWebUrl, {
+            lat: displayLocation.lat,
+            lng: displayLocation.lng,
+            locationId: isGoongPlace ? undefined : displayLocation.id,
+        });
         const shareData = {
             title: displayTitle,
             text: `Khám phá địa điểm "${displayTitle}" trên Aether Geo!`,
             url: shareUrl,
         };
         try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                await navigator.clipboard.writeText(shareUrl);
+            const result = await shareContent(shareData);
+            if (result === "shared" && !navigator.share) {
                 showToast('✓ Đã sao chép link!');
             }
         } catch (err) {
             if (err.name !== 'AbortError') {
-                await navigator.clipboard.writeText(shareUrl);
+                await copyPlatformText(shareUrl);
                 showToast('✓ Đã sao chép link!');
             }
         }
@@ -303,7 +313,7 @@ export default function LocationSidebar({ location, onAddReview, onClose }) {
         }
 
         try {
-            await navigator.clipboard.writeText(text);
+            await copyPlatformText(text);
             showToast(successMessage);
         } catch {
             showToast("Không thể sao chép");
@@ -314,11 +324,9 @@ export default function LocationSidebar({ location, onAddReview, onClose }) {
         const lat = Number(displayLocation?.lat);
         const lng = Number(displayLocation?.lng);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-        window.open(
+        void openExternalUrl(
             externalPlaceUrl || `https://maps.goong.io/?lat=${lat}&lng=${lng}&zoom=17`,
-            "_blank",
-            "noopener,noreferrer"
-        );
+        ).catch(() => showToast("Không thể mở bản đồ Goong"));
     };
 
     const handleGetDirections = () => {
@@ -335,9 +343,9 @@ export default function LocationSidebar({ location, onAddReview, onClose }) {
             return;
         }
 
-        navigator.geolocation.getCurrentPosition((pos) => {
+        void getCurrentPosition().then((pos) => {
             fetchRoute([pos.coords.longitude, pos.coords.latitude], destination);
-        }, () => {
+        }).catch(() => {
             showToast("Không thể lấy vị trí của bạn");
         });
     };

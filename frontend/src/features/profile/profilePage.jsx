@@ -102,7 +102,7 @@ export default function ProfilePage() {
     } finally {
       setDeletingId(null);
     }
-  }, [removeLocation, currentUserId]);
+  }, [removeLocation]);
 
   const handleLogout = async () => {
     await logout();

@@ -1,8 +1,7 @@
 import {useEffect, useState} from "react";
-import {signInWithPopup} from "firebase/auth";
 import {useLocation, useNavigate} from "react-router-dom";
-import {auth, googleProvider} from "../../config/firebase";
 import {useAuthStore} from "./context/authStore.js";
+import {getGoogleAuthErrorMessage, signInWithGoogle} from "../../platform/auth.js";
 import {AnimatePresence, motion} from "framer-motion";
 import {EyeIcon, EyeOffIcon, MapIcon, PowerIcon, PrivateIcon, UserIcon} from "../../shared/components/common/icons.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
@@ -37,10 +36,10 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setAuthStatus({type: '', message: ''});
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithGoogle();
     } catch (error) {
       console.error(error);
-      setAuthStatus({type: 'error', message: "Đăng nhập Google thất bại: " + error.code});
+      setAuthStatus({type: 'error', message: getGoogleAuthErrorMessage(error)});
     }
   };
 
@@ -262,4 +261,3 @@ export default function Login() {
     </div>
   );
 }
-

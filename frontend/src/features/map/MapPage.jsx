@@ -16,9 +16,11 @@ import OnlineCommunityBar from "./overlays/OnlineCommunityBar.jsx";
 import OnlineFriendsPane from "./overlays/OnlineFriendsPane.jsx";
 import SearchBox from "./overlays/SearchBox.jsx";
 import UserProfileButton from "./overlays/UserProfileButton.jsx";
+import LocationPermissionBanner from "./overlays/LocationPermissionBanner.jsx";
 import WeatherEffects from "./overlays/WeatherEffects.jsx";
 import WeatherWidget from "./overlays/WeatherWidget.jsx";
 import LocationSidebar from "./panels/LocationSidebar.jsx";
+import {getCurrentPosition} from "../../platform/location.js";
 
 /**
  * MapPage - composition layer.
@@ -46,6 +48,8 @@ export default function MapPage() {
   const mapLoading = useLocationStore((s) => s.mapLoading);
   const mapError = useLocationStore((s) => s.mapError);
   const routeError = useLocationStore((s) => s.routeError);
+  const locationPermission = useLocationStore((s) => s.locationPermission);
+  const setLocationPermission = useLocationStore((s) => s.setLocationPermission);
 
   const isWeatherVisible = useWeatherStore((s) => s.isVisible);
   const toggleWeather = useWeatherStore((s) => s.toggleVisibility);
@@ -173,21 +177,24 @@ export default function MapPage() {
 
   const handleLocateUser = useCallback(() => {
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
+    void getCurrentPosition({enableHighAccuracy: true}).then(
       (pos) => {
         const {longitude, latitude, accuracy} = pos.coords;
         setUserLocation([longitude, latitude]);
         setAccuracy(accuracy);
+        setLocationPermission("granted");
         flyToLocation(longitude, latitude, 16, 2000);
         setIsLocating(false);
       },
-      () => {
+      (error) => {
         setIsLocating(false);
-        addToast("Không thể truy cập vị trí của bạn. Vui lòng cấp quyền.", "error");
+        setLocationPermission(error?.code === "LOCATION_DENIED" ? "denied" : "unavailable");
+        addToast(error?.code === "LOCATION_DENIED"
+          ? "Quyền vị trí đang tắt. Hãy cấp quyền trong Cài đặt rồi thử lại."
+          : "Không lấy được GPS. Hãy bật định vị rồi thử lại.", "error");
       },
-      {enableHighAccuracy: true}
     );
-  }, [addToast, flyToLocation, setUserLocation, setAccuracy]);
+  }, [addToast, flyToLocation, setUserLocation, setAccuracy, setLocationPermission]);
 
   const handleFlyToOnlineUser = useCallback((onlineUser) => {
     const lat = Number.parseFloat(onlineUser?.current_lat);
@@ -265,7 +272,7 @@ export default function MapPage() {
   const showOverlay = !mobile || !activeLocation;
 
   return (
-    <div className="h-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
+    <div className="app-screen w-full relative overflow-hidden bg-map-bg text-text-primary">
       <MapView
         ref={mapViewRef}
         mobile={mobile}
@@ -298,6 +305,8 @@ export default function MapPage() {
         />
       )}
       {showOverlay && <SearchBox onSelectLocation={handleSearchSelect} />}
+
+      {showOverlay && <LocationPermissionBanner permission={locationPermission} onRetry={handleLocateUser} />}
       {showOverlay && <OnlineFriendsPane onFlyToUser={handleFlyToOnlineUser} />}
       {!mobile && <OnlineCommunityBar />}
 

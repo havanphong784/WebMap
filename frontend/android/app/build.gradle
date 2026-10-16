@@ -1,0 +1,132 @@
+import groovy.json.JsonSlurper
+
+apply plugin: 'com.android.application'
+
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
+def requiredSigningKeys = ['storeFile', 'storePassword', 'keyAlias', 'keyPassword']
+def missingSigningKeys = requiredSigningKeys.findAll { !keystoreProperties.getProperty(it)?.trim() }
+def releaseSigningReady = keystorePropertiesFile.exists() && missingSigningKeys.isEmpty()
+
+android {
+    namespace = "com.aether.geo"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.aether.geo"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        if (releaseSigningReady) {
+            release {
+                storeFile rootProject.file(keystoreProperties.getProperty('storeFile'))
+                storePassword keystoreProperties.getProperty('storePassword')
+                keyAlias keystoreProperties.getProperty('keyAlias')
+                keyPassword keystoreProperties.getProperty('keyPassword')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (releaseSigningReady) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    def releaseRequested = graph.allTasks.any {
+        it.project == project && it.name in ['bundleRelease', 'assembleRelease']
+    }
+    if (!releaseRequested) return
+
+    if (!releaseSigningReady) {
+        def detail = keystorePropertiesFile.exists()
+            ? "missing keys: ${missingSigningKeys.join(', ')}"
+            : "missing ${keystorePropertiesFile}"
+        throw new GradleException(
+            "Release signing is not configured (${detail}). " +
+            "Copy keystore.properties.example to keystore.properties and provide the release keystore values."
+        )
+    }
+
+    def markerFile = file('src/main/assets/public/aether-android-release.json')
+    if (!markerFile.exists()) {
+        throw new GradleException(
+            "Validated Android web assets are missing. Run npm run android:sync from frontend before the release build."
+        )
+    }
+    def marker = new JsonSlurper().parse(markerFile)
+    def releaseUrls = [marker.apiBaseUrl, marker.publicWebUrl]
+    if (marker.schemaVersion != 1 || releaseUrls.any {
+        !(it instanceof String) || !it.startsWith('https://') ||
+            it.toLowerCase().contains('localhost') || it.toLowerCase().contains('example') ||
+            it.toLowerCase().contains('replace')
+    }) {
+        throw new GradleException(
+            "Android web assets contain invalid or placeholder release URLs. Rebuild them with production .env.android values."
+        )
+    }
+
+    def servicesJSON = file('google-services.json')
+    if (!servicesJSON.exists() || !servicesJSON.text.trim()) {
+        throw new GradleException(
+            "Native Google sign-in requires app/google-services.json for release. Download it from Firebase for com.aether.geo."
+        )
+    }
+    try {
+        def googleConfig = new JsonSlurper().parse(servicesJSON)
+        def packageNames = googleConfig.client?.collect { it.client_info?.android_client_info?.package_name }
+        if (!packageNames?.contains('com.aether.geo')) {
+            throw new GradleException("google-services.json does not contain Android client com.aether.geo.")
+        }
+    } catch (GradleException error) {
+        throw error
+    } catch (Exception error) {
+        throw new GradleException("google-services.json is not valid JSON: ${error.message}")
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.exists() && servicesJSON.text.trim()) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found or invalid; native Google sign-in is unavailable in this build")
+}

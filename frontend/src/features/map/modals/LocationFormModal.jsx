@@ -25,6 +25,7 @@ import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import {AnimatePresence, motion} from "framer-motion";
 import { useToastStore } from "../../../shared/components/toast/useToastStore.jsx";
+import {registerBackHandler} from "../../../platform/backStack.js";
 
 const SUGGESTED_TAGS = [
   "view đẹp", "cà phê", "ăn ngon", "check-in", "yên tĩnh",
@@ -33,6 +34,10 @@ const SUGGESTED_TAGS = [
 ];
 
 export default function LocationFormModal({point, onClose, onSaved}) {
+  useEffect(() => registerBackHandler("location-form", () => {
+    onClose();
+    return true;
+  }, 40), [onClose]);
   const addLocation = useLocationStore((state) => state.addLocation);
   const isLoading = useLocationStore((state) => state.isLoading);
   const {user} = useAuthStore();

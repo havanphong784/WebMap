@@ -1,4 +1,5 @@
 import {apiClient} from "../../../shared/api/apiClient.js";
+import {getCurrentPosition as getDevicePosition} from "../../../platform/location.js";
 
 /**
  * Geocoding Cache & Debouncing Utilities
@@ -179,20 +180,10 @@ export const getPlaceDetail = async (placeId) => {
  * Get current position
  */
 export const getCurrentPosition = () =>
-  new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("Trình duyệt không hỗ trợ định vị"));
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({
-        lng: pos.coords.longitude,
-        lat: pos.coords.latitude
-      }),
-      reject
-    );
-  });
+  getDevicePosition().then((pos) => ({
+    lng: pos.coords.longitude,
+    lat: pos.coords.latitude,
+  }));
 
 /**
  * Clear all caches (useful for testing or manual refresh)

@@ -15,6 +15,7 @@ import {
 import {apiClient} from "../../../shared/api/apiClient.js";
 import {useAuthStore} from "../../auth/context/authStore.js";
 import {isMobile} from "../../../shared/utils/deviceUtils.js";
+import {registerBackHandler} from "../../../platform/backStack.js";
 
 const hasPosition = (user) => {
   const lat = Number.parseFloat(user?.current_lat ?? user?.peer_current_lat);
@@ -103,6 +104,18 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
   const [isSending, setIsSending] = useState(false);
   const [chatError, setChatError] = useState("");
 
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    return registerBackHandler("online-friends", () => {
+      if (activeChatId) {
+        setActiveChatId(null);
+      } else {
+        setIsOpen(false);
+      }
+      return true;
+    }, activeChatId ? 35 : 25);
+  }, [activeChatId, isOpen]);
+
   const threadMap = useMemo(() => new Map(threads.map((thread) => [thread.peer_id, thread])), [threads]);
 
   const friends = useMemo(() => {
@@ -160,18 +173,6 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
     if (!silent) setIsLoadingMessages(false);
   }, [currentUserId, loadThreads]);
 
-  // Khi mở pane: tải friends/threads/conversation 1 lần. Realtime đến qua SSE event `new_message`.
-  useEffect(() => {
-    if (!isOpen) return;
-    loadFriends();
-    loadThreads();
-  }, [isOpen, loadFriends, loadThreads]);
-
-  useEffect(() => {
-    if (!isOpen || !activeChatUser?.firebase_uid) return;
-    loadConversation(activeChatUser.firebase_uid);
-  }, [activeChatUser?.firebase_uid, isOpen, loadConversation]);
-
   // Lắng nghe SSE: khi có DM mới, append/refresh.
   useEffect(() => {
     if (!currentUserId) return;
@@ -205,6 +206,16 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
     setActiveChatId(friend.firebase_uid);
     setDraftMessage("");
     setChatError("");
+    void loadConversation(friend.firebase_uid);
+  };
+
+  const togglePane = () => {
+    const willOpen = !isOpen;
+    setIsOpen(willOpen);
+    if (willOpen) {
+      void loadFriends();
+      void loadThreads();
+    }
   };
 
   const appendMessage = (peerId, message) => {
@@ -284,7 +295,7 @@ const OnlineFriendsPane = memo(({onFlyToUser}) => {
 
   return (
     <>
-      <ChatArrowTab isOpen={isOpen} onClick={() => setIsOpen((value) => !value)}/>
+      <ChatArrowTab isOpen={isOpen} onClick={togglePane}/>
 
       <motion.aside
         initial={false}
