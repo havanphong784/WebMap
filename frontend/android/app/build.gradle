@@ -1,5 +1,15 @@
 apply plugin: 'com.android.application'
 
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
+def requiredSigningKeys = ['storeFile', 'storePassword', 'keyAlias', 'keyPassword']
+def missingSigningKeys = requiredSigningKeys.findAll { !keystoreProperties.getProperty(it)?.trim() }
+def releaseSigningReady = keystorePropertiesFile.exists() && missingSigningKeys.isEmpty()
+
 android {
     namespace = "com.aether.geo"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,11 +26,39 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (releaseSigningReady) {
+            release {
+                storeFile rootProject.file(keystoreProperties.getProperty('storeFile'))
+                storePassword keystoreProperties.getProperty('storePassword')
+                keyAlias keystoreProperties.getProperty('keyAlias')
+                keyPassword keystoreProperties.getProperty('keyPassword')
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (releaseSigningReady) {
+                signingConfig signingConfigs.release
+            }
         }
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    def releaseRequested = graph.allTasks.any {
+        it.project == project && it.name in ['bundleRelease', 'assembleRelease']
+    }
+    if (releaseRequested && !releaseSigningReady) {
+        def detail = keystorePropertiesFile.exists()
+            ? "missing keys: ${missingSigningKeys.join(', ')}"
+            : "missing ${keystorePropertiesFile}"
+        throw new GradleException(
+            "Release signing is not configured (${detail}). " +
+            "Copy keystore.properties.example to keystore.properties and provide the release keystore values."
+        )
     }
 }
 

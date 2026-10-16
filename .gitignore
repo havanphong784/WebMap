@@ -29,6 +29,7 @@ docs/
 !docs/superpowers/specs/*.md
 !docs/superpowers/plans/
 !docs/superpowers/plans/*.md
+!docs/android-release.md
 *.py
 /pnpm-lock.yaml
 /pnpm-workspace.yaml
