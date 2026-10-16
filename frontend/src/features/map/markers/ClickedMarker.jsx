@@ -9,6 +9,7 @@ import {useToastStore} from "../../../shared/components/toast/useToastStore.jsx"
 import GlassPanel from "../../../shared/components/common/glassPanel.jsx";
 import ActionButton from "../../../shared/components/common/actionButton.jsx";
 import {CloseIcon, PinIcon, PlusIcon, RouteIcon, SpinnerIcon} from "../../../shared/components/common/icons.jsx";
+import {getCurrentPosition} from "../../../platform/location.js";
 
 const LocationFormModal = lazy(() => import("../modals/LocationFormModal.jsx"));
 
@@ -39,7 +40,7 @@ export default function ClickedMarker({point, setPoint, onLocationSaved}) {
     }
 
     setRouteLoading(true);
-    navigator.geolocation.getCurrentPosition(
+    void getCurrentPosition({timeout: 5000, enableHighAccuracy: true}).then(
       (pos) => {
         fetchRoute([pos.coords.longitude, pos.coords.latitude], end);
         setPoint(null);
@@ -48,7 +49,6 @@ export default function ClickedMarker({point, setPoint, onLocationSaved}) {
         setRouteLoading(false);
         addToast("Không thể lấy vị trí của bạn. Vui lòng cho phép truy cập vị trí.", "error");
       },
-      {timeout: 5000, enableHighAccuracy: true}
     );
   }, [point, routeLoading, userLocation, fetchRoute, setPoint, setRouteLoading, addToast]);
 

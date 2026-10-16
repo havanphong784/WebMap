@@ -19,6 +19,7 @@ import UserProfileButton from "./overlays/UserProfileButton.jsx";
 import WeatherEffects from "./overlays/WeatherEffects.jsx";
 import WeatherWidget from "./overlays/WeatherWidget.jsx";
 import LocationSidebar from "./panels/LocationSidebar.jsx";
+import {getCurrentPosition} from "../../platform/location.js";
 
 /**
  * MapPage - composition layer.
@@ -173,7 +174,7 @@ export default function MapPage() {
 
   const handleLocateUser = useCallback(() => {
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
+    void getCurrentPosition({enableHighAccuracy: true}).then(
       (pos) => {
         const {longitude, latitude, accuracy} = pos.coords;
         setUserLocation([longitude, latitude]);
@@ -185,7 +186,6 @@ export default function MapPage() {
         setIsLocating(false);
         addToast("Không thể truy cập vị trí của bạn. Vui lòng cấp quyền.", "error");
       },
-      {enableHighAccuracy: true}
     );
   }, [addToast, flyToLocation, setUserLocation, setAccuracy]);
 

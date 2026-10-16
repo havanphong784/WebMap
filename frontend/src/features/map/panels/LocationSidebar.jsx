@@ -31,6 +31,7 @@ import {
 } from "../../../shared/components/common/icons.jsx";
 import { parseDBDate } from "../../../shared/utils/dateUtils.js";
 import {registerBackHandler} from "../../../platform/backStack.js";
+import {getCurrentPosition} from "../../../platform/location.js";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import UserBadge from "../../../shared/components/UserBadge.jsx";
 import { isMobile } from "../../../shared/utils/deviceUtils.js";
@@ -340,9 +341,9 @@ export default function LocationSidebar({ location, onAddReview, onClose }) {
             return;
         }
 
-        navigator.geolocation.getCurrentPosition((pos) => {
+        void getCurrentPosition().then((pos) => {
             fetchRoute([pos.coords.longitude, pos.coords.latitude], destination);
-        }, () => {
+        }).catch(() => {
             showToast("Không thể lấy vị trí của bạn");
         });
     };
