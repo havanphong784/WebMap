@@ -1,8 +1,7 @@
 import {useEffect, useState} from "react";
-import {signInWithPopup} from "firebase/auth";
 import {useLocation, useNavigate} from "react-router-dom";
-import {auth, googleProvider} from "../../config/firebase";
 import {useAuthStore} from "./context/authStore.js";
+import {signInWithGoogle} from "../../platform/auth.js";
 import {AnimatePresence, motion} from "framer-motion";
 import {EyeIcon, EyeOffIcon, MapIcon, PowerIcon, PrivateIcon, UserIcon} from "../../shared/components/common/icons.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
@@ -37,10 +36,13 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setAuthStatus({type: '', message: ''});
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithGoogle();
     } catch (error) {
       console.error(error);
-      setAuthStatus({type: 'error', message: "Đăng nhập Google thất bại: " + error.code});
+      const message = error.code === "AUTH_CANCELLED"
+        ? "Bạn đã hủy đăng nhập Google."
+        : "Đăng nhập Google thất bại: " + (error.code || "UNKNOWN");
+      setAuthStatus({type: 'error', message});
     }
   };
 
@@ -262,4 +264,3 @@ export default function Login() {
     </div>
   );
 }
-
