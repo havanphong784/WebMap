@@ -1,9 +1,22 @@
 import {describe, expect, it, vi} from "vitest";
-import {createGoogleAuthAdapter} from "./auth.js";
+import {createGoogleAuthAdapter, getGoogleAuthErrorMessage} from "./auth.js";
 
 vi.mock("../config/firebase.js", () => ({auth: {}, googleProvider: {}}));
 
 describe("Google authentication adapter", () => {
+  it("turns a native configuration failure into actionable Vietnamese guidance", () => {
+    expect(getGoogleAuthErrorMessage({
+      code: "AUTH_NATIVE_FAILED",
+      message: "Default FirebaseApp is not initialized",
+    })).toBe("Google Sign-In trên Android chưa được cấu hình. Hãy thêm google-services.json đúng package và SHA rồi cài lại ứng dụng.");
+  });
+
+  it("shows the normalized missing-token message instead of its internal code", () => {
+    expect(getGoogleAuthErrorMessage({
+      code: "AUTH_INVALID_CREDENTIAL",
+      message: "Google không trả về ID token hợp lệ",
+    })).toBe("Google không trả về ID token hợp lệ");
+  });
   it("uses Firebase popup on web", async () => {
     const credential = {user: {uid: "web-user"}};
     const signInWithPopup = vi.fn().mockResolvedValue(credential);

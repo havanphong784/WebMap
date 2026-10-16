@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import {useAuthStore} from "./context/authStore.js";
-import {signInWithGoogle} from "../../platform/auth.js";
+import {getGoogleAuthErrorMessage, signInWithGoogle} from "../../platform/auth.js";
 import {AnimatePresence, motion} from "framer-motion";
 import {EyeIcon, EyeOffIcon, MapIcon, PowerIcon, PrivateIcon, UserIcon} from "../../shared/components/common/icons.jsx";
 import GlassPanel from "../../shared/components/common/glassPanel.jsx";
@@ -39,10 +39,7 @@ export default function Login() {
       await signInWithGoogle();
     } catch (error) {
       console.error(error);
-      const message = error.code === "AUTH_CANCELLED"
-        ? "Bạn đã hủy đăng nhập Google."
-        : "Đăng nhập Google thất bại: " + (error.code || "UNKNOWN");
-      setAuthStatus({type: 'error', message});
+      setAuthStatus({type: 'error', message: getGoogleAuthErrorMessage(error)});
     }
   };
 
