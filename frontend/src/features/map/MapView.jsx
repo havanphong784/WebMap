@@ -9,7 +9,6 @@ import useFocusFromRoute from "./hooks/useFocusFromRoute.js";
 import useFlyTo from "./hooks/useFlyTo.js";
 import useRouteFitBounds from "./hooks/useRouteFitBounds.js";
 import {useLocationStore} from "./store/useLocationsStore.jsx";
-import {getAddress, getPlaceDetail} from "./utils/geocoding.js";
 import ClusterLayer from "./layers/ClusterLayer.jsx";
 import WeatherLayer from "./layers/WeatherLayer.jsx";
 import RouteLayer from "./layers/RouteLayer.jsx";
@@ -167,6 +166,3 @@ const MapView = forwardRef(function MapView(
 });
 
 export default MapView;
-
-// Helpers cho POI handling
-export {getAddress, getPlaceDetail};
