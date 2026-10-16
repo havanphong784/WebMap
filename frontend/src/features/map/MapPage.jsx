@@ -16,6 +16,7 @@ import OnlineCommunityBar from "./overlays/OnlineCommunityBar.jsx";
 import OnlineFriendsPane from "./overlays/OnlineFriendsPane.jsx";
 import SearchBox from "./overlays/SearchBox.jsx";
 import UserProfileButton from "./overlays/UserProfileButton.jsx";
+import LocationPermissionBanner from "./overlays/LocationPermissionBanner.jsx";
 import WeatherEffects from "./overlays/WeatherEffects.jsx";
 import WeatherWidget from "./overlays/WeatherWidget.jsx";
 import LocationSidebar from "./panels/LocationSidebar.jsx";
@@ -305,16 +306,7 @@ export default function MapPage() {
       )}
       {showOverlay && <SearchBox onSelectLocation={handleSearchSelect} />}
 
-      {showOverlay && !["checking", "granted"].includes(locationPermission) && (
-        <div className="absolute left-1/2 top-[calc(5rem+var(--app-safe-top))] z-30 w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 rounded-2xl border border-cyan-glow/30 bg-white/95 p-3 text-xs text-text-primary shadow-floating backdrop-blur-xl">
-          <p>{locationPermission === "denied"
-            ? "Aether cần quyền vị trí để hiển thị bạn trên bản đồ. Bạn vẫn có thể dùng bản đồ khi chưa cấp quyền."
-            : "Chưa thể đọc GPS. Hãy bật dịch vụ vị trí rồi thử lại."}</p>
-          <button type="button" onClick={handleLocateUser} className="mt-2 font-bold text-cyan-glow">
-            {locationPermission === "denied" ? "Cấp quyền / thử lại" : "Thử lại GPS"}
-          </button>
-        </div>
-      )}
+      {showOverlay && <LocationPermissionBanner permission={locationPermission} onRetry={handleLocateUser} />}
       {showOverlay && <OnlineFriendsPane onFlyToUser={handleFlyToOnlineUser} />}
       {!mobile && <OnlineCommunityBar />}
 
