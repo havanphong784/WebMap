@@ -1,7 +1,8 @@
 import {useEffect, useRef} from "react";
 import {auth} from "../../config/firebase.js";
+import {runtimeConfig} from "../../config/runtimeConfig.js";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+const API_BASE_URL = runtimeConfig.apiBaseUrl;
 const RECONNECT_DELAY_MS = 5000;
 const MAX_RECONNECT_DELAY_MS = 30000;
 

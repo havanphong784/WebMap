@@ -7,8 +7,9 @@
  * Tham khảo: https://docs.goong.io
  */
 
-const GOONG_TILES_KEY =
-  import.meta.env.VITE_GOONG_MAP_TILES_KEY || import.meta.env.VITE_GOONG_API_KEY;
+import {runtimeConfig} from "../../../config/runtimeConfig.js";
+
+const GOONG_TILES_KEY = runtimeConfig.goongTilesKey;
 
 export const GOONG_MAP_STYLE = `https://tiles.goong.io/assets/goong_map_web.json?api_key=${GOONG_TILES_KEY}`;
 

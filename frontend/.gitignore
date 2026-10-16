@@ -13,6 +13,13 @@ dist-ssr
 *.local
 .env
 .env.*
+!.env.android.example
+
+# Android credentials and local build state
+android/app/google-services.json
+android/keystore.properties
+android/*.jks
+android/*.keystore
 
 # Editor directories and files
 .vscode/*
