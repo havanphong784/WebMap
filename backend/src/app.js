@@ -18,27 +18,20 @@ import sseRoutes from "./routes/sseRoutes.js";
 import {errorHandler, notFoundHandler} from "./middlewares/errorHandler.js";
 import {normalizeApiResponse} from "./middlewares/normalizeResponse.js";
 import {createRateLimiter} from "./middlewares/rateLimit.js";
+import {createOriginChecker} from "./config/corsPolicy.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// CORS allowlist (đặt FRONTEND_ORIGINS="https://a.com,https://b.com" trong .env)
-const allowedOrigins = (process.env.FRONTEND_ORIGINS || "")
-  .split(",")
-  .map(item => item.trim())
-  .filter(Boolean);
 
 const isDev = process.env.NODE_ENV !== "production";
 
 const corsOptions = {
   credentials: true,
-  origin: (origin, callback) => {
-    // Cho phép tools như curl/Postman không gửi origin
-    if (!origin) return callback(null, true);
-    if (isDev && allowedOrigins.length === 0) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`Origin ${origin} không được phép bởi CORS`));
-  },
+  origin: createOriginChecker({
+    frontendOrigins: process.env.FRONTEND_ORIGINS,
+    capacitorOrigins: process.env.CAPACITOR_ORIGINS,
+    isDev,
+  }),
 };
 
 app.use(helmet({
