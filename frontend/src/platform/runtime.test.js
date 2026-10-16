@@ -24,4 +24,17 @@ describe("native runtime", () => {
     expect(statusBar.setBackgroundColor).toHaveBeenCalledWith({color: "#F4FBFA"});
     expect(splashScreen.hide).toHaveBeenCalledOnce();
   });
+
+  it("always hides the splash when Android system-bar configuration fails", async () => {
+    const statusError = new Error("Status bar unavailable");
+    const statusBar = {
+      setStyle: vi.fn().mockRejectedValue(statusError),
+      setBackgroundColor: vi.fn(),
+    };
+    const splashScreen = {hide: vi.fn()};
+    const capacitor = {isNativePlatform: () => true, getPlatform: () => "android"};
+
+    await expect(configureNativeShell({capacitor, statusBar, splashScreen})).rejects.toBe(statusError);
+    expect(splashScreen.hide).toHaveBeenCalledOnce();
+  });
 });

@@ -13,7 +13,10 @@ export const configureNativeShell = async ({
 } = {}) => {
   if (!isNativeAndroid(capacitor)) return;
 
-  await statusBar.setStyle({style: Style.Light});
-  await statusBar.setBackgroundColor({color: "#F4FBFA"});
-  await splashScreen.hide();
+  try {
+    await statusBar.setStyle({style: Style.Light});
+    await statusBar.setBackgroundColor({color: "#F4FBFA"});
+  } finally {
+    await splashScreen.hide();
+  }
 };

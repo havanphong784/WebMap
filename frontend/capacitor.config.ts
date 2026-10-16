@@ -16,7 +16,8 @@ const config: CapacitorConfig = {
       providers: ["google.com"],
     },
     SplashScreen: {
-      launchAutoHide: false,
+      launchAutoHide: true,
+      launchShowDuration: 1500,
     },
   },
 };
