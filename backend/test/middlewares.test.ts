@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import admin from '../src/config/firebase.ts';
+import { optionalVerifyToken, verifyToken } from '../src/middlewares/authMiddleware.ts';
 import { errorHandler, notFoundHandler } from '../src/middlewares/errorHandler.ts';
 import { normalizeApiResponse } from '../src/middlewares/normalizeResponse.ts';
 import { createRateLimiter } from '../src/middlewares/rateLimit.ts';
@@ -7,7 +9,7 @@ import {
   validateLocationCreation,
   validateLocationUpdate,
 } from '../src/middlewares/validateLocation.ts';
-import type { AppError } from '../src/types/common.ts';
+import type { AppError, AuthRequest } from '../src/types/common.ts';
 
 interface MockResponse {
   statusCode: number;
@@ -201,4 +203,132 @@ test('normalizeApiResponse normalizes error responses >= 400', () => {
       details: null,
     },
   });
+});
+
+test('verifyToken returns 401 when Authorization header is missing or malformed', async () => {
+  const missingHeaderReq = { headers: {} } as unknown as AuthRequest;
+  const res1 = createMockResponse();
+  let next1 = false;
+  await verifyToken(missingHeaderReq, res1 as never, () => {
+    next1 = true;
+  });
+  assert.equal(next1, false);
+  assert.equal(res1.statusCode, 401);
+  assert.deepEqual(res1.jsonData, {
+    success: false,
+    message: 'Thiếu token xác thực',
+    error: {
+      code: 'AUTH_TOKEN_MISSING',
+      message: 'Thiếu token xác thực',
+      status: 401,
+      details: null,
+    },
+  });
+
+  const badSchemeReq = {
+    headers: { authorization: 'Basic 12345' },
+  } as unknown as AuthRequest;
+  const res2 = createMockResponse();
+  let next2 = false;
+  await verifyToken(badSchemeReq, res2 as never, () => {
+    next2 = true;
+  });
+  assert.equal(next2, false);
+  assert.equal(res2.statusCode, 401);
+  assert.equal((res2.jsonData as { error?: { code?: string } })?.error?.code, 'AUTH_TOKEN_MISSING');
+});
+
+test('verifyToken validates token and attaches user or returns 401 on failure', async (t) => {
+  t.after(() => {
+    Reflect.deleteProperty(admin, 'auth');
+  });
+
+  Object.defineProperty(admin, 'auth', {
+    value: () => ({
+      verifyIdToken: async (token: string) => {
+        if (token === 'valid-token') {
+          return { uid: 'user-abc', email: 'user@example.com' } as never;
+        }
+        throw new Error('Token expired');
+      },
+    }),
+    configurable: true,
+    writable: true,
+  });
+
+  const validReq = {
+    headers: { authorization: 'Bearer valid-token' },
+  } as unknown as AuthRequest;
+  const validRes = createMockResponse();
+  let validNext = false;
+  await verifyToken(validReq, validRes as never, () => {
+    validNext = true;
+  });
+  assert.equal(validNext, true);
+  assert.deepEqual(validReq.user, {
+    uid: 'user-abc',
+    email: 'user@example.com',
+  });
+
+  const invalidReq = {
+    headers: { authorization: 'Bearer invalid-token' },
+  } as unknown as AuthRequest;
+  const invalidRes = createMockResponse();
+  let invalidNext = false;
+  await verifyToken(invalidReq, invalidRes as never, () => {
+    invalidNext = true;
+  });
+  assert.equal(invalidNext, false);
+  assert.equal(invalidRes.statusCode, 401);
+  assert.equal(
+    (invalidRes.jsonData as { error?: { code?: string } })?.error?.code,
+    'AUTH_TOKEN_INVALID',
+  );
+});
+
+test('optionalVerifyToken allows anonymous or attaches user when token valid', async (t) => {
+  t.after(() => {
+    Reflect.deleteProperty(admin, 'auth');
+  });
+
+  Object.defineProperty(admin, 'auth', {
+    value: () => ({
+      verifyIdToken: async (token: string) => {
+        if (token === 'valid-token') {
+          return { uid: 'user-xyz' } as never;
+        }
+        throw new Error('Invalid token');
+      },
+    }),
+    configurable: true,
+    writable: true,
+  });
+
+  const noTokenReq = { headers: {} } as unknown as AuthRequest;
+  let nextCalled1 = false;
+  await optionalVerifyToken(noTokenReq, createMockResponse() as never, () => {
+    nextCalled1 = true;
+  });
+  assert.equal(nextCalled1, true);
+  assert.equal(noTokenReq.user, undefined);
+
+  const validReq = {
+    headers: { authorization: 'Bearer valid-token' },
+  } as unknown as AuthRequest;
+  let nextCalled2 = false;
+  await optionalVerifyToken(validReq, createMockResponse() as never, () => {
+    nextCalled2 = true;
+  });
+  assert.equal(nextCalled2, true);
+  assert.deepEqual(validReq.user, { uid: 'user-xyz' });
+
+  const invalidReq = {
+    headers: { authorization: 'Bearer bad-token' },
+  } as unknown as AuthRequest;
+  let nextCalled3 = false;
+  await optionalVerifyToken(invalidReq, createMockResponse() as never, () => {
+    nextCalled3 = true;
+  });
+  assert.equal(nextCalled3, true);
+  assert.equal(invalidReq.user, undefined);
 });
