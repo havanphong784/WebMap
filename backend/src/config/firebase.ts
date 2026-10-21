@@ -1,5 +1,5 @@
-import admin from "firebase-admin";
-import "dotenv/config";
+import 'dotenv/config';
+import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
   const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -19,10 +19,15 @@ if (!admin.apps.length) {
   }
 
   if (!projectId || !clientEmail || !privateKey) {
-    console.error("❌ Firebase Error: Thiếu biến môi trường!");
-    console.error("  FIREBASE_PROJECT_ID:", projectId ? "✅" : "❌ MISSING");
-    console.error("  FIREBASE_CLIENT_EMAIL:", clientEmail ? "✅" : "❌ MISSING");
-    console.error("  FIREBASE_PRIVATE_KEY:", privateKey ? `✅ (${privateKey.length} chars, starts with: ${privateKey.substring(0, 30)}...)` : "❌ MISSING");
+    console.error('❌ Firebase Error: Thiếu biến môi trường!');
+    console.error('  FIREBASE_PROJECT_ID:', projectId ? '✅' : '❌ MISSING');
+    console.error('  FIREBASE_CLIENT_EMAIL:', clientEmail ? '✅' : '❌ MISSING');
+    console.error(
+      '  FIREBASE_PRIVATE_KEY:',
+      privateKey
+        ? `✅ (${privateKey.length} chars, starts with: ${privateKey.substring(0, 30)}...)`
+        : '❌ MISSING',
+    );
   } else {
     try {
       admin.initializeApp({
@@ -32,9 +37,10 @@ if (!admin.apps.length) {
           privateKey,
         }),
       });
-      console.log("✅ Firebase Admin initialized successfully");
+      console.log('✅ Firebase Admin initialized successfully');
     } catch (error) {
-      console.error("❌ Firebase Initialization Error:", error.message);
+      const err = error as Error;
+      console.error('❌ Firebase Initialization Error:', err.message);
     }
   }
 }
