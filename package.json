@@ -1,5 +1,15 @@
 {
+  "name": "webmap",
+  "private": true,
+  "scripts": {
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write ."
+  },
   "dependencies": {
     "firebase": "^12.12.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4"
   }
 }
