@@ -1,0 +1,62 @@
+=== TypeScript Compile Check ===
+npm notice run backend@1.0.0 build
+npm notice run tsc
+
+=== Frontend Tests ===
+npm notice run frontend@0.0.0 test
+npm notice run vitest --run
+
+ RUN  v4.1.12 /home/phongha/Code/WebMap/.claude/worktrees/issue-2-qa/frontend
+
+
+ Test Files  8 passed (8)
+      Tests  52 passed (52)
+   Start at  21:04:49
+   Duration  681ms (transform 193ms, setup 0ms, import 406ms, tests 87ms, environment 3.73s)
+
+
+=== Backend Tests ===
+npm notice run backend@1.0.0 test
+npm notice run node --import tsx --test
+✔ sendSuccess sends 200 and success payload by default (1.032087ms)
+✔ sendError defaults to 500 and INTERNAL_SERVER_ERROR (0.15927ms)
+✔ sendError supports custom status, code, and details (0.151306ms)
+✔ allows configured web and Capacitor origins after trimming and deduplication (1.122898ms)
+✔ allows requests without an Origin header (0.176082ms)
+✔ rejects unknown production origins (0.233491ms)
+✔ retains allow-all origin behavior only for unconfigured development (0.161564ms)
+❌ Firebase Error: Thiếu biến môi trường!
+  FIREBASE_PROJECT_ID: ❌ MISSING
+  FIREBASE_CLIENT_EMAIL: ❌ MISSING
+  FIREBASE_PRIVATE_KEY: ❌ MISSING
+Unhandled error: Error: Database error
+    at TestContext.<anonymous> (/home/phongha/Code/WebMap/.claude/worktrees/issue-2-qa/backend/test/middlewares.test.ts:66:25)
+    at Test.runInAsyncScope (node:async_hooks:226:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+✔ notFoundHandler returns 404 with ROUTE_NOT_FOUND (1.040021ms)
+✔ errorHandler formats AppError and falls back to 500 (1.909863ms)
+✔ rateLimiter tracks requests and blocks when limit exceeded (0.25953ms)
+✔ validateLocationCreation accepts valid payload and calls next() (0.219544ms)
+✔ validateLocationCreation rejects invalid coordinates (0.113243ms)
+✔ validateLocationUpdate validates optional fields when provided (0.176874ms)
+✔ normalizeApiResponse normalizes error responses >= 400 (0.175762ms)
+✔ verifyToken returns 401 when Authorization header is missing or malformed (0.178356ms)
+✔ verifyToken validates token and attaches user or returns 401 on failure (0.661277ms)
+✔ optionalVerifyToken allows anonymous or attaches user when token valid (0.397029ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 157.517801
+
+=== Biome Check on Converted Code ===
+npm notice run npx
+npm notice run 'biome' check backend/src/config backend/src/utils backend/src/middlewares backend/test
+Checked 12 files in 6ms. No fixes applied.
