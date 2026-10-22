@@ -1,7 +1,10 @@
 import pool from "../config/db.js";
+import type { ToggleLikeParams, ToggleLikeResult } from "../types/database.js";
 import {addXP} from "./gamificationService.js";
 
-export const toggleLike = async ({userId, locationId}) => {
+export type { ToggleLikeParams, ToggleLikeResult };
+
+export const toggleLike = async ({userId, locationId}: ToggleLikeParams): Promise<ToggleLikeResult> => {
   if (!userId || !locationId) {
     throw new Error("Thiếu user hoặc location");
   }
@@ -31,9 +34,9 @@ export const toggleLike = async ({userId, locationId}) => {
   return {action: "liked"};
 };
 
-async function handleLikeXP(locationId, userId, type) {
+async function handleLikeXP(locationId: string | number, userId: string, type: string): Promise<void> {
   try {
-    const locInfo = await pool.query("SELECT user_id FROM locations WHERE id = $1", [locationId]);
+    const locInfo = await pool.query<{ user_id: string }>("SELECT user_id FROM locations WHERE id = $1", [locationId]);
     if (locInfo.rows.length > 0) {
       const ownerId = locInfo.rows[0].user_id;
       if (ownerId !== userId) {
@@ -51,8 +54,7 @@ async function handleLikeXP(locationId, userId, type) {
         }
       }
     }
-  } catch (err) {
+  } catch (err: unknown) {
     console.error(`Lỗi xử lý Gamification cho ${type}:`, err);
   }
 }
-

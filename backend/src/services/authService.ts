@@ -1,7 +1,21 @@
-import pool from "../config/db.js";
-import {broadcast} from "./sseService.js";
+import pool from '../config/db.js';
+import type {
+  ActiveUser,
+  UpsertUserParams,
+  UserLocationInput,
+  UserProfile,
+  UserRecord,
+} from '../types/database.js';
+import { broadcast } from './sseService.js';
 
-export const upsertUser = async ({uid, email, name, picture}) => {
+export type { ActiveUser, UpsertUserParams, UserLocationInput, UserProfile, UserRecord };
+
+export const upsertUser = async ({
+  uid,
+  email,
+  name,
+  picture,
+}: UpsertUserParams): Promise<UserRecord | undefined> => {
   const query = `
     INSERT INTO users (firebase_uid, email, name, avatar_url)
     VALUES ($1, $2, $3, $4) ON CONFLICT (firebase_uid)
@@ -13,11 +27,11 @@ export const upsertUser = async ({uid, email, name, picture}) => {
       RETURNING *;
   `;
   const values = [uid, email, name, picture];
-  const result = await pool.query(query, values);
+  const result = await pool.query<UserRecord>(query, values);
   return result.rows[0];
 };
 
-export const getUserProfile = async (uid) => {
+export const getUserProfile = async (uid: string): Promise<UserProfile | undefined> => {
   const query = `
     SELECT u.*,
            (SELECT COUNT(*) FROM locations WHERE user_id = u.firebase_uid) AS total_posts,
@@ -27,11 +41,11 @@ export const getUserProfile = async (uid) => {
     FROM users u
     WHERE u.firebase_uid = $1;
   `;
-  const result = await pool.query(query, [uid]);
+  const result = await pool.query<UserProfile>(query, [uid]);
   return result.rows[0];
 };
 
-export const listActiveUsers = async (limit = 10) => {
+export const listActiveUsers = async (limit = 10): Promise<ActiveUser[]> => {
   const query = `
     SELECT firebase_uid, name, avatar_url, last_seen_at, level, tier, current_lat, current_lng
     FROM users
@@ -39,15 +53,15 @@ export const listActiveUsers = async (limit = 10) => {
     ORDER BY last_seen_at DESC
     LIMIT $1;
   `;
-  const result = await pool.query(query, [limit]);
+  const result = await pool.query<ActiveUser>(query, [limit]);
   return result.rows;
 };
 
 // Debounce broadcast active users (tránh spam khi nhiều heartbeat cùng lúc)
-let broadcastTimer = null;
-let lastBroadcastSignature = "";
+let broadcastTimer: NodeJS.Timeout | null = null;
+let lastBroadcastSignature = '';
 
-const scheduleBroadcastActiveUsers = () => {
+const scheduleBroadcastActiveUsers = (): void => {
   if (broadcastTimer) return;
   broadcastTimer = setTimeout(async () => {
     broadcastTimer = null;
@@ -56,26 +70,36 @@ const scheduleBroadcastActiveUsers = () => {
       // Signature: chỉ uid set + có lat/lng hay chưa.
       // Bỏ qua last_seen_at để tránh broadcast vô nghĩa mỗi 5s khi không ai vào/ra.
       const signature = users
-        .map(u => `${u.firebase_uid}:${u.current_lat ? "L" : "_"}`)
+        .map((u) => `${u.firebase_uid}:${u.current_lat ? 'L' : '_'}`)
         .sort()
-        .join("|");
+        .join('|');
       if (signature === lastBroadcastSignature) return;
       lastBroadcastSignature = signature;
-      broadcast("active_users", users);
-    } catch (err) {
-      console.error("Broadcast active users error:", err.message);
+      broadcast('active_users', users);
+    } catch (err: unknown) {
+      console.error(
+        'Broadcast active users error:',
+        err instanceof Error ? err.message : String(err),
+      );
     }
   }, 5000); // Gom lại 5s rồi broadcast 1 lần
+  broadcastTimer?.unref?.();
 };
 
-export const updateLastSeen = async (uid, location = {}) => {
-  const lat = Number.parseFloat(location?.lat);
-  const lng = Number.parseFloat(location?.lng);
+export const updateLastSeen = async (
+  uid: string,
+  location: UserLocationInput = {},
+): Promise<void> => {
+  const lat = Number.parseFloat(String(location?.lat));
+  const lng = Number.parseFloat(String(location?.lng));
   // Validate range để tránh DB numeric overflow
   const hasLocation =
-    Number.isFinite(lat) && Number.isFinite(lng)
-    && lat >= -90 && lat <= 90
-    && lng >= -180 && lng <= 180;
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180;
 
   const query = hasLocation
     ? `

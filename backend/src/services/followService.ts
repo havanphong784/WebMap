@@ -1,10 +1,18 @@
 import pool from "../config/db.js";
+import type {
+  FollowRecord,
+  FollowUser,
+  FriendUser,
+  ToggleFollowResult,
+} from "../types/database.js";
 
-export const toggleFollow = async (followerId, followedId) => {
+export type { FollowRecord, FollowUser, FriendUser, ToggleFollowResult };
+
+export const toggleFollow = async (followerId: string, followedId: string): Promise<ToggleFollowResult> => {
   if (followerId === followedId) throw new Error("Cannot follow yourself");
 
   const checkQuery = `SELECT * FROM follows WHERE follower_id = $1 AND followed_id = $2`;
-  const { rows } = await pool.query(checkQuery, [followerId, followedId]);
+  const { rows } = await pool.query<FollowRecord>(checkQuery, [followerId, followedId]);
 
   if (rows.length > 0) {
     await pool.query(`DELETE FROM follows WHERE follower_id = $1 AND followed_id = $2`, [followerId, followedId]);
@@ -15,7 +23,7 @@ export const toggleFollow = async (followerId, followedId) => {
   }
 };
 
-export const getFollowers = async (userId) => {
+export const getFollowers = async (userId: string): Promise<FollowUser[]> => {
   const query = `
     SELECT u.firebase_uid, u.name, u.avatar_url, u.xp, u.level, u.tier
     FROM follows f
@@ -23,11 +31,11 @@ export const getFollowers = async (userId) => {
     WHERE f.followed_id = $1
     ORDER BY f.created_at DESC;
   `;
-  const { rows } = await pool.query(query, [userId]);
+  const { rows } = await pool.query<FollowUser>(query, [userId]);
   return rows;
 };
 
-export const getFollowing = async (userId) => {
+export const getFollowing = async (userId: string): Promise<FollowUser[]> => {
   const query = `
     SELECT u.firebase_uid, u.name, u.avatar_url, u.xp, u.level, u.tier
     FROM follows f
@@ -35,11 +43,11 @@ export const getFollowing = async (userId) => {
     WHERE f.follower_id = $1
     ORDER BY f.created_at DESC;
   `;
-  const { rows } = await pool.query(query, [userId]);
+  const { rows } = await pool.query<FollowUser>(query, [userId]);
   return rows;
 };
 
-export const getFriends = async (userId) => {
+export const getFriends = async (userId: string): Promise<FriendUser[]> => {
   const query = `
     SELECT
       u.firebase_uid,
@@ -61,11 +69,11 @@ export const getFriends = async (userId) => {
     WHERE f.follower_id = $1
     ORDER BY friends_since DESC;
   `;
-  const { rows } = await pool.query(query, [userId]);
+  const { rows } = await pool.query<FriendUser>(query, [userId]);
   return rows;
 };
 
-export const checkIsFollowing = async (followerId, followedId) => {
+export const checkIsFollowing = async (followerId?: string | null, followedId?: string | null): Promise<boolean> => {
   if (!followerId || !followedId) return false;
   const query = `SELECT 1 FROM follows WHERE follower_id = $1 AND followed_id = $2`;
   const { rows } = await pool.query(query, [followerId, followedId]);
