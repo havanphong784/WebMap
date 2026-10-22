@@ -9,7 +9,7 @@
     "start": "node dist/app.js",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src",
-    "test": "node --test"
+    "test": "node --import tsx --test"
   },
   "keywords": [],
   "author": "",

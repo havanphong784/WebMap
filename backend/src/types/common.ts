@@ -21,5 +21,6 @@ export interface PaginationQuery {
 
 export interface AppError extends Error {
   statusCode?: number;
+  status?: number;
   code?: string;
 }
