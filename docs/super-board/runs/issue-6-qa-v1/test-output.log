@@ -1,0 +1,61 @@
+=== Backend TypeScript Typecheck ===
+npm notice run backend@1.0.0 typecheck
+npm notice run tsc --noEmit
+
+=== Frontend Vitest Suite ===
+npm notice run frontend@0.0.0 test
+npm notice run vitest --run
+
+ RUN  v4.1.12 /home/phongha/Code/WebMap/.claude/worktrees/issue-6-qa/frontend
+
+
+ Test Files  8 passed (8)
+      Tests  52 passed (52)
+   Start at  08:14:32
+   Duration  649ms (transform 171ms, setup 0ms, import 380ms, tests 78ms, environment 3.61s)
+
+
+=== Backend Node Test Suite ===
+npm notice run backend@1.0.0 test
+npm notice run node --import tsx --test
+✔ sendSuccess sends 200 and success payload by default (0.946604ms)
+✔ sendError defaults to 500 and INTERNAL_SERVER_ERROR (0.146594ms)
+✔ sendError supports custom status, code, and details (0.15783ms)
+✔ allows configured web and Capacitor origins after trimming and deduplication (1.031206ms)
+✔ allows requests without an Origin header (0.129661ms)
+✔ rejects unknown production origins (0.235061ms)
+✔ retains allow-all origin behavior only for unconfigured development (0.114972ms)
+❌ Firebase Error: Thiếu biến môi trường!
+  FIREBASE_PROJECT_ID: ❌ MISSING
+  FIREBASE_CLIENT_EMAIL: ❌ MISSING
+  FIREBASE_PRIVATE_KEY: ❌ MISSING
+Unhandled error: Error: Database error
+    at TestContext.<anonymous> (/home/phongha/Code/WebMap/.claude/worktrees/issue-6-qa/backend/test/middlewares.test.ts:66:25)
+    at Test.runInAsyncScope (node:async_hooks:226:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+✔ notFoundHandler returns 404 with ROUTE_NOT_FOUND (1.208211ms)
+✔ errorHandler formats AppError and falls back to 500 (1.769103ms)
+✔ rateLimiter tracks requests and blocks when limit exceeded (0.284076ms)
+✔ validateLocationCreation accepts valid payload and calls next() (0.20426ms)
+✔ validateLocationCreation rejects invalid coordinates (0.107953ms)
+✔ validateLocationUpdate validates optional fields when provided (0.172529ms)
+✔ normalizeApiResponse normalizes error responses >= 400 (0.176243ms)
+✔ verifyToken returns 401 when Authorization header is missing or malformed (0.184113ms)
+✔ verifyToken validates token and attaches user or returns 401 on failure (0.623315ms)
+✔ optionalVerifyToken allows anonymous or attaches user when token valid (0.387072ms)
+⚠️ SSL: Using rejectUnauthorized=false (no CA cert provided)
+✔ services validation and query delegation (2.654485ms)
+✔ services edge cases and query flows (1.072921ms)
+❌ Database: Connection failed! The server does not support SSL connections
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 156.229351
