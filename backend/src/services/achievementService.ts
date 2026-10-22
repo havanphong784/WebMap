@@ -1,6 +1,8 @@
+import type { AchievementProgress, DailyTaskProgress } from "../types/database.js";
+export type { AchievementProgress, DailyTaskProgress };
 import pool from "../config/db.js";
 
-export const getUserAchievements = async (userId) => {
+export const getUserAchievements = async (userId: string): Promise<AchievementProgress[]> => {
     const query = `
         SELECT 
             a.*,
@@ -11,11 +13,11 @@ export const getUserAchievements = async (userId) => {
         LEFT JOIN user_achievements ua ON a.id = ua.achievement_id AND ua.user_id = $1
         ORDER BY a.category, a.requirement_value ASC;
     `;
-    const result = await pool.query(query, [userId]);
+    const result = await pool.query<AchievementProgress>(query, [userId]);
     return result.rows;
 };
 
-export const getUserDailyTasks = async (userId) => {
+export const getUserDailyTasks = async (userId: string): Promise<DailyTaskProgress[]> => {
     const query = `
         SELECT 
             dt.*,
@@ -26,6 +28,6 @@ export const getUserDailyTasks = async (userId) => {
         LEFT JOIN user_daily_tasks udt ON dt.id = udt.task_id AND udt.user_id = $1 AND udt.task_date = CURRENT_DATE
         ORDER BY dt.id ASC;
     `;
-    const result = await pool.query(query, [userId]);
+    const result = await pool.query<DailyTaskProgress>(query, [userId]);
     return result.rows;
 };
