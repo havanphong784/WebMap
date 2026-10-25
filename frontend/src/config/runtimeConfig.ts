@@ -1,11 +1,32 @@
 const DEFAULT_API_BASE_URL = "http://localhost:3000/api";
 
-const read = (env, key) => {
+export interface FirebaseRuntimeConfig {
+  apiKey?: string;
+  authDomain?: string;
+  projectId?: string;
+  storageBucket?: string;
+  messagingSenderId?: string;
+  appId?: string;
+  measurementId?: string;
+}
+
+export interface RuntimeConfig {
+  apiBaseUrl: string;
+  publicWebUrl?: string;
+  firebaseConfig: FirebaseRuntimeConfig;
+  goongTilesKey?: string;
+}
+
+export interface RuntimeConfigOptions {
+  release?: boolean;
+}
+
+const read = (env: Record<string, unknown> | undefined, key: string): string | undefined => {
   const value = env?.[key];
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 };
 
-const requireReleaseValue = (env, key) => {
+const requireReleaseValue = (env: Record<string, unknown> | undefined, key: string): string => {
   const value = read(env, key);
   if (!value) {
     throw new Error(`Missing required Android release setting: ${key}`);
@@ -13,8 +34,8 @@ const requireReleaseValue = (env, key) => {
   return value;
 };
 
-const validateReleaseUrl = (value, key) => {
-  let url;
+const validateReleaseUrl = (value: string, key: string): string => {
+  let url: URL;
   try {
     url = new URL(value);
   } catch {
@@ -30,7 +51,10 @@ const validateReleaseUrl = (value, key) => {
   return url.toString().replace(/\/$/, "");
 };
 
-export const getRuntimeConfig = (env, {release = false} = {}) => {
+export const getRuntimeConfig = (
+  env?: Record<string, unknown>,
+  {release = false}: RuntimeConfigOptions = {}
+): RuntimeConfig => {
   const apiBaseUrl = release
     ? requireReleaseValue(env, "VITE_API_BASE_URL")
     : read(env, "VITE_API_BASE_URL") || DEFAULT_API_BASE_URL;
@@ -41,8 +65,8 @@ export const getRuntimeConfig = (env, {release = false} = {}) => {
     ? validateReleaseUrl(requireReleaseValue(env, "VITE_PUBLIC_WEB_URL"), "VITE_PUBLIC_WEB_URL")
     : read(env, "VITE_PUBLIC_WEB_URL") || globalThis.location?.origin;
 
-  const releaseValue = (key) => release ? requireReleaseValue(env, key) : read(env, key);
-  const firebaseConfig = {
+  const releaseValue = (key: string): string | undefined => release ? requireReleaseValue(env, key) : read(env, key);
+  const firebaseConfig: FirebaseRuntimeConfig = {
     apiKey: releaseValue("VITE_FIREBASE_API_KEY"),
     authDomain: releaseValue("VITE_FIREBASE_AUTH_DOMAIN"),
     projectId: releaseValue("VITE_FIREBASE_PROJECT_ID"),
@@ -59,4 +83,6 @@ export const getRuntimeConfig = (env, {release = false} = {}) => {
   return {apiBaseUrl, publicWebUrl, firebaseConfig, goongTilesKey};
 };
 
-export const runtimeConfig = getRuntimeConfig(import.meta.env);
+export const runtimeConfig: RuntimeConfig = getRuntimeConfig(
+  (import.meta as unknown as {env?: Record<string, unknown>})?.env
+);

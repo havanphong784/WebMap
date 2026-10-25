@@ -8,6 +8,11 @@ describe("platform actions", () => {
       lng: 106.67,
       locationId: "place 1",
     })).toBe("https://aether.vn/?lat=10.75&lng=106.67&locationId=place+1");
+    expect(buildLocationShareUrl("https://aether.vn", {
+      lat: 0,
+      lng: 0,
+      locationId: "",
+    })).toBe("https://aether.vn/?lat=0&lng=0");
   });
   it("uses native share, clipboard, and browser on Android", async () => {
     const share = {share: vi.fn().mockResolvedValue({activityType: "messages"})};
@@ -60,6 +65,15 @@ describe("platform actions", () => {
       windowObject: {},
     });
     await expect(actions.shareContent({text: "Aether"})).resolves.toBe("cancelled");
+  });
+
+  it("rethrows unexpected share errors", async () => {
+    const actions = createActionsAdapter({
+      nativeAndroid: false,
+      navigatorObject: {share: vi.fn().mockRejectedValue(new Error("Share error"))},
+      windowObject: {},
+    });
+    await expect(actions.shareContent({text: "Aether"})).rejects.toThrow("Share error");
   });
 
   it.each(["http://maps.goong.io", "javascript:alert(1)", "not-a-url"])(

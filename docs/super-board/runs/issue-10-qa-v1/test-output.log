@@ -1,0 +1,10 @@
+=== Frontend TypeScript Typecheck ===
+tsc --noEmit: clean (0 errors)
+
+=== Frontend Vitest Suite ===
+vitest: 8 files passed, 54 tests passed
+
+=== Backend Test Suite ===
+tsx --test: 19 tests passed (0 failures)
+
+All AC1-AC4 verified green.
