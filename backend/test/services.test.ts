@@ -6,7 +6,9 @@ import * as auth from '../src/services/authService.ts';
 import * as cmt from '../src/services/commentService.ts';
 import * as fol from '../src/services/followService.ts';
 import * as like from '../src/services/likeService.ts';
+import * as msg from '../src/services/messageService.ts';
 import * as notif from '../src/services/notificationService.ts';
+import * as sse from '../src/services/sseService.ts';
 
 test('services validation and query delegation', async (t) => {
   await assert.rejects(() => fol.toggleFollow('u1', 'u1'), /Cannot follow yourself/);
@@ -151,4 +153,154 @@ test('services edge cases and query flows', async (t) => {
     locationId: 5,
   });
   assert.equal(notifRes?.id, 201);
+});
+
+test('sseService handles connections, broadcasting, and error drops', () => {
+  const writes1: string[] = [];
+  const writes2: string[] = [];
+  const client1 = { write: (chunk: string) => void writes1.push(chunk) };
+  const client2 = { write: (chunk: string) => void writes2.push(chunk) };
+  const brokenClient = { write: () => { throw new Error('disconnected'); } };
+
+  sse.addConnection('user_a', client1 as never);
+  sse.addConnection('user_b', client2 as never);
+  assert.equal(sse.isUserOnline('user_a'), true);
+  assert.equal(sse.isUserOnline('user_b'), true);
+  assert.equal(sse.isUserOnline('user_offline'), false);
+
+  sse.sendToUser('user_a', 'test_event', { foo: 'bar' });
+  assert.equal(writes1.length, 1);
+  assert.match(writes1[0], /event: test_event\ndata: \{"foo":"bar"\}\n\n/);
+  assert.equal(writes2.length, 0);
+
+  sse.broadcast('global_event', { ok: true });
+  assert.equal(writes1.length, 2);
+  assert.equal(writes2.length, 1);
+  assert.match(writes2[0], /event: global_event\ndata: \{"ok":true\}\n\n/);
+
+  sse.addConnection('user_c', brokenClient as never);
+  assert.equal(sse.isUserOnline('user_c'), true);
+  sse.sendToUser('user_c', 'fail_event', {});
+  assert.equal(sse.isUserOnline('user_c'), false);
+
+  sse.removeConnection('user_a', client1 as never);
+  assert.equal(sse.isUserOnline('user_a'), false);
+  sse.removeConnection('user_b', client2 as never);
+  assert.equal(sse.isUserOnline('user_b'), false);
+
+  // Multi-connection per user and idempotent disconnect
+  const clientA2Writes: string[] = [];
+  const clientA2 = { write: (chunk: string) => void clientA2Writes.push(chunk) };
+  sse.addConnection('user_multi', client1 as never);
+  sse.addConnection('user_multi', clientA2 as never);
+  sse.sendToUser('user_multi', 'sync', { tab: 2 });
+  assert.equal(clientA2Writes.length, 1);
+  sse.removeConnection('user_multi', client1 as never);
+  assert.equal(sse.isUserOnline('user_multi'), true);
+  sse.removeConnection('user_multi', clientA2 as never);
+  assert.equal(sse.isUserOnline('user_multi'), false);
+  sse.removeConnection('user_multi', clientA2 as never);
+  sse.resetConnectionsForTesting();
+});
+
+test('messageService validates friends, bounds, and delegates queries', async (t) => {
+  const orig = pool.query;
+  const queries: { sql: string; vals: unknown[] }[] = [];
+  t.after(() => {
+    pool.query = orig;
+  });
+
+  pool.query = (async (sql: string, vals: unknown[] = []) => {
+    queries.push({ sql, vals });
+    if (sql.includes('SELECT 1\n     FROM follows')) {
+      const isFriend =
+        (vals[0] === 'friend1' && vals[1] === 'friend2') ||
+        (vals[0] === 'sender' && vals[1] === 'recipient');
+      return { rowCount: isFriend ? 1 : 0, rows: isFriend ? [{ '?column?': 1 }] : [] };
+    }
+    if (sql.includes('INSERT INTO direct_messages')) {
+      return {
+        rowCount: 1,
+        rows: [{ id: 10, sender_id: vals[0], recipient_id: vals[1], content: vals[2], is_read: false, created_at: new Date() }],
+      };
+    }
+    if (sql.includes('WITH scoped_messages')) {
+      return {
+        rowCount: 1,
+        rows: [{
+          peer_id: 'friend2', id: 1, sender_id: 'friend1', recipient_id: 'friend2',
+          content: 'latest message', is_read: false, created_at: new Date(), unread_count: 2,
+          peer_name: 'Friend 2', peer_email: 'f2@example.com', peer_avatar_url: null,
+          peer_last_seen_at: null, peer_current_lat: null, peer_current_lng: null,
+        }],
+      };
+    }
+    if (sql.includes('JOIN users sender ON sender.firebase_uid = dm.sender_id')) {
+      return {
+        rowCount: 1,
+        rows: [{
+          id: 1, sender_id: vals[0], recipient_id: vals[1], content: 'hi',
+          is_read: true, created_at: new Date(), sender_name: 'Friend', sender_avatar_url: null,
+        }],
+      };
+    }
+    return { rowCount: 0, rows: [] };
+  }) as never;
+
+  await assert.rejects(
+    () => msg.ensureFriends({ userId: 'stranger1', peerId: 'stranger2' }),
+    (err: { status?: number; code?: string }) =>
+      err.status === 403 && err.code === 'CHAT_FRIEND_REQUIRED',
+  );
+
+  await assert.rejects(
+    () => msg.sendDirectMessage({ senderId: 'sender', recipientId: 'recipient', content: '   ' }),
+    (err: { status?: number; code?: string }) =>
+      err.status === 400 && err.code === 'MESSAGE_CONTENT_REQUIRED',
+  );
+
+  await assert.rejects(
+    () =>
+      msg.sendDirectMessage({
+        senderId: 'sender',
+        recipientId: 'recipient',
+        content: 'x'.repeat(2001),
+      }),
+    (err: { status?: number; code?: string }) =>
+      err.status === 400 && err.code === 'MESSAGE_TOO_LONG',
+  );
+
+  const sent = await msg.sendDirectMessage({
+    senderId: 'sender',
+    recipientId: 'recipient',
+    content: '  Hello   there!  ',
+  });
+  assert.equal(sent.content, 'Hello there!');
+  assert.equal(sent.id, 10);
+
+  const convo = await msg.listConversation({ userId: 'friend1', peerId: 'friend2', limit: 300 });
+  assert.equal(convo.length, 1);
+  const convoCall = queries.find((q) => q.sql.includes('FROM direct_messages'));
+  assert.equal(convoCall?.vals[2], 150);
+
+  await msg.listConversation({ userId: 'friend1', peerId: 'friend2', limit: -5 });
+  const minLimitCall = queries[queries.length - 1];
+  assert.equal(minLimitCall?.vals[2], 1);
+
+  await msg.listConversation({ userId: 'friend1', peerId: 'friend2', limit: 'invalid' });
+  const defaultLimitCall = queries[queries.length - 1];
+  assert.equal(defaultLimitCall?.vals[2], 80);
+
+  await assert.rejects(
+    () => msg.sendDirectMessage({ senderId: 'sender', recipientId: 'recipient', content: null as never }),
+    (err: { status?: number; code?: string }) => err.status === 400 && err.code === 'MESSAGE_CONTENT_REQUIRED',
+  );
+
+  const threads = await msg.listMessageThreads({ userId: 'friend1' });
+  assert.equal(threads.length, 1);
+  assert.equal(threads[0].peer_id, 'friend2');
+
+  await msg.markConversationRead({ userId: 'friend1', peerId: 'friend2' });
+  const updateCall = queries.find((q) => q.sql.includes('UPDATE direct_messages'));
+  assert.deepEqual(updateCall?.vals, ['friend2', 'friend1']);
 });

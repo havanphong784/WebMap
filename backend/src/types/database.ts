@@ -158,3 +158,67 @@ export interface DailyTaskProgress {
   completed_at: string | Date | null;
   [key: string]: unknown;
 }
+
+export interface DirectMessageRecord {
+  id: number;
+  sender_id: string;
+  recipient_id: string;
+  content: string;
+  is_read: boolean;
+  created_at: string | Date;
+  [key: string]: unknown;
+}
+
+export interface ConversationMessage extends DirectMessageRecord {
+  sender_name: string | null;
+  sender_avatar_url: string | null;
+}
+
+export interface MessageThread {
+  peer_id: string;
+  id: number;
+  sender_id: string;
+  recipient_id: string;
+  content: string;
+  is_read: boolean;
+  created_at: string | Date;
+  unread_count: number;
+  peer_name: string | null;
+  peer_email: string | null;
+  peer_avatar_url: string | null;
+  peer_last_seen_at: string | Date | null;
+  peer_current_lat: number | null;
+  peer_current_lng: number | null;
+  [key: string]: unknown;
+}
+
+export interface DirectMessagePayload extends DirectMessageRecord {
+  peer_id_for_sender: string;
+  peer_id_for_recipient: string;
+}
+
+export type SendDirectMessageParams = {
+  senderId: string;
+  recipientId: string;
+  content: string;
+};
+
+export type ListConversationParams = {
+  userId: string;
+  peerId: string;
+  limit?: number | string;
+};
+
+export type ListMessageThreadsParams = {
+  userId: string;
+};
+
+export type MarkConversationReadParams = {
+  userId: string;
+  peerId: string;
+};
+
+export type EnsureFriendsParams = {
+  userId: string;
+  peerId: string;
+};
