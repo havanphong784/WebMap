@@ -222,3 +222,48 @@ export type EnsureFriendsParams = {
   userId: string;
   peerId: string;
 };
+
+export type XPAction =
+  | 'PHOTO'
+  | 'REVIEW'
+  | 'LONG_REVIEW'
+  | 'LIKE_RECEIVED'
+  | 'LIKE_GIVEN'
+  | 'COMMENT'
+  | 'LOCATION_CREATED';
+
+export interface TierConfig {
+  name: string;
+  minLevel: number;
+  color: string;
+}
+
+export interface UserGamificationState {
+  xp: number;
+  level: number;
+  tier: string;
+  added?: number;
+}
+
+export interface GamificationAchievementRow {
+  id: number;
+  key_name: string;
+  title_vi: string;
+  requirement_type: string;
+  requirement_value: number;
+  xp_reward: number;
+  current_progress: number;
+  [key: string]: unknown;
+}
+
+export interface GamificationDailyTaskRow {
+  id: number;
+  key_name: string;
+  title_vi: string;
+  requirement_type: string;
+  requirement_value: number;
+  xp_reward: number;
+  current_progress: number;
+  is_completed: boolean;
+  [key: string]: unknown;
+}
