@@ -2,23 +2,30 @@ import {useEffect, useRef} from "react";
 import {auth} from "../../config/firebase.js";
 import {runtimeConfig} from "../../config/runtimeConfig.js";
 
-const API_BASE_URL = runtimeConfig.apiBaseUrl;
+const API_BASE_URL: string = runtimeConfig.apiBaseUrl;
 const RECONNECT_DELAY_MS = 5000;
 const MAX_RECONNECT_DELAY_MS = 30000;
+
+export type SSEHandler<T = any> = (data: T) => void;
+export type SSEHandlers = Record<string, SSEHandler<any>>;
+
+export interface UseSSEOptions {
+  enabled?: boolean;
+  handlers?: SSEHandlers;
+}
 
 /**
  * Hook quản lý SSE connection tới backend.
  * Tự động reconnect với exponential backoff. Khi gặp 401, force refresh token Firebase.
  *
- * @param {Object} options
- * @param {boolean} options.enabled - Có kết nối hay không (thường = !!user)
- * @param {Object} options.handlers - Map<eventName, handler(data)>
+ * @param options.enabled - Có kết nối hay không (thường = !!user)
+ * @param options.handlers - Map<eventName, handler(data)>
  */
-export default function useSSE({enabled = false, handlers = {}}) {
-  const readerRef = useRef(null);
-  const reconnectTimerRef = useRef(null);
-  const reconnectAttemptsRef = useRef(0);
-  const handlersRef = useRef(handlers);
+export default function useSSE({enabled = false, handlers = {}}: UseSSEOptions = {}): void {
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptsRef = useRef<number>(0);
+  const handlersRef = useRef<SSEHandlers>(handlers);
 
   useEffect(() => {
     handlersRef.current = handlers;
@@ -43,7 +50,7 @@ export default function useSSE({enabled = false, handlers = {}}) {
       reconnectTimerRef.current = null;
     };
 
-    const scheduleReconnect = (connect) => {
+    const scheduleReconnect = (connect: () => Promise<void>) => {
       if (disposed || !enabled || reconnectTimerRef.current) return;
       const attempts = reconnectAttemptsRef.current;
       const delay = Math.min(RECONNECT_DELAY_MS * Math.pow(2, attempts), MAX_RECONNECT_DELAY_MS);
@@ -70,6 +77,10 @@ export default function useSSE({enabled = false, handlers = {}}) {
 
         if (!response.ok) {
           throw new Error(`SSE connect failed: ${response.status}`);
+        }
+
+        if (!response.body) {
+          throw new Error("No response body for SSE stream");
         }
 
         reconnectAttemptsRef.current = 0;
@@ -105,9 +116,9 @@ export default function useSSE({enabled = false, handlers = {}}) {
             }
           }
         }
-      } catch (err) {
-        if (!disposed && err.name !== "AbortError") {
-          console.warn("SSE connection error:", err.message);
+      } catch (err: any) {
+        if (!disposed && err?.name !== "AbortError") {
+          console.warn("SSE connection error:", err?.message);
         }
       } finally {
         readerRef.current = null;

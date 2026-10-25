@@ -3,26 +3,38 @@
  * Quản lý các kết nối SSE theo userId, cho phép push event tới user cụ thể.
  */
 
-// Map<userId, Set<Response>>
-const connections = new Map();
+import type { Response } from 'express';
 
-const dropConnection = (userId, res) => {
+export type SSEClient =
+  | Response
+  | { write(chunk: string): boolean | undefined; [key: string]: unknown };
+
+export interface SSEEventPayload<T = unknown> {
+  event: string;
+  data: T;
+}
+
+// Map<userId, Set<Response>>
+const connections = new Map<string, Set<SSEClient>>();
+
+const dropConnection = (userId: string, res: SSEClient): void => {
   const userConns = connections.get(userId);
   if (!userConns) return;
   userConns.delete(res);
   if (userConns.size === 0) connections.delete(userId);
 };
 
-export const addConnection = (userId, res) => {
+export const addConnection = (userId: string, res: SSEClient): void => {
   if (!connections.has(userId)) {
     connections.set(userId, new Set());
   }
-  connections.get(userId).add(res);
+  connections.get(userId)?.add(res);
 };
 
-export const removeConnection = (userId, res) => dropConnection(userId, res);
+export const removeConnection = (userId: string, res: SSEClient): void =>
+  dropConnection(userId, res);
 
-const safeWrite = (res, payload, userId) => {
+const safeWrite = (res: SSEClient, payload: string, userId?: string): boolean => {
   try {
     res.write(payload);
     return true;
@@ -35,7 +47,7 @@ const safeWrite = (res, payload, userId) => {
 /**
  * Gửi event tới một user cụ thể (tất cả tabs/devices).
  */
-export const sendToUser = (userId, event, data) => {
+export const sendToUser = (userId: string, event: string, data: unknown): void => {
   const userConns = connections.get(userId);
   if (!userConns || userConns.size === 0) return;
 
@@ -49,7 +61,7 @@ export const sendToUser = (userId, event, data) => {
 /**
  * Broadcast tới tất cả connected users.
  */
-export const broadcast = (event, data) => {
+export const broadcast = (event: string, data: unknown): void => {
   const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const userId of [...connections.keys()]) {
     const userConns = connections.get(userId);
@@ -60,5 +72,11 @@ export const broadcast = (event, data) => {
   }
 };
 
-export const isUserOnline = (userId) =>
-  connections.has(userId) && connections.get(userId).size > 0;
+export const isUserOnline = (userId: string): boolean => {
+  const userConns = connections.get(userId);
+  return Boolean(userConns && userConns.size > 0);
+};
+
+export const resetConnectionsForTesting = (): void => {
+  connections.clear();
+};

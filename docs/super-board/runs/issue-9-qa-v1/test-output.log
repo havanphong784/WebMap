@@ -1,0 +1,39 @@
+=== Frontend TypeScript Typecheck ===
+npm notice run frontend@0.0.0 npx
+npm notice run 'tsc' --noEmit
+status: 0 errors (clean)
+
+=== Frontend Vitest Suite ===
+npm notice run frontend@0.0.0 test
+npm notice run vitest --run
+
+ RUN  v4.1.12 frontend
+ Test Files  9 passed (9)
+      Tests  64 passed (64)
+   Duration  850ms
+
+=== Backend Node Test Suite ===
+npm notice run backend@1.0.0 test
+npm notice run node --import tsx --test
+✔ sendSuccess sends 200 and success payload by default
+✔ sendError defaults to 500 and INTERNAL_SERVER_ERROR
+✔ sendError supports custom status, code, and details
+✔ allows configured web and Capacitor origins after trimming and deduplication
+✔ allows requests without an Origin header
+✔ rejects unknown production origins
+✔ retains allow-all origin behavior only for unconfigured development
+✔ notFoundHandler returns 404 with ROUTE_NOT_FOUND
+✔ errorHandler formats AppError and falls back to 500
+✔ rateLimiter tracks requests and blocks when limit exceeded
+✔ validateLocationCreation accepts valid payload and calls next()
+✔ validateLocationCreation rejects invalid coordinates
+✔ validateLocationUpdate validates optional fields when provided
+✔ normalizeApiResponse normalizes error responses >= 400
+✔ verifyToken returns 401 when Authorization header is missing or malformed
+✔ verifyToken validates token and attaches user or returns 401 on failure
+✔ optionalVerifyToken allows anonymous or attaches user when token valid
+✔ services validation and query delegation
+✔ services edge cases and query flows
+ℹ tests 19
+ℹ pass 19
+ℹ fail 0

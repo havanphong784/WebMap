@@ -1,7 +1,19 @@
-const handlers = new Map();
+export type BackHandler = () => boolean;
+
+export interface RegisteredBackHandler {
+  close: BackHandler;
+  priority: number;
+  token: number;
+}
+
+const handlers = new Map<string, RegisteredBackHandler>();
 let sequence = 0;
 
-export const registerBackHandler = (id, close, priority = 0) => {
+export const registerBackHandler = (
+  id: string,
+  close: BackHandler,
+  priority: number = 0
+): (() => void) => {
   const token = ++sequence;
   handlers.set(id, {close, priority, token});
 
@@ -10,7 +22,7 @@ export const registerBackHandler = (id, close, priority = 0) => {
   };
 };
 
-export const closeTopOverlay = () => {
+export const closeTopOverlay = (): boolean => {
   const ordered = [...handlers.values()].sort((left, right) => (
     right.priority - left.priority || right.token - left.token
   ));
@@ -21,7 +33,7 @@ export const closeTopOverlay = () => {
   return false;
 };
 
-export const resetBackHandlersForTests = () => {
+export const resetBackHandlersForTests = (): void => {
   handlers.clear();
   sequence = 0;
 };

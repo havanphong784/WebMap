@@ -32,4 +32,15 @@ describe("back stack", () => {
     expect(high).not.toHaveBeenCalled();
     expect(low).toHaveBeenCalledOnce();
   });
+
+  it("evaluates handlers with same priority in LIFO registration order", () => {
+    const first = vi.fn(() => false);
+    const second = vi.fn(() => true);
+    registerBackHandler("first", first, 10);
+    registerBackHandler("second", second, 10);
+
+    expect(closeTopOverlay()).toBe(true);
+    expect(second).toHaveBeenCalledOnce();
+    expect(first).not.toHaveBeenCalled();
+  });
 });

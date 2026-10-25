@@ -1,4 +1,4 @@
-export const parseDBDate = (dateStr) => {
+export const parseDBDate = (dateStr?: string | Date | null): Date => {
   if (!dateStr) return new Date();
   if (dateStr instanceof Date) return dateStr;
 
@@ -10,7 +10,7 @@ export const parseDBDate = (dateStr) => {
   return isNaN(date.getTime()) ? new Date() : date;
 };
 
-export const formatFullTime = (dateStr) => {
+export const formatFullTime = (dateStr?: string | Date | null): string => {
   const d = parseDBDate(dateStr);
   if (isNaN(d.getTime())) return 'Vừa xong';
 
