@@ -1,7 +1,7 @@
-import imageCompression from 'browser-image-compression';
+import imageCompression, {Options} from 'browser-image-compression';
 
-export const compressImage = async (file) => {
-  const options = {
+export const compressImage = async (file: File): Promise<File> => {
+  const options: Options = {
     maxSizeMB: 0.3, // Even smaller for instant feel
     maxWidthOrHeight: 1280, // Optimized for mobile cards
     useWebWorker: true,
@@ -9,14 +9,12 @@ export const compressImage = async (file) => {
     initialQuality: 0.7, // Focused on speed
   };
 
-
-
   try {
     const compressedFile = await imageCompression(file, options);
     const newFileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
     return new File([compressedFile], `${newFileName}.webp`, {
       type: 'image/webp',
-      lastModified: Date.now()
+      lastModified: Date.now(),
     });
   } catch (error) {
     console.error('Error compressing image:', error);
