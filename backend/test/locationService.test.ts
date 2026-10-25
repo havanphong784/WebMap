@@ -184,3 +184,67 @@ test('locationController validates coordinate query parameters', async () => {
   assert.equal(capturedPayload?.message, 'Thiếu tham số tọa độ');
   assert.deepEqual(capturedPayload?.data, []);
 });
+
+test('locationController guards unauthenticated and invalid requests', async () => {
+  let capturedStatus = 0;
+  let capturedPayload: any = null;
+  const mockRes = {
+    status: (s: number) => {
+      capturedStatus = s;
+      return {
+        json: (data: any) => {
+          capturedPayload = data;
+          return mockRes;
+        },
+      };
+    },
+  } as unknown as Response;
+
+  // Unauthenticated create
+  const unauthReq = { body: {}, user: undefined, params: { id: 'loc1' }, query: {} } as unknown as AuthenticatedRequest;
+  await locController.createLocationEntry(unauthReq, mockRes, () => {});
+  assert.equal(capturedStatus, 401);
+
+  // Unauthenticated delete
+  await locController.deleteLocationEntry(unauthReq, mockRes, () => {});
+  assert.equal(capturedStatus, 401);
+
+  // Unauthenticated following
+  await locController.getFollowingLocations(unauthReq, mockRes, () => {});
+  assert.equal(capturedStatus, 401);
+
+  // Reverse geocode missing coords
+  const missingGeoReq = { query: {} } as unknown as AuthenticatedRequest;
+  await locController.reverseGeocode(missingGeoReq, mockRes, () => {});
+  assert.equal(capturedStatus, 400);
+
+  // Search address missing query
+  const missingSearchReq = { query: {} } as unknown as AuthenticatedRequest;
+  await locController.searchAddress(missingSearchReq, mockRes, () => {});
+  assert.equal(capturedStatus, 400);
+
+  // Goong place missing place_id
+  const missingPlaceReq = { query: {} } as unknown as AuthenticatedRequest;
+  await locController.getGoongPlace(missingPlaceReq, mockRes, () => {});
+  assert.equal(capturedStatus, 400);
+});
+
+test('goongMapService edge cases and fallback handling', async () => {
+  assert.equal(await goongService.getRouteForPoints([]), null);
+  assert.equal(await goongService.getRouteForPoints([[105.8, 21.0]]), null);
+
+  const emptyLine = goongService.decodePolylineToLineString('');
+  assert.deepEqual(emptyLine.coordinates, []);
+
+  const fallbackPlace = goongService.normalizeGoongPlace(null, {
+    place_id: 'fallback_1',
+    description: 'Custom Place, Hanoi',
+    lat: '21.05',
+    lng: '105.82',
+  });
+  assert.equal(fallbackPlace.id, 'fallback_1');
+  assert.equal(fallbackPlace.lat, 21.05);
+  assert.equal(fallbackPlace.lng, 105.82);
+  assert.equal(fallbackPlace.name, 'Custom Place');
+});
+
