@@ -187,6 +187,20 @@ test('sseService handles connections, broadcasting, and error drops', () => {
   assert.equal(sse.isUserOnline('user_a'), false);
   sse.removeConnection('user_b', client2 as never);
   assert.equal(sse.isUserOnline('user_b'), false);
+
+  // Multi-connection per user and idempotent disconnect
+  const clientA2Writes: string[] = [];
+  const clientA2 = { write: (chunk: string) => void clientA2Writes.push(chunk) };
+  sse.addConnection('user_multi', client1 as never);
+  sse.addConnection('user_multi', clientA2 as never);
+  sse.sendToUser('user_multi', 'sync', { tab: 2 });
+  assert.equal(clientA2Writes.length, 1);
+  sse.removeConnection('user_multi', client1 as never);
+  assert.equal(sse.isUserOnline('user_multi'), true);
+  sse.removeConnection('user_multi', clientA2 as never);
+  assert.equal(sse.isUserOnline('user_multi'), false);
+  sse.removeConnection('user_multi', clientA2 as never);
+  sse.resetConnectionsForTesting();
 });
 
 test('messageService validates friends, bounds, and delegates queries', async (t) => {
@@ -268,6 +282,19 @@ test('messageService validates friends, bounds, and delegates queries', async (t
   assert.equal(convo.length, 1);
   const convoCall = queries.find((q) => q.sql.includes('FROM direct_messages'));
   assert.equal(convoCall?.vals[2], 150);
+
+  await msg.listConversation({ userId: 'friend1', peerId: 'friend2', limit: -5 });
+  const minLimitCall = queries[queries.length - 1];
+  assert.equal(minLimitCall?.vals[2], 1);
+
+  await msg.listConversation({ userId: 'friend1', peerId: 'friend2', limit: 'invalid' });
+  const defaultLimitCall = queries[queries.length - 1];
+  assert.equal(defaultLimitCall?.vals[2], 80);
+
+  await assert.rejects(
+    () => msg.sendDirectMessage({ senderId: 'sender', recipientId: 'recipient', content: null as never }),
+    (err: { status?: number; code?: string }) => err.status === 400 && err.code === 'MESSAGE_CONTENT_REQUIRED',
+  );
 
   const threads = await msg.listMessageThreads({ userId: 'friend1' });
   assert.equal(threads.length, 1);
