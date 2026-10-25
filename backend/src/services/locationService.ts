@@ -1,4 +1,17 @@
 import pool from "../config/db.js";
+import type {
+  CreateLocationParams,
+  DeleteLocationParams,
+  GetLocationDetailParams,
+  ListFollowingLocationsParams,
+  ListLocationsByTagParams,
+  ListLocationsParams,
+  ListTrendingLocationsParams,
+  ListUserLocationsParams,
+  LocationRecord,
+  LocationWithAuthor,
+  PaginatedLocationsResult,
+} from "../types/database.js";
 
 // Cột chung cho mọi location query — tránh lặp code và đảm bảo schema nhất quán.
 const LOCATION_SELECT_COLUMNS = `
@@ -12,26 +25,34 @@ const LOCATION_SELECT_COLUMNS = `
 `;
 
 // JOIN một lần duy nhất với likes của viewer thay vì EXISTS subquery cho mỗi row.
-const LOCATION_FROM_CLAUSE = (viewerParam) => `
+const LOCATION_FROM_CLAUSE = (viewerParam: string): string => `
   FROM locations l
   LEFT JOIN users u ON l.user_id = u.firebase_uid
   LEFT JOIN likes lk_viewer ON lk_viewer.location_id = l.id AND lk_viewer.user_id = ${viewerParam}
 `;
 
 // Pagination helper
-const getPaginationParams = (page = 1, limit = 20) => {
-  const pageNum = Math.max(1, parseInt(page, 10) || 1);
-  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+const getPaginationParams = (page: number | string = 1, limit: number | string = 20) => {
+  const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(String(limit), 10) || 20));
   const offset = (pageNum - 1) * limitNum;
   return {pageNum, limitNum, offset};
 };
 
-export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat, page = 1, limit = 500}) => {
+export const listLocations = async ({
+  userId,
+  minLng,
+  maxLng,
+  minLat,
+  maxLat,
+  page = 1,
+  limit = 500,
+}: ListLocationsParams): Promise<PaginatedLocationsResult<LocationWithAuthor>> => {
   // Map view cần load nhiều hơn — cap ở 500 thay vì 100
-  const pageNum = Math.max(1, parseInt(page, 10) || 1);
-  const limitNum = Math.min(500, Math.max(1, parseInt(limit, 10) || 500));
+  const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
+  const limitNum = Math.min(500, Math.max(1, parseInt(String(limit), 10) || 500));
   const offset = (pageNum - 1) * limitNum;
-  
+
   // Get total count
   const countQuery = `
     SELECT COUNT(*) as total
@@ -40,9 +61,9 @@ export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat, pag
       AND l.lng BETWEEN $3 AND $4
       AND (l.is_public = true OR l.user_id = $5)
   `;
-  const countResult = await pool.query(countQuery, [minLat, maxLat, minLng, maxLng, userId || "guest"]);
+  const countResult = await pool.query<{ total: string }>(countQuery, [minLat, maxLat, minLng, maxLng, userId || "guest"]);
   const total = parseInt(countResult.rows[0].total, 10);
-  
+
   // Get paginated data
   const query = `
     SELECT ${LOCATION_SELECT_COLUMNS}
@@ -54,11 +75,11 @@ export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat, pag
     LIMIT $6 OFFSET $7;
   `;
   const values = [minLat, maxLat, minLng, maxLng, userId || "guest", limitNum, offset];
-  const result = await pool.query(query, values);
-  
+  const result = await pool.query<LocationWithAuthor>(query, values);
+
   // Group locations gần nhau (< ~30m) thành 1 điểm đại diện
   const grouped = groupNearbyLocations(result.rows);
-  
+
   return {
     data: grouped,
     pagination: {
@@ -77,43 +98,43 @@ export const listLocations = async ({userId, minLng, maxLng, minLat, maxLat, pag
  */
 const GROUP_THRESHOLD = 0.0003; // ~30 meters
 
-function groupNearbyLocations(locations) {
+function groupNearbyLocations(locations: LocationWithAuthor[]): LocationWithAuthor[] {
   if (!locations || locations.length === 0) return [];
-  
-  const groups = [];
-  const assigned = new Set();
-  
+
+  const groups: LocationWithAuthor[] = [];
+  const assigned = new Set<number>();
+
   for (let i = 0; i < locations.length; i++) {
     if (assigned.has(i)) continue;
-    
+
     const anchor = locations[i];
     const anchorLat = Number(anchor.lat);
     const anchorLng = Number(anchor.lng);
-    const group = [anchor];
+    const group: LocationWithAuthor[] = [anchor];
     assigned.add(i);
-    
+
     // Tìm các locations gần anchor
     for (let j = i + 1; j < locations.length; j++) {
       if (assigned.has(j)) continue;
       const candidate = locations[j];
       const dLat = Math.abs(Number(candidate.lat) - anchorLat);
       const dLng = Math.abs(Number(candidate.lng) - anchorLng);
-      
+
       if (dLat <= GROUP_THRESHOLD && dLng <= GROUP_THRESHOLD) {
         group.push(candidate);
         assigned.add(j);
       }
     }
-    
+
     if (group.length === 1) {
       // Không có neighbor → trả nguyên
       groups.push(anchor);
     } else {
       // Có nhiều reviews cùng vị trí → chọn đại diện (nhiều like nhất)
-      const representative = group.reduce((best, loc) => 
+      const representative = group.reduce((best, loc) =>
         (Number(loc.likes_count) || 0) > (Number(best.likes_count) || 0) ? loc : best
       , group[0]);
-      
+
       // Gắn group vào representative
       groups.push({
         ...representative,
@@ -122,7 +143,7 @@ function groupNearbyLocations(locations) {
       });
     }
   }
-  
+
   return groups;
 }
 
@@ -138,7 +159,7 @@ export const createLocation = async ({
   image_url,
   is_public,
   tags,
-}) => {
+}: CreateLocationParams): Promise<LocationRecord> => {
   const query = `
     INSERT INTO locations
     (user_id, name, address, category, review_text, rating, lat, lng, image_url, is_public, tags)
@@ -158,22 +179,27 @@ export const createLocation = async ({
     is_public !== undefined ? is_public : true,
     tags && tags.length > 0 ? tags : [],
   ];
-  const result = await pool.query(query, values);
+  const result = await pool.query<LocationRecord>(query, values);
   return result.rows[0];
 };
 
-export const listUserLocations = async ({uid, currentUserId, page = 1, limit = 20}) => {
+export const listUserLocations = async ({
+  uid,
+  currentUserId,
+  page = 1,
+  limit = 20,
+}: ListUserLocationsParams): Promise<PaginatedLocationsResult<LocationWithAuthor>> => {
   const {pageNum, limitNum, offset} = getPaginationParams(page, limit);
-  
+
   // Get total count
   const countQuery = `
     SELECT COUNT(*) as total
     FROM locations l
     WHERE l.user_id = $1
   `;
-  const countResult = await pool.query(countQuery, [uid]);
+  const countResult = await pool.query<{ total: string }>(countQuery, [uid]);
   const total = parseInt(countResult.rows[0].total, 10);
-  
+
   // Get paginated data
   const query = `
     SELECT ${LOCATION_SELECT_COLUMNS}
@@ -182,8 +208,8 @@ export const listUserLocations = async ({uid, currentUserId, page = 1, limit = 2
     ORDER BY l.created_at DESC
     LIMIT $3 OFFSET $4;
   `;
-  const result = await pool.query(query, [uid, currentUserId || "guest", limitNum, offset]);
-  
+  const result = await pool.query<LocationWithAuthor>(query, [uid, currentUserId || "guest", limitNum, offset]);
+
   return {
     data: result.rows,
     pagination: {
@@ -195,18 +221,22 @@ export const listUserLocations = async ({uid, currentUserId, page = 1, limit = 2
   };
 };
 
-export const listTrendingLocations = async ({userId, page = 1, limit = 20}) => {
+export const listTrendingLocations = async ({
+  userId,
+  page = 1,
+  limit = 20,
+}: ListTrendingLocationsParams): Promise<PaginatedLocationsResult<LocationWithAuthor>> => {
   const {pageNum, limitNum, offset} = getPaginationParams(page, limit);
-  
+
   // Get total count
   const countQuery = `
     SELECT COUNT(*) as total
     FROM locations l
     WHERE l.is_public = true
   `;
-  const countResult = await pool.query(countQuery);
+  const countResult = await pool.query<{ total: string }>(countQuery);
   const total = parseInt(countResult.rows[0].total, 10);
-  
+
   // Get paginated data
   const query = `
     SELECT ${LOCATION_SELECT_COLUMNS}
@@ -215,8 +245,8 @@ export const listTrendingLocations = async ({userId, page = 1, limit = 20}) => {
     ORDER BY l.likes_count DESC, l.created_at DESC
     LIMIT $2 OFFSET $3;
   `;
-  const result = await pool.query(query, [userId || "guest", limitNum, offset]);
-  
+  const result = await pool.query<LocationWithAuthor>(query, [userId || "guest", limitNum, offset]);
+
   return {
     data: result.rows,
     pagination: {
@@ -228,8 +258,11 @@ export const listTrendingLocations = async ({userId, page = 1, limit = 20}) => {
   };
 };
 
-export const deleteLocation = async ({locationId, userId}) => {
-  const result = await pool.query(
+export const deleteLocation = async ({
+  locationId,
+  userId,
+}: DeleteLocationParams): Promise<LocationRecord> => {
+  const result = await pool.query<LocationRecord>(
     "DELETE FROM locations WHERE id = $1 AND user_id = $2 RETURNING *",
     [locationId, userId]
   );
@@ -239,19 +272,27 @@ export const deleteLocation = async ({locationId, userId}) => {
   return result.rows[0];
 };
 
-export const getLocationDetail = async ({locationId, userId}) => {
+export const getLocationDetail = async ({
+  locationId,
+  userId,
+}: GetLocationDetailParams): Promise<LocationWithAuthor | undefined> => {
   const query = `
     SELECT ${LOCATION_SELECT_COLUMNS}
     ${LOCATION_FROM_CLAUSE("$2")}
     WHERE l.id = $1;
   `;
-  const result = await pool.query(query, [locationId, userId || "guest"]);
+  const result = await pool.query<LocationWithAuthor>(query, [locationId, userId || "guest"]);
   return result.rows[0];
 };
 
-export const listLocationsByTag = async ({tag, userId, page = 1, limit = 20}) => {
+export const listLocationsByTag = async ({
+  tag,
+  userId,
+  page = 1,
+  limit = 20,
+}: ListLocationsByTagParams): Promise<PaginatedLocationsResult<LocationWithAuthor>> => {
   const {pageNum, limitNum, offset} = getPaginationParams(page, limit);
-  
+
   // Get total count
   const countQuery = `
     SELECT COUNT(*) as total
@@ -259,9 +300,9 @@ export const listLocationsByTag = async ({tag, userId, page = 1, limit = 20}) =>
     WHERE $1 = ANY(l.tags)
       AND (l.is_public = true OR l.user_id = $2)
   `;
-  const countResult = await pool.query(countQuery, [tag, userId || "guest"]);
+  const countResult = await pool.query<{ total: string }>(countQuery, [tag, userId || "guest"]);
   const total = parseInt(countResult.rows[0].total, 10);
-  
+
   // Get paginated data
   const query = `
     SELECT ${LOCATION_SELECT_COLUMNS}
@@ -271,8 +312,8 @@ export const listLocationsByTag = async ({tag, userId, page = 1, limit = 20}) =>
     ORDER BY l.created_at DESC
     LIMIT $3 OFFSET $4;
   `;
-  const result = await pool.query(query, [tag, userId || "guest", limitNum, offset]);
-  
+  const result = await pool.query<LocationWithAuthor>(query, [tag, userId || "guest", limitNum, offset]);
+
   return {
     data: result.rows,
     pagination: {
@@ -284,20 +325,24 @@ export const listLocationsByTag = async ({tag, userId, page = 1, limit = 20}) =>
   };
 };
 
-export const listUniqueTags = async () => {
+export const listUniqueTags = async (): Promise<string[]> => {
   const query = `
     SELECT DISTINCT unnest(tags) AS tag
     FROM locations
     WHERE is_public = true
     ORDER BY tag ASC;
   `;
-  const result = await pool.query(query);
+  const result = await pool.query<{ tag: string }>(query);
   return result.rows.map(r => r.tag);
 };
 
-export const listFollowingLocations = async ({userId, page = 1, limit = 20}) => {
+export const listFollowingLocations = async ({
+  userId,
+  page = 1,
+  limit = 20,
+}: ListFollowingLocationsParams): Promise<PaginatedLocationsResult<LocationWithAuthor>> => {
   const {pageNum, limitNum, offset} = getPaginationParams(page, limit);
-  
+
   // Get total count
   const countQuery = `
     SELECT COUNT(*) as total
@@ -305,9 +350,9 @@ export const listFollowingLocations = async ({userId, page = 1, limit = 20}) => 
     JOIN follows f ON l.user_id = f.followed_id
     WHERE f.follower_id = $1 AND l.is_public = true
   `;
-  const countResult = await pool.query(countQuery, [userId]);
+  const countResult = await pool.query<{ total: string }>(countQuery, [userId]);
   const total = parseInt(countResult.rows[0].total, 10);
-  
+
   // Get paginated data
   const query = `
     SELECT ${LOCATION_SELECT_COLUMNS}
@@ -319,8 +364,8 @@ export const listFollowingLocations = async ({userId, page = 1, limit = 20}) => 
     ORDER BY l.created_at DESC
     LIMIT $2 OFFSET $3;
   `;
-  const result = await pool.query(query, [userId, limitNum, offset]);
-  
+  const result = await pool.query<LocationWithAuthor>(query, [userId, limitNum, offset]);
+
   return {
     data: result.rows,
     pagination: {

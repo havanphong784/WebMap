@@ -267,3 +267,106 @@ export interface GamificationDailyTaskRow {
   is_completed: boolean;
   [key: string]: unknown;
 }
+
+export interface LocationRecord {
+  id: number;
+  user_id: string;
+  name: string;
+  address: string | null;
+  category: string;
+  review_text: string;
+  rating: number;
+  lat: number | string;
+  lng: number | string;
+  image_url: string | null;
+  is_public: boolean;
+  tags: string[];
+  likes_count?: number;
+  comments_count?: number;
+  created_at?: string | Date;
+  updated_at?: string | Date;
+  [key: string]: unknown;
+}
+
+export interface LocationWithAuthor extends LocationRecord {
+  user_name?: string | null;
+  user_avatar?: string | null;
+  user_xp?: number | null;
+  user_level?: number | null;
+  user_tier?: string | null;
+  is_liked?: boolean;
+  group?: LocationWithAuthor[];
+  review_count?: number;
+}
+
+export interface ListLocationsParams {
+  userId?: string | null;
+  minLng: number;
+  maxLng: number;
+  minLat: number;
+  maxLat: number;
+  page?: number;
+  limit?: number;
+}
+
+export interface CreateLocationParams {
+  user_id: string;
+  name: string;
+  address?: string | null;
+  category?: string;
+  review_text?: string;
+  rating?: number;
+  lat: number | string;
+  lng: number | string;
+  image_url?: string | null;
+  is_public?: boolean;
+  tags?: string[];
+}
+
+export interface ListUserLocationsParams {
+  uid: string;
+  currentUserId?: string | null;
+  page?: number;
+  limit?: number;
+}
+
+export interface ListTrendingLocationsParams {
+  userId?: string | null;
+  page?: number;
+  limit?: number;
+}
+
+export interface DeleteLocationParams {
+  locationId: string | number;
+  userId: string;
+}
+
+export interface GetLocationDetailParams {
+  locationId: string | number;
+  userId?: string | null;
+}
+
+export interface ListLocationsByTagParams {
+  tag: string;
+  userId?: string | null;
+  page?: number;
+  limit?: number;
+}
+
+export interface ListFollowingLocationsParams {
+  userId: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedLocationsResult<T = LocationWithAuthor> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  [key: string]: unknown;
+}
+
