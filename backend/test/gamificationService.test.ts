@@ -91,3 +91,61 @@ test('gamificationService calculates level, tier thresholds, and processes xp aw
   const marked = await gamification.markAllAsSeen('user_xp_1');
   assert.equal(marked, true);
 });
+
+test('gamificationService handles edge cases, unmapped actions, and database error fallbacks', async (t) => {
+  // calculateLevel handles negative and boundary numbers
+  assert.equal(gamification.calculateLevel(-100), 1);
+  assert.equal(gamification.calculateLevel(-1), 1);
+  assert.equal(gamification.calculateLevel(399), 2);
+  assert.equal(gamification.calculateLevel(899), 3);
+  assert.equal(gamification.calculateLevel(9999), 10);
+
+  // calculateTier handles out-of-range low and high levels
+  assert.equal(gamification.calculateTier(0), 'Wanderer');
+  assert.equal(gamification.calculateTier(-5), 'Wanderer');
+  assert.equal(gamification.calculateTier(500), 'Master of Aether');
+
+  // Verify all XP_CONFIG actions
+  assert.equal(gamification.XP_CONFIG.REVIEW, 5);
+  assert.equal(gamification.XP_CONFIG.LONG_REVIEW, 20);
+  assert.equal(gamification.XP_CONFIG.LIKE_RECEIVED, 1);
+  assert.equal(gamification.XP_CONFIG.LIKE_GIVEN, 2);
+  assert.equal(gamification.XP_CONFIG.COMMENT, 3);
+
+  // addAchievementXP with 0 or falsy does not query DB
+  const orig = pool.query;
+  const queries: string[] = [];
+  t.after(() => {
+    pool.query = orig;
+  });
+
+  pool.query = (async (sql: string) => {
+    queries.push(sql);
+    return { rows: [] };
+  }) as never;
+
+  await gamification.addAchievementXP('u_zero', 0, 'Zero XP test');
+  assert.equal(queries.length, 0);
+
+  // updateAchievementProgress and updateDailyTaskProgress ignore unmapped actions
+  await gamification.updateAchievementProgress('u_unmapped', 'UNKNOWN');
+  await gamification.updateDailyTaskProgress('u_unmapped', 'UNKNOWN');
+  assert.equal(queries.length, 0);
+
+  // addXP returns undefined when user not found in update
+  const notFoundRes = await gamification.addXP('user_not_found', 'PHOTO');
+  assert.equal(notFoundRes, undefined);
+
+  // getUnreadGamificationCount handles DB query error gracefully
+  pool.query = (async () => {
+    throw new Error('DB connection lost');
+  }) as never;
+
+  const unreadFallback = await gamification.getUnreadGamificationCount('u_err');
+  assert.equal(unreadFallback, 0);
+
+  // markAllAsSeen handles DB query error gracefully
+  const markRes = await gamification.markAllAsSeen('u_err');
+  assert.equal(markRes, false);
+});
+
