@@ -7,6 +7,7 @@ describe("native runtime", () => {
     const splashScreen = {hide: vi.fn()};
 
     expect(isNativeAndroid({isNativePlatform: () => false, getPlatform: () => "web"})).toBe(false);
+    expect(isNativeAndroid({isNativePlatform: () => true, getPlatform: () => "ios"})).toBe(false);
     await configureNativeShell({capacitor: {isNativePlatform: () => false}, statusBar, splashScreen});
 
     expect(statusBar.setStyle).not.toHaveBeenCalled();
