@@ -1,6 +1,6 @@
 import "dotenv/config";
-import express from "express";
-import cors from "cors";
+import express, { type Application, type Request, type Response, type NextFunction } from "express";
+import cors, { type CorsOptions } from "cors";
 import compression from "compression";
 import helmet from "helmet";
 import "./config/db.js";
@@ -15,17 +15,17 @@ import weatherRoutes from "./routes/weatherRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import sseRoutes from "./routes/sseRoutes.js";
-import {errorHandler, notFoundHandler} from "./middlewares/errorHandler.js";
-import {normalizeApiResponse} from "./middlewares/normalizeResponse.js";
-import {createRateLimiter} from "./middlewares/rateLimit.js";
-import {createOriginChecker} from "./config/corsPolicy.js";
+import { errorHandler, notFoundHandler } from "./middlewares/errorHandler.js";
+import { normalizeApiResponse } from "./middlewares/normalizeResponse.js";
+import { createRateLimiter } from "./middlewares/rateLimit.js";
+import { createOriginChecker } from "./config/corsPolicy.js";
 
-const app = express();
+const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
 const isDev = process.env.NODE_ENV !== "production";
 
-const corsOptions = {
+const corsOptions: CorsOptions = {
   credentials: true,
   origin: createOriginChecker({
     frontendOrigins: process.env.FRONTEND_ORIGINS,
@@ -39,20 +39,20 @@ app.use(helmet({
 }));
 app.use(compression());
 app.use(cors(corsOptions));
-app.use(express.json({limit: "1mb"}));
+app.use(express.json({ limit: "1mb" }));
 app.use(normalizeApiResponse);
 
 // Rate limiters dùng chung
-const authLimiter = createRateLimiter({windowMs: 60_000, max: 30, code: "AUTH_RATE_LIMITED"});
-const heartbeatLimiter = createRateLimiter({windowMs: 60_000, max: 30, code: "HEARTBEAT_RATE_LIMITED"});
-const externalProxyLimiter = createRateLimiter({windowMs: 60_000, max: 60, code: "PROXY_RATE_LIMITED"});
-const chatbotLimiter = createRateLimiter({windowMs: 60_000, max: 20, code: "CHATBOT_RATE_LIMITED"});
-const writeLimiter = createRateLimiter({windowMs: 60_000, max: 60, code: "WRITE_RATE_LIMITED"});
+const authLimiter = createRateLimiter({ windowMs: 60_000, max: 30, code: "AUTH_RATE_LIMITED" });
+const heartbeatLimiter = createRateLimiter({ windowMs: 60_000, max: 30, code: "HEARTBEAT_RATE_LIMITED" });
+const externalProxyLimiter = createRateLimiter({ windowMs: 60_000, max: 60, code: "PROXY_RATE_LIMITED" });
+const chatbotLimiter = createRateLimiter({ windowMs: 60_000, max: 20, code: "CHATBOT_RATE_LIMITED" });
+const writeLimiter = createRateLimiter({ windowMs: 60_000, max: 60, code: "WRITE_RATE_LIMITED" });
 
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/heartbeat", heartbeatLimiter);
 // Chỉ limit endpoint lấy data thời tiết, KHÔNG limit tiles vì map gọi hàng chục tile cùng lúc.
-app.use("/api/weather", (req, res, next) => {
+app.use("/api/weather", (req: Request, res: Response, next: NextFunction) => {
   // Bỏ qua rate limit cho tile requests (đã có Cache-Control 1h).
   if (req.path.startsWith("/tile/")) return next();
   return externalProxyLimiter(req, res, next);
@@ -75,13 +75,16 @@ app.use("/api/weather", weatherRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/messages", messageRoutes);
 
-app.get("/health", (req, res) => {
-  res.json({success: true, message: "Server Backend đang chạy!"});
+app.get("/health", (_req: Request, res: Response) => {
+  res.json({ success: true, message: "Server Backend đang chạy!" });
 });
 
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server: http://localhost:${PORT}`);
 });
+
+export { app, server };
+export default app;

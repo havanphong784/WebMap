@@ -1,6 +1,11 @@
 import "dotenv/config";
+import type { AsyncRequestHandler } from "../types/http.js";
+import type { WeatherQueryParams, WeatherTileParams } from "../types/weather.js";
 
-export const getWeather = async (req, res) => {
+export const getWeather: AsyncRequestHandler<Record<string, string>, any, any, WeatherQueryParams> = async (
+  req,
+  res,
+) => {
   try {
     const { lat, lng } = req.query;
     if (!lat || !lng) {
@@ -9,23 +14,23 @@ export const getWeather = async (req, res) => {
 
     const apiKey = process.env.OPENWEATHER_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ 
-        success: false, 
-        message: "Server chưa cấu hình API Key thời tiết. Vui lòng thêm OPENWEATHER_API_KEY vào .env" 
+      return res.status(500).json({
+        success: false,
+        message: "Server chưa cấu hình API Key thời tiết. Vui lòng thêm OPENWEATHER_API_KEY vào .env",
       });
     }
 
     const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric&lang=vi`
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric&lang=vi`,
     );
-    const data = await response.json();
+    const data = (await response.json()) as { message?: string; [key: string]: unknown };
 
     if (response.ok) {
       res.status(200).json({ success: true, data });
     } else {
-      res.status(response.status).json({ 
-        success: false, 
-        message: data.message || "Lỗi từ dịch vụ thời tiết" 
+      res.status(response.status).json({
+        success: false,
+        message: data.message || "Lỗi từ dịch vụ thời tiết",
       });
     }
   } catch (error) {
@@ -34,7 +39,7 @@ export const getWeather = async (req, res) => {
   }
 };
 
-export const getTile = async (req, res) => {
+export const getTile: AsyncRequestHandler<WeatherTileParams> = async (req, res) => {
   try {
     const { layer, z, x, y } = req.params;
     const apiKey = process.env.OPENWEATHER_API_KEY;

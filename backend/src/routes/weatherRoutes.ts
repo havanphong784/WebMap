@@ -1,8 +1,8 @@
-import express from "express";
-import {getWeather, getTile} from "../controllers/weatherController.js";
-import {verifyToken} from "../middlewares/authMiddleware.js";
+import { Router } from "express";
+import { getTile, getWeather } from "../controllers/weatherController.js";
+import { verifyToken } from "../middlewares/authMiddleware.js";
 
-const router = express.Router();
+const router = Router();
 
 // Data endpoint: yêu cầu auth để chống abuse API key.
 router.get("/", verifyToken, getWeather);
