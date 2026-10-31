@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type Router } from "express";
 import {
   toggleFollow,
   getFollowers,
@@ -8,7 +8,7 @@ import {
 } from "../controllers/followController.js";
 import {verifyToken} from "../middlewares/authMiddleware.js";
 
-const router = express.Router();
+const router: Router = express.Router();
 
 router.use(verifyToken);
 

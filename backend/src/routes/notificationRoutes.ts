@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type Router } from "express";
 import {
   getMyNotifications,
   readAllNotifications,
@@ -6,7 +6,7 @@ import {
 } from "../controllers/notificationController.js";
 import {verifyToken} from "../middlewares/authMiddleware.js";
 
-const router = express.Router();
+const router: Router = express.Router();
 
 router.use(verifyToken);
 
