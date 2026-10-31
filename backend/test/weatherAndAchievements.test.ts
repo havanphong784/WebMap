@@ -236,6 +236,103 @@ test("weather and achievement routes export valid Express routers", () => {
   assert.equal(typeof achievementRoutes, "function");
 });
 
+test("weatherController handles network fetch rejections gracefully", async (t) => {
+  const origApiKey = process.env.OPENWEATHER_API_KEY;
+  const origFetch = globalThis.fetch;
+  t.after(() => {
+    process.env.OPENWEATHER_API_KEY = origApiKey;
+    globalThis.fetch = origFetch;
+  });
+
+  process.env.OPENWEATHER_API_KEY = "test_key";
+  globalThis.fetch = (async () => {
+    throw new Error("Network timeout");
+  }) as typeof globalThis.fetch;
+
+  // getWeather with network failure
+  const resWeather = createMockRes();
+  await weatherController.getWeather(
+    createMockReq({ query: { lat: "21.02", lng: "105.83" } }),
+    resWeather,
+    () => {},
+  );
+  assert.equal(resWeather.statusCode, 500);
+  assert.equal(resWeather.jsonData.success, false);
+  assert.equal(resWeather.jsonData.message, "Lỗi Server");
+
+  // getTile with network failure
+  const resTile = createMockRes();
+  await weatherController.getTile(
+    createMockReq({ params: { layer: "temp_new", z: "5", x: "10", y: "15" } }),
+    resTile,
+    () => {},
+  );
+  assert.equal(resTile.statusCode, 500);
+  assert.equal(resTile.jsonData, "Server Error");
+});
+
+test("achievementController handles service errors and database fallbacks", async (t) => {
+  const origQuery = pool.query;
+  t.after(() => {
+    pool.query = origQuery;
+  });
+
+  pool.query = (async () => {
+    throw new Error("DB fatal error");
+  }) as never;
+
+  // getAchievements with DB error -> returns 500
+  const resAch = createMockRes();
+  await achievementController.getAchievements(
+    createMockReq({ params: { userId: "user1" } }),
+    resAch,
+    () => {},
+  );
+  assert.equal(resAch.statusCode, 500);
+  assert.equal(resAch.jsonData.success, false);
+
+  // getUnreadCount with DB error -> gamificationService gracefully falls back to 0
+  const resUnread = createMockRes();
+  await achievementController.getUnreadCount(
+    createMockReq({ user: { uid: "user1" } as any, params: { userId: "user1" } }),
+    resUnread,
+    () => {},
+  );
+  assert.equal(resUnread.statusCode, 200);
+  assert.equal(resUnread.jsonData.success, true);
+  assert.equal(resUnread.jsonData.count, 0);
+
+  // markSeen with DB error -> gamificationService gracefully returns false, controller sends 200
+  const resMark = createMockRes();
+  await achievementController.markSeen(
+    createMockReq({ user: { uid: "user1" } as any, params: { userId: "user1" } }),
+    resMark,
+    () => {},
+  );
+  assert.equal(resMark.statusCode, 200);
+  assert.equal(resMark.jsonData.success, true);
+});
+
+test("app boots cleanly and registers routes including health endpoint", async (t) => {
+  process.env.PORT = "0";
+  const { app, server } = await import("../src/app.ts");
+  t.after(() => {
+    server.close();
+  });
+
+  assert.equal(typeof app, "function");
+  assert.ok(server.listening);
+
+  const addr = server.address();
+  assert.ok(addr && typeof addr === "object");
+  const port = addr.port;
+  const res = await fetch(`http://localhost:${port}/health`);
+  assert.equal(res.status, 200);
+  const data = (await res.json()) as { success: boolean; message: string };
+  assert.equal(data.success, true);
+  assert.equal(data.message, "Server Backend đang chạy!");
+});
+
 test("no remaining .js files in backend/src (100% typescript conversion)", () => {
   const srcDir = fileURLToPath(new URL("../src", import.meta.url));
   const filesToRemove = [
