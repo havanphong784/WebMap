@@ -1,8 +1,8 @@
-import express from "express";
+import express, {type Router} from "express";
 import * as chatbotController from "../controllers/chatbotController.js";
-import { verifyToken } from "../middlewares/authMiddleware.js";
+import {verifyToken} from "../middlewares/authMiddleware.js";
 
-const router = express.Router();
+const router: Router = express.Router();
 
 router.use(verifyToken);
 

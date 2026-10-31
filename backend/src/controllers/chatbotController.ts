@@ -7,9 +7,10 @@ import {
   saveChatFeedback,
   saveChatMessage,
 } from "../services/chatbotPersistenceService.js";
+import type {AsyncRequestHandler} from "../types/http.js";
 import {sendError, sendSuccess} from "../utils/apiResponse.js";
 
-export const chat = async (req, res) => {
+export const chat: AsyncRequestHandler = async (req, res) => {
   try {
     const {message, context, sessionId} = req.body;
     const userId = req.user?.uid;
@@ -20,15 +21,15 @@ export const chat = async (req, res) => {
 
     // Try to persist session/messages, but don't fail if DB tables don't exist
     let session = null;
-    let history = [];
+    let history: any[] = [];
     try {
       session = await ensureChatSession({
         sessionId,
-        userId,
+        userId: userId || "",
         title: message.slice(0, 80),
       });
-      history = await listChatMessages({userId, sessionId: session.id, limit: 20});
-    } catch (dbErr) {
+      history = await listChatMessages({userId: userId || "", sessionId: session.id, limit: 20});
+    } catch (dbErr: any) {
       console.warn("Chat persistence unavailable:", dbErr.message);
       // Continue without persistence
     }
@@ -37,17 +38,17 @@ export const chat = async (req, res) => {
     if (session) {
       saveChatMessage({
         sessionId: session.id,
-        userId,
+        userId: userId || "",
         role: "user",
         content: message,
         metadata: {contextSummary: {locationCount: context?.locations?.length || 0}},
-      }).catch(err => console.warn("Save user message failed:", err.message));
+      }).catch((err: any) => console.warn("Save user message failed:", err.message));
     }
 
     // Call Gemini AI
     const aiResult = await chatbotService.generateChatbotResponse(message, {
       ...context,
-      history: history.map(item => ({role: item.role, content: item.content})),
+      history: history.map((item: any) => ({role: item.role, content: item.content})),
     });
 
     // Log AI usage (non-blocking)
@@ -62,7 +63,7 @@ export const chat = async (req, res) => {
         durationMs: aiResult.durationMs,
         status: aiResult.status,
         errorMessage: aiResult.errorMessage || null,
-      }).catch(err => console.warn("logAiUsage error:", err.message));
+      }).catch((err: any) => console.warn("logAiUsage error:", err.message));
     }
 
     if (aiResult.status === "error" || !aiResult.text) {
@@ -79,12 +80,12 @@ export const chat = async (req, res) => {
       try {
         assistantMessage = await saveChatMessage({
           sessionId: session.id,
-          userId,
+          userId: userId || "",
           role: "assistant",
           content: aiResult.text,
           metadata: {source: "gemini", model: aiResult.model},
         });
-      } catch (err) {
+      } catch (err: any) {
         console.warn("Save assistant message failed:", err.message);
       }
     }
@@ -97,38 +98,50 @@ export const chat = async (req, res) => {
         assistantMessage,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Chat endpoint error:", error);
     sendError(res, {status: 500, message: error.message || "Lỗi Server"});
   }
 };
 
-export const sessions = async (req, res) => {
+export const sessions: AsyncRequestHandler = async (req, res) => {
+  const userId = req.user?.uid;
+  if (!userId) {
+    return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+  }
   try {
-    const data = await listChatSessions({userId: req.user.uid, limit: req.query.limit});
+    const data = await listChatSessions({userId, limit: req.query.limit as string});
     sendSuccess(res, {data});
-  } catch (error) {
+  } catch (error: any) {
     sendError(res, {status: 500, message: error.message});
   }
 };
 
-export const messages = async (req, res) => {
+export const messages: AsyncRequestHandler = async (req, res) => {
+  const userId = req.user?.uid;
+  if (!userId) {
+    return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+  }
   try {
     const data = await listChatMessages({
-      userId: req.user.uid,
+      userId,
       sessionId: req.params.sessionId,
-      limit: req.query.limit,
+      limit: req.query.limit as string,
     });
     sendSuccess(res, {data});
-  } catch (error) {
+  } catch (error: any) {
     sendError(res, {status: 500, message: error.message});
   }
 };
 
-export const feedback = async (req, res) => {
+export const feedback: AsyncRequestHandler = async (req, res) => {
+  const userId = req.user?.uid;
+  if (!userId) {
+    return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+  }
   try {
     const data = await saveChatFeedback({
-      userId: req.user.uid,
+      userId,
       sessionId: req.body.sessionId,
       assistantMessageId: req.body.assistantMessageId,
       rating: req.body.rating,
@@ -137,7 +150,7 @@ export const feedback = async (req, res) => {
       metadata: req.body.metadata,
     });
     sendSuccess(res, {data});
-  } catch (error) {
+  } catch (error: any) {
     sendError(res, {status: 500, message: error.message});
   }
 };

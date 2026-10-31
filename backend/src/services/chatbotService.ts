@@ -1,9 +1,27 @@
 import {GoogleGenerativeAI} from "@google/generative-ai";
 import "dotenv/config";
+import type {ChatbotContext, ChatbotResponse} from "../types/chatbot.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-export const generateChatbotResponse = async (userMessage, context = {}) => {
+let mockGenerator:
+  | ((userMessage: string, context: ChatbotContext) => Promise<ChatbotResponse>)
+  | null = null;
+
+export const setGeneratorForTesting = (
+  fn: ((userMessage: string, context: ChatbotContext) => Promise<ChatbotResponse>) | null
+): void => {
+  mockGenerator = fn;
+};
+
+export const generateChatbotResponse = async (
+  userMessage: string,
+  context: ChatbotContext = {}
+): Promise<ChatbotResponse> => {
+  if (mockGenerator) {
+    return mockGenerator(userMessage, context);
+  }
+
   const {weather, locations, userLocation, history = []} = context;
 
   const model = genAI.getGenerativeModel({
@@ -55,7 +73,7 @@ LƯU Ý: Không nhắc đến mã JSON trong phần văn bản trả lời ngư�
     const response = await result.response;
     const text = response.text();
     const durationMs = Date.now() - startTime;
-    const usageMetadata = response.usageMetadata || {};
+    const usageMetadata = (response.usageMetadata as Record<string, unknown>) || {};
 
     return {
       text,
@@ -64,7 +82,7 @@ LƯU Ý: Không nhắc đến mã JSON trong phần văn bản trả lời ngư�
       model: "gemini-2.0-flash",
       status: "success",
     };
-  } catch (error) {
+  } catch (error: any) {
     const durationMs = Date.now() - startTime;
     console.error("Error calling Gemini API:", error);
     return {
@@ -73,7 +91,7 @@ LƯU Ý: Không nhắc đến mã JSON trong phần văn bản trả lời ngư�
       usageMetadata: {},
       model: "gemini-2.0-flash",
       status: "error",
-      errorMessage: error.message,
+      errorMessage: error?.message || "Unknown error",
     };
   }
 };
