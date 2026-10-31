@@ -1,9 +1,14 @@
 import {getUserProfile, listActiveUsers, updateLastSeen, upsertUser} from "../services/authService.js";
 import {sendError, sendSuccess} from "../utils/apiResponse.js";
+import type {AsyncRequestHandler} from "../types/http.js";
+import type {UserLocationInput} from "../types/database.js";
 
-export const login = async (req, res) => {
+export const login: AsyncRequestHandler = async (req, res) => {
   try {
-    const {uid, email, name, picture} = req.user;
+    const {uid, email, name, picture} = req.user || {};
+    if (!uid) {
+      return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+    }
     const savedUser = await upsertUser({uid, email, name, picture});
     sendSuccess(res, {message: "Đăng nhập thành công", user: savedUser});
   } catch (error) {
@@ -12,7 +17,7 @@ export const login = async (req, res) => {
   }
 };
 
-export const getProfile = async (req, res) => {
+export const getProfile: AsyncRequestHandler = async (req, res) => {
   try {
     const {uid} = req.params;
     const user = await getUserProfile(uid);
@@ -32,7 +37,7 @@ export const getProfile = async (req, res) => {
   }
 };
 
-export const getActiveUsers = async (req, res) => {
+export const getActiveUsers: AsyncRequestHandler = async (req, res) => {
   try {
     const users = await listActiveUsers(50);
     sendSuccess(res, {data: users});
@@ -42,10 +47,13 @@ export const getActiveUsers = async (req, res) => {
   }
 };
 
-export const heartbeat = async (req, res) => {
+export const heartbeat: AsyncRequestHandler = async (req, res) => {
   try {
-    const {uid} = req.user;
-    await updateLastSeen(uid, req.body?.location);
+    const {uid} = req.user || {};
+    if (!uid) {
+      return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+    }
+    await updateLastSeen(uid, req.body?.location as UserLocationInput | undefined);
     sendSuccess(res);
   } catch (error) {
     console.error("Lỗi heartbeat:", error);

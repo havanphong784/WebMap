@@ -1,8 +1,12 @@
 import {toggleLike} from "../services/likeService.js";
 import {sendError, sendSuccess} from "../utils/apiResponse.js";
+import type {AsyncRequestHandler} from "../types/http.js";
 
-export const toggleLocationLike = async (req, res) => {
-  const userId = req.user.uid;
+export const toggleLocationLike: AsyncRequestHandler = async (req, res) => {
+  const userId = req.user?.uid;
+  if (!userId) {
+    return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+  }
   const locationId = req.params.id;
 
   if (!locationId) {

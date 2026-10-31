@@ -5,67 +5,84 @@ import {
   sendDirectMessage,
 } from "../services/messageService.js";
 import {sendError, sendSuccess} from "../utils/apiResponse.js";
+import type {AsyncRequestHandler} from "../types/http.js";
 
-export const getThreads = async (req, res) => {
+export const getThreads: AsyncRequestHandler = async (req, res) => {
   try {
-    const data = await listMessageThreads({userId: req.user.uid});
+    const userId = req.user?.uid;
+    if (!userId) {
+      return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+    }
+    const data = await listMessageThreads({userId});
     sendSuccess(res, {data});
-  } catch (error) {
+  } catch (error: any) {
     sendError(res, {status: error.status || 500, code: error.code, message: error.message});
   }
 };
 
-export const getConversation = async (req, res) => {
+export const getConversation: AsyncRequestHandler = async (req, res) => {
   try {
-    const peerId = req.params.peerId;
+    const userId = req.user?.uid;
+    if (!userId) {
+      return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+    }
+    const {peerId} = req.params;
     if (!peerId) {
       return sendError(res, {status: 400, code: "PEER_REQUIRED", message: "Peer id is required"});
     }
 
     const data = await listConversation({
-      userId: req.user.uid,
+      userId,
       peerId,
-      limit: req.query.limit,
+      limit: req.query.limit as string | undefined,
     });
-    await markConversationRead({userId: req.user.uid, peerId});
+    await markConversationRead({userId, peerId});
     sendSuccess(res, {data});
-  } catch (error) {
+  } catch (error: any) {
     sendError(res, {status: error.status || 500, code: error.code, message: error.message});
   }
 };
 
-export const createMessage = async (req, res) => {
+export const createMessage: AsyncRequestHandler = async (req, res) => {
   try {
-    const peerId = req.params.peerId;
+    const userId = req.user?.uid;
+    if (!userId) {
+      return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+    }
+    const {peerId} = req.params;
     if (!peerId) {
       return sendError(res, {status: 400, code: "PEER_REQUIRED", message: "Peer id is required"});
     }
 
-    if (peerId === req.user.uid) {
+    if (peerId === userId) {
       return sendError(res, {status: 400, code: "SELF_MESSAGE", message: "Cannot send message to yourself"});
     }
 
     const data = await sendDirectMessage({
-      senderId: req.user.uid,
+      senderId: userId,
       recipientId: peerId,
       content: req.body?.content,
     });
     sendSuccess(res, {status: 201, data});
-  } catch (error) {
+  } catch (error: any) {
     sendError(res, {status: error.status || 500, code: error.code, message: error.message});
   }
 };
 
-export const readConversation = async (req, res) => {
+export const readConversation: AsyncRequestHandler = async (req, res) => {
   try {
-    const peerId = req.params.peerId;
+    const userId = req.user?.uid;
+    if (!userId) {
+      return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+    }
+    const {peerId} = req.params;
     if (!peerId) {
       return sendError(res, {status: 400, code: "PEER_REQUIRED", message: "Peer id is required"});
     }
 
-    await markConversationRead({userId: req.user.uid, peerId});
+    await markConversationRead({userId, peerId});
     sendSuccess(res);
-  } catch (error) {
+  } catch (error: any) {
     sendError(res, {status: error.status || 500, code: error.code, message: error.message});
   }
 };

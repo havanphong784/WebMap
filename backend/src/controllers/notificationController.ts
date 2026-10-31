@@ -1,11 +1,12 @@
 import {getNotificationsByUserId, markAllAsRead, markAsRead} from "../services/notificationService.js";
 import {sendError, sendSuccess} from "../utils/apiResponse.js";
+import type {AsyncRequestHandler} from "../types/http.js";
 
-export const getMyNotifications = async (req, res) => {
+export const getMyNotifications: AsyncRequestHandler = async (req, res) => {
   try {
-    const requesterId = req.user.uid;
+    const requesterId = req.user?.uid;
     const targetUid = req.params.uid;
-    if (requesterId !== targetUid) {
+    if (!requesterId || requesterId !== targetUid) {
       return sendError(res, {
         status: 403,
         code: "NOTIFICATION_FORBIDDEN",
@@ -21,10 +22,14 @@ export const getMyNotifications = async (req, res) => {
   }
 };
 
-export const readNotification = async (req, res) => {
+export const readNotification: AsyncRequestHandler = async (req, res) => {
   try {
+    const userId = req.user?.uid;
+    if (!userId) {
+      return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+    }
     const {id} = req.params;
-    await markAsRead(id, req.user.uid);
+    await markAsRead(id, userId);
     sendSuccess(res);
   } catch (error) {
     console.error("Lỗi đọc thông báo:", error);
@@ -32,9 +37,13 @@ export const readNotification = async (req, res) => {
   }
 };
 
-export const readAllNotifications = async (req, res) => {
+export const readAllNotifications: AsyncRequestHandler = async (req, res) => {
   try {
-    await markAllAsRead(req.user.uid);
+    const userId = req.user?.uid;
+    if (!userId) {
+      return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+    }
+    await markAllAsRead(userId);
     sendSuccess(res);
   } catch (error) {
     console.error("Lỗi đọc tất cả thông báo:", error);

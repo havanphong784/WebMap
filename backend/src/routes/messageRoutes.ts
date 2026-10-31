@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type Router } from "express";
 import {verifyToken} from "../middlewares/authMiddleware.js";
 import {
   createMessage,
@@ -7,7 +7,7 @@ import {
   readConversation,
 } from "../controllers/messageController.js";
 
-const router = express.Router();
+const router: Router = express.Router();
 
 router.use(verifyToken);
 

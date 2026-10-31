@@ -1,18 +1,23 @@
-import express from "express";
+import express, { type Router, type Response } from "express";
 import {verifyToken} from "../middlewares/authMiddleware.js";
 import {addConnection, removeConnection, sendToUser} from "../services/sseService.js";
 import {getNotificationsByUserId} from "../services/notificationService.js";
 import {listActiveUsers} from "../services/authService.js";
+import type {AuthenticatedRequest} from "../types/http.js";
 
-const router = express.Router();
+const router: Router = express.Router();
 
 /**
  * SSE stream endpoint.
  * Client kết nối 1 lần, server push events khi có thay đổi.
  * Events: notification, active_users, heartbeat_ack
  */
-router.get("/stream", verifyToken, async (req, res) => {
-  const userId = req.user.uid;
+router.get("/stream", verifyToken, async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.uid;
+  if (!userId) {
+    res.status(401).end();
+    return;
+  }
 
   // SSE headers
   res.writeHead(200, {
@@ -37,8 +42,9 @@ router.get("/stream", verifyToken, async (req, res) => {
 
     sendToUser(userId, "notifications", notifications);
     sendToUser(userId, "active_users", activeUsers);
-  } catch (err) {
-    console.error("SSE initial data error:", err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("SSE initial data error:", message);
   }
 
   // Heartbeat mỗi 30s để giữ connection (tránh proxy timeout)
