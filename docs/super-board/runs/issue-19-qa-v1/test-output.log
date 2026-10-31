@@ -1,0 +1,99 @@
+=== Frontend Vitest Suite ===
+npm notice run frontend@0.0.0 test
+npm notice run vitest --run
+
+ RUN  v4.1.12 /home/phongha/Code/WebMap/frontend
+
+
+ Test Files  9 passed (9)
+      Tests  62 passed (62)
+   Duration  1.33s (transform 606ms, setup 0ms, import 1.15s, tests 178ms, environment 8.21s)
+
+=== Backend Node Test Suite ===
+npm notice run backend@1.0.0 test
+npm notice run node --import tsx --test
+✔ sendSuccess sends 200 and success payload by default (1.902361ms)
+✔ sendError defaults to 500 and INTERNAL_SERVER_ERROR (0.445062ms)
+✔ sendError supports custom status, code, and details (0.399478ms)
+⚠️ SSL: Using rejectUnauthorized=false (no CA cert provided)
+✅ Firebase Admin initialized successfully
+Chat persistence unavailable: Database offline
+✔ chatbotPersistenceService CRUD and query operations (3.975589ms)
+✔ chatbotService response handling and fallbacks (0.255171ms)
+✔ chatbotController handles validations, auth guards, and responses (1.259704ms)
+✔ chatbotRoutes registers endpoints with auth middleware (0.215057ms)
+✔ chatbotController handles database failure during chat gracefully without crashing (0.572066ms)
+❌ Database: Connection failed! getaddrinfo ENOTFOUND pg-2626f630-havanphong784-879b.l.aivencloud.com
+✔ allows configured web and Capacitor origins after trimming and deduplication (2.358924ms)
+✔ allows requests without an Origin header (0.371205ms)
+✔ rejects unknown production origins (0.464337ms)
+✔ retains allow-all origin behavior only for unconfigured development (0.295937ms)
+⚠️ SSL: Using rejectUnauthorized=false (no CA cert provided)
+User user_xp_1 awarded 50 XP for Nhiếp ảnh gia
+User user_xp_1 awarded 20 XP for Hoàn thành nhiệm vụ: Chụp ảnh hôm nay
+Error getting unread count: Error: DB connection lost
+    at BoundPool.pool.query (/home/phongha/Code/WebMap/backend/test/gamificationService.test.ts:141:11)
+    at Module.getUnreadGamificationCount (/home/phongha/Code/WebMap/backend/src/services/gamificationService.ts:252:33)
+    at TestContext.<anonymous> (/home/phongha/Code/WebMap/backend/test/gamificationService.test.ts:144:45)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+Error marking as seen: Error: DB connection lost
+    at BoundPool.pool.query (/home/phongha/Code/WebMap/backend/test/gamificationService.test.ts:141:11)
+    at Module.markAllAsSeen (/home/phongha/Code/WebMap/backend/src/services/gamificationService.ts:272:16)
+    at TestContext.<anonymous> (/home/phongha/Code/WebMap/backend/test/gamificationService.test.ts:148:38)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+✔ gamificationService calculates level, tier thresholds, and processes xp awards (4.220311ms)
+✔ gamificationService handles edge cases, unmapped actions, and database error fallbacks (6.531607ms)
+❌ Database: Connection failed! getaddrinfo ENOTFOUND pg-2626f630-havanphong784-879b.l.aivencloud.com
+⚠️ SSL: Using rejectUnauthorized=false (no CA cert provided)
+✔ http type abstractions and utilities compile and type correctly (1.530415ms)
+✔ goongMapService geometry and parsing utilities (1.555912ms)
+✔ locationService operations and nearby location grouping (2.290188ms)
+✔ locationController validates coordinate query parameters (0.458215ms)
+✔ locationController guards unauthenticated and invalid requests (1.095923ms)
+✔ goongMapService edge cases and fallback handling (0.520982ms)
+❌ Database: Connection failed! getaddrinfo ENOTFOUND pg-2626f630-havanphong784-879b.l.aivencloud.com
+✅ Firebase Admin initialized successfully
+Unhandled error: Error: Database error
+    at TestContext.<anonymous> (/home/phongha/Code/WebMap/backend/test/middlewares.test.ts:66:25)
+    at Test.runInAsyncScope (node:async_hooks:226:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+✔ notFoundHandler returns 404 with ROUTE_NOT_FOUND (2.288334ms)
+✔ errorHandler formats AppError and falls back to 500 (3.342029ms)
+✔ rateLimiter tracks requests and blocks when limit exceeded (0.599867ms)
+✔ validateLocationCreation accepts valid payload and calls next() (0.514259ms)
+✔ validateLocationCreation rejects invalid coordinates (0.277162ms)
+✔ validateLocationUpdate validates optional fields when provided (0.442927ms)
+✔ normalizeApiResponse normalizes error responses >= 400 (0.456472ms)
+✔ verifyToken returns 401 when Authorization header is missing or malformed (0.477681ms)
+✔ verifyToken validates token and attaches user or returns 401 on failure (1.690431ms)
+✔ optionalVerifyToken allows anonymous or attaches user when token valid (0.943131ms)
+⚠️ SSL: Using rejectUnauthorized=false (no CA cert provided)
+✔ services validation and query delegation (4.33349ms)
+✔ services edge cases and query flows (2.67645ms)
+✔ sseService handles connections, broadcasting, and error drops (0.689262ms)
+✔ messageService validates friends, bounds, and delegates queries (2.845863ms)
+❌ Database: Connection failed! getaddrinfo ENOTFOUND pg-2626f630-havanphong784-879b.l.aivencloud.com
+⚠️ SSL: Using rejectUnauthorized=false (no CA cert provided)
+✅ Firebase Admin initialized successfully
+✔ authController handles authentication, profiles, and heartbeat (2.739496ms)
+✔ commentController handles comment retrieval and creation (1.310178ms)
+✔ likeController handles location like toggling (0.760784ms)
+✔ followController handles follow toggling, lists, and status checks (1.260767ms)
+✔ messageController handles threads, conversations, and sending (0.803153ms)
+✔ notificationController handles retrieval and read marking (0.771915ms)
+✔ social and sse routes are valid Express routers (0.157862ms)
+❌ Database: Connection failed! getaddrinfo ENOTFOUND pg-2626f630-havanphong784-879b.l.aivencloud.com
+ℹ tests 41
+ℹ suites 0
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 597.182726

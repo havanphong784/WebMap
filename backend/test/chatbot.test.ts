@@ -354,3 +354,46 @@ test('chatbotRoutes registers endpoints with auth middleware', () => {
   assert.ok(routes.some((r: any) => r.path === '/sessions/:sessionId/messages' && r.methods.includes('get')));
   assert.ok(routes.some((r: any) => r.path === '/feedback' && r.methods.includes('post')));
 });
+
+test('chatbotController handles database failure during chat gracefully without crashing', async (t) => {
+  const origQuery = pool.query;
+  t.after(() => {
+    pool.query = origQuery;
+    chatbotService.setGeneratorForTesting(null);
+  });
+
+  pool.query = (async () => {
+    throw new Error('Database offline');
+  }) as never;
+
+  chatbotService.setGeneratorForTesting(async () => ({
+    text: 'Chat fallback reply',
+    durationMs: 15,
+    usageMetadata: {},
+    model: 'gemini-2.0-flash',
+    status: 'success',
+  }));
+
+  let status = 200;
+  let payload: any = null;
+  const res: any = {
+    status: (s: number) => {
+      status = s;
+      return res;
+    },
+    json: (p: any) => {
+      payload = p;
+      return res;
+    },
+  };
+
+  await chatbotController.chat(
+    { body: { message: 'hello without DB' }, user: { uid: 'u_nodb' } } as unknown as AuthenticatedRequest,
+    res,
+    () => {}
+  );
+
+  assert.equal(status, 200);
+  assert.equal(payload?.data?.response, 'Chat fallback reply');
+  assert.equal(payload?.data?.sessionId, null);
+});
