@@ -1,12 +1,12 @@
-import express from "express";
+import express, { type Router } from "express";
 import {
   getAchievements,
   getUnreadCount,
   markSeen,
 } from "../controllers/achievementController.js";
-import {optionalVerifyToken, verifyToken} from "../middlewares/authMiddleware.js";
+import { optionalVerifyToken, verifyToken } from "../middlewares/authMiddleware.js";
 
-const router = express.Router();
+const router: Router = express.Router();
 
 // Read achievements của user khác là OK (giống GitHub profile), không yêu cầu auth.
 router.get("/:userId", optionalVerifyToken, getAchievements);
