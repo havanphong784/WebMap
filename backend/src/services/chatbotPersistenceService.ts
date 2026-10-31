@@ -1,9 +1,27 @@
 import {randomUUID} from "crypto";
 import pool from "../config/db.js";
+import type {
+  AiUsageLogRecord,
+  ChatbotExperimentMetrics,
+  ChatbotProfile,
+  ChatFeedbackRecord,
+  ChatMessageRecord,
+  ChatMessageRole,
+  ChatSessionRecord,
+  SavedTripRecord,
+} from "../types/chatbot.js";
 
-export const createSessionId = () => randomUUID();
+export const createSessionId = (): string => randomUUID();
 
-export const ensureChatSession = async ({sessionId, userId, title}) => {
+export const ensureChatSession = async ({
+  sessionId,
+  userId,
+  title,
+}: {
+  sessionId?: string;
+  userId: string;
+  title?: string;
+}): Promise<ChatSessionRecord> => {
   const id = sessionId || createSessionId();
   const result = await pool.query(
     `INSERT INTO chat_sessions (id, user_id, title)
@@ -15,7 +33,19 @@ export const ensureChatSession = async ({sessionId, userId, title}) => {
   return result.rows[0];
 };
 
-export const saveChatMessage = async ({sessionId, userId, role, content, metadata = {}}) => {
+export const saveChatMessage = async ({
+  sessionId,
+  userId,
+  role,
+  content,
+  metadata = {},
+}: {
+  sessionId: string;
+  userId: string;
+  role: ChatMessageRole | string;
+  content: string;
+  metadata?: Record<string, unknown>;
+}): Promise<ChatMessageRecord> => {
   const result = await pool.query(
     `INSERT INTO chat_messages (session_id, user_id, role, content, metadata)
      VALUES ($1, $2, $3, $4, $5)
@@ -33,7 +63,15 @@ export const saveChatFeedback = async ({
   reason = null,
   comment = null,
   metadata = {},
-}) => {
+}: {
+  userId: string;
+  sessionId?: string;
+  assistantMessageId: number | string;
+  rating: number | string;
+  reason?: string | null;
+  comment?: string | null;
+  metadata?: Record<string, unknown>;
+}): Promise<ChatFeedbackRecord> => {
   const normalizedRating = Number(rating) > 0 ? 1 : -1;
   const result = await pool.query(
     `INSERT INTO chatbot_feedback
@@ -67,7 +105,23 @@ export const saveTrip = async ({
   options = {},
   locations = [],
   route = null,
-}) => {
+}: {
+  userId: string;
+  sessionId?: string;
+  title?: string;
+  options?: {
+    durationHours?: number;
+    budget?: string | number;
+    preferences?: string[];
+  };
+  locations?: Array<{ id: number | string; [key: string]: unknown }>;
+  route?: {
+    geometry?: unknown;
+    distanceMeters?: number;
+    durationSeconds?: number;
+    source?: string;
+  } | null;
+}): Promise<SavedTripRecord | null> => {
   if (!locations.length) return null;
 
   const client = await pool.connect();
@@ -132,7 +186,22 @@ export const logAiUsage = async ({
   durationMs,
   status,
   errorMessage = null,
-}) => {
+}: {
+  userId?: string | null;
+  sessionId?: string | null;
+  provider?: string;
+  model: string;
+  requestType?: string;
+  experimentVariant?: string | null;
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+    totalTokenCount?: number;
+  };
+  durationMs?: number | null;
+  status: string;
+  errorMessage?: string | null;
+}): Promise<void> => {
   await pool.query(
     `INSERT INTO ai_usage_logs
      (user_id, session_id, provider, model, request_type, experiment_variant, prompt_tokens,
@@ -155,7 +224,13 @@ export const logAiUsage = async ({
   );
 };
 
-export const listSavedTrips = async ({userId, limit = 10}) => {
+export const listSavedTrips = async ({
+  userId,
+  limit = 10,
+}: {
+  userId: string;
+  limit?: number | string;
+}): Promise<SavedTripRecord[]> => {
   const result = await pool.query(
     `SELECT
        t.*,
@@ -187,7 +262,13 @@ export const listSavedTrips = async ({userId, limit = 10}) => {
   return result.rows;
 };
 
-export const listChatSessions = async ({userId, limit = 20}) => {
+export const listChatSessions = async ({
+  userId,
+  limit = 20,
+}: {
+  userId: string;
+  limit?: number | string;
+}): Promise<ChatSessionRecord[]> => {
   const result = await pool.query(
     `SELECT
        s.id,
@@ -216,7 +297,15 @@ export const listChatSessions = async ({userId, limit = 20}) => {
   return result.rows;
 };
 
-export const listChatMessages = async ({userId, sessionId, limit = 80}) => {
+export const listChatMessages = async ({
+  userId,
+  sessionId,
+  limit = 80,
+}: {
+  userId: string;
+  sessionId: string;
+  limit?: number | string;
+}): Promise<ChatMessageRecord[]> => {
   const result = await pool.query(
     `SELECT
        m.id,
@@ -241,7 +330,11 @@ export const listChatMessages = async ({userId, sessionId, limit = 80}) => {
   return result.rows;
 };
 
-export const getUserChatbotProfile = async ({userId}) => {
+export const getUserChatbotProfile = async ({
+  userId,
+}: {
+  userId: string;
+}): Promise<ChatbotProfile> => {
   const [tagResult, categoryResult, tripResult, messageResult] = await Promise.all([
     pool.query(
       `SELECT tag, COUNT(*)::int AS weight
@@ -311,11 +404,15 @@ export const getUserChatbotProfile = async ({userId}) => {
     preferredTags: tagResult.rows,
     preferredCategories: categoryResult.rows,
     recentTrips: tripResult.rows,
-    recentMessages: messageResult.rows.map(row => row.content),
+    recentMessages: messageResult.rows.map((row: { content: string }) => row.content),
   };
 };
 
-export const getChatbotExperimentMetrics = async ({days = 14} = {}) => {
+export const getChatbotExperimentMetrics = async ({
+  days = 14,
+}: {
+  days?: number | string;
+} = {}): Promise<ChatbotExperimentMetrics> => {
   const safeDays = Math.min(Math.max(Number(days) || 14, 1), 90);
   const result = await pool.query(
     `WITH usage AS (
