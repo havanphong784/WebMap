@@ -1,0 +1,89 @@
+=== Backend TypeScript Typecheck ===
+npm notice run backend@1.0.0 typecheck
+npm notice run tsc --noEmit
+
+=== Frontend Vitest Suite ===
+npm notice run frontend@0.0.0 test
+npm notice run vitest --run
+
+ RUN  v4.1.12 /home/phongha/Code/WebMap/.claude/worktrees/issue-18-qa/frontend
+
+
+ Test Files  9 passed (9)
+      Tests  62 passed (62)
+   Start at  14:30:48
+   Duration  1.22s (transform 815ms, setup 0ms, import 1.34s, tests 122ms, environment 7.48s)
+
+
+=== Backend Node Test Suite ===
+npm notice run backend@1.0.0 test
+npm notice run node --import tsx --test
+✔ sendSuccess sends 200 and success payload by default (1.410852ms)
+✔ sendError defaults to 500 and INTERNAL_SERVER_ERROR (0.268857ms)
+✔ sendError supports custom status, code, and details (0.216148ms)
+✔ allows configured web and Capacitor origins after trimming and deduplication (1.515089ms)
+✔ allows requests without an Origin header (0.22267ms)
+✔ rejects unknown production origins (0.357855ms)
+✔ retains allow-all origin behavior only for unconfigured development (0.168568ms)
+⚠️ SSL: Using rejectUnauthorized=false (no CA cert provided)
+User user_xp_1 awarded 50 XP for Nhiếp ảnh gia
+User user_xp_1 awarded 20 XP for Hoàn thành nhiệm vụ: Chụp ảnh hôm nay
+Error getting unread count: Error: DB connection lost
+    at BoundPool.pool.query (/home/phongha/Code/WebMap/.claude/worktrees/issue-18-qa/backend/test/gamificationService.test.ts:141:11)
+    at Module.getUnreadGamificationCount (/home/phongha/Code/WebMap/.claude/worktrees/issue-18-qa/backend/src/services/gamificationService.ts:252:33)
+    at TestContext.<anonymous> (/home/phongha/Code/WebMap/.claude/worktrees/issue-18-qa/backend/test/gamificationService.test.ts:144:45)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+Error marking as seen: Error: DB connection lost
+    at BoundPool.pool.query (/home/phongha/Code/WebMap/.claude/worktrees/issue-18-qa/backend/test/gamificationService.test.ts:141:11)
+    at Module.markAllAsSeen (/home/phongha/Code/WebMap/.claude/worktrees/issue-18-qa/backend/src/services/gamificationService.ts:272:16)
+    at TestContext.<anonymous> (/home/phongha/Code/WebMap/.claude/worktrees/issue-18-qa/backend/test/gamificationService.test.ts:148:38)
+    at async Test.run (node:internal/test_runner/test:1409:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+✔ gamificationService calculates level, tier thresholds, and processes xp awards (2.758365ms)
+✔ gamificationService handles edge cases, unmapped actions, and database error fallbacks (2.56012ms)
+❌ Database: Connection failed! The server does not support SSL connections
+⚠️ SSL: Using rejectUnauthorized=false (no CA cert provided)
+✔ http type abstractions and utilities compile and type correctly (1.169607ms)
+✔ goongMapService geometry and parsing utilities (1.004596ms)
+✔ locationService operations and nearby location grouping (1.689699ms)
+✔ locationController validates coordinate query parameters (0.325605ms)
+✔ locationController guards unauthenticated and invalid requests (0.622174ms)
+✔ goongMapService edge cases and fallback handling (0.279307ms)
+❌ Database: Connection failed! The server does not support SSL connections
+❌ Firebase Error: Thiếu biến môi trường!
+  FIREBASE_PROJECT_ID: ❌ MISSING
+  FIREBASE_CLIENT_EMAIL: ❌ MISSING
+  FIREBASE_PRIVATE_KEY: ❌ MISSING
+Unhandled error: Error: Database error
+    at TestContext.<anonymous> (/home/phongha/Code/WebMap/.claude/worktrees/issue-18-qa/backend/test/middlewares.test.ts:66:25)
+    at Test.runInAsyncScope (node:async_hooks:226:14)
+    at Test.run (node:internal/test_runner/test:1402:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    at Test.postRun (node:internal/test_runner/test:1542:19)
+    at Test.run (node:internal/test_runner/test:1467:12)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+✔ notFoundHandler returns 404 with ROUTE_NOT_FOUND (1.123159ms)
+✔ errorHandler formats AppError and falls back to 500 (1.964938ms)
+✔ rateLimiter tracks requests and blocks when limit exceeded (0.274097ms)
+✔ validateLocationCreation accepts valid payload and calls next() (0.219996ms)
+✔ validateLocationCreation rejects invalid coordinates (0.129415ms)
+✔ validateLocationUpdate validates optional fields when provided (0.188746ms)
+✔ normalizeApiResponse normalizes error responses >= 400 (0.194928ms)
+✔ verifyToken returns 401 when Authorization header is missing or malformed (0.182044ms)
+✔ verifyToken validates token and attaches user or returns 401 on failure (0.707345ms)
+✔ optionalVerifyToken allows anonymous or attaches user when token valid (0.4027ms)
+⚠️ SSL: Using rejectUnauthorized=false (no CA cert provided)
+✔ services validation and query delegation (2.904831ms)
+✔ services edge cases and query flows (1.441149ms)
+✔ sseService handles connections, broadcasting, and error drops (0.390136ms)
+✔ messageService validates friends, bounds, and delegates queries (1.226253ms)
+❌ Database: Connection failed! The server does not support SSL connections
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 224.264191

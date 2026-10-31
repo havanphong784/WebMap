@@ -21,12 +21,13 @@ import {
   searchAddressWithGoong
 } from "../services/goongMapService.js";
 import {sendError, sendSuccess} from "../utils/apiResponse.js";
+import type {AsyncRequestHandler, AuthenticatedRequest} from "../types/http.js";
 
-const getViewerId = (req) => req.user?.uid || null;
+const getViewerId = (req: AuthenticatedRequest): string | null => req.user?.uid || null;
 
-export const getLocations = async (req, res) => {
+export const getLocations: AsyncRequestHandler = async (req, res) => {
   try {
-    const {minLng, maxLng, minLat, maxLat, page, limit} = req.query;
+    const {minLng, maxLng, minLat, maxLat, page, limit} = req.query as Record<string, string | undefined>;
 
     if (!minLng || !maxLng || !minLat || !maxLat) {
       return sendSuccess(res, {data: [], pagination: {page: 1, limit: 20, total: 0, totalPages: 0}, message: "Thiếu tham số tọa độ"});
@@ -38,8 +39,8 @@ export const getLocations = async (req, res) => {
       maxLng: parseFloat(maxLng),
       minLat: parseFloat(minLat),
       maxLat: parseFloat(maxLat),
-      page: parseInt(page, 10) || 1,
-      limit: parseInt(limit, 10) || 500
+      page: parseInt(page || "1", 10) || 1,
+      limit: parseInt(limit || "500", 10) || 500
     });
     sendSuccess(res, result);
   } catch (error) {
@@ -48,12 +49,15 @@ export const getLocations = async (req, res) => {
   }
 };
 
-export const createLocationEntry = async (req, res) => {
+export const createLocationEntry: AsyncRequestHandler = async (req, res) => {
   try {
-    const userId = req.user.uid;
+    const userId = req.user?.uid;
+    if (!userId) {
+      return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+    }
     const {tags, user_id: _ignored, ...rest} = req.body;
     const normalizedTags = Array.isArray(tags)
-      ? tags.map(t => t.trim().toLowerCase()).filter(Boolean)
+      ? tags.map((t: string) => t.trim().toLowerCase()).filter(Boolean)
       : [];
     const saved = await createLocation({...rest, user_id: userId, tags: normalizedTags});
 
@@ -99,15 +103,15 @@ export const createLocationEntry = async (req, res) => {
   }
 };
 
-export const getUserLocations = async (req, res) => {
+export const getUserLocations: AsyncRequestHandler = async (req, res) => {
   try {
-    const {uid} = req.params;
-    const {page, limit} = req.query;
+    const {uid} = req.params as {uid: string};
+    const {page, limit} = req.query as Record<string, string | undefined>;
     const result = await listUserLocations({
       uid,
       currentUserId: getViewerId(req),
-      page: parseInt(page, 10) || 1,
-      limit: parseInt(limit, 10) || 20
+      page: parseInt(page || "1", 10) || 1,
+      limit: parseInt(limit || "20", 10) || 20
     });
     sendSuccess(res, result);
   } catch (error) {
@@ -116,13 +120,13 @@ export const getUserLocations = async (req, res) => {
   }
 };
 
-export const getTrendingLocations = async (req, res) => {
+export const getTrendingLocations: AsyncRequestHandler = async (req, res) => {
   try {
-    const {page, limit} = req.query;
+    const {page, limit} = req.query as Record<string, string | undefined>;
     const result = await listTrendingLocations({
       userId: getViewerId(req),
-      page: parseInt(page, 10) || 1,
-      limit: parseInt(limit, 10) || 20
+      page: parseInt(page || "1", 10) || 1,
+      limit: parseInt(limit || "20", 10) || 20
     });
     sendSuccess(res, result);
   } catch (error) {
@@ -131,14 +135,17 @@ export const getTrendingLocations = async (req, res) => {
   }
 };
 
-export const getFollowingLocations = async (req, res) => {
+export const getFollowingLocations: AsyncRequestHandler = async (req, res) => {
   try {
-    const userId = req.user.uid;
-    const {page, limit} = req.query;
+    const userId = req.user?.uid;
+    if (!userId) {
+      return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+    }
+    const {page, limit} = req.query as Record<string, string | undefined>;
     const result = await listFollowingLocations({
       userId,
-      page: parseInt(page, 10) || 1,
-      limit: parseInt(limit, 10) || 20
+      page: parseInt(page || "1", 10) || 1,
+      limit: parseInt(limit || "20", 10) || 20
     });
     sendSuccess(res, result);
   } catch (error) {
@@ -147,20 +154,24 @@ export const getFollowingLocations = async (req, res) => {
   }
 };
 
-export const deleteLocationEntry = async (req, res) => {
+export const deleteLocationEntry: AsyncRequestHandler = async (req, res) => {
   try {
-    const {id} = req.params;
-    const deleted = await deleteLocation({locationId: id, userId: req.user.uid});
+    const {id} = req.params as {id: string};
+    const userId = req.user?.uid;
+    if (!userId) {
+      return sendError(res, {status: 401, message: "Yêu cầu đăng nhập"});
+    }
+    const deleted = await deleteLocation({locationId: id, userId});
     sendSuccess(res, {data: deleted});
-  } catch (error) {
+  } catch (error: any) {
     console.error("Lỗi xóa địa điểm:", error);
-    sendError(res, {status: 403, code: "LOCATION_DELETE_FORBIDDEN", message: error.message || "Không thể xoá"});
+    sendError(res, {status: 403, code: "LOCATION_DELETE_FORBIDDEN", message: error?.message || "Không thể xoá"});
   }
 };
 
-export const getLocationById = async (req, res) => {
+export const getLocationById: AsyncRequestHandler = async (req, res) => {
   try {
-    const {id} = req.params;
+    const {id} = req.params as {id: string};
     const data = await getLocationDetail({locationId: id, userId: getViewerId(req)});
     if (!data) {
       return sendError(res, {status: 404, code: "LOCATION_NOT_FOUND", message: "Không tìm thấy địa điểm"});
@@ -172,15 +183,15 @@ export const getLocationById = async (req, res) => {
   }
 };
 
-export const getLocationsByTag = async (req, res) => {
+export const getLocationsByTag: AsyncRequestHandler = async (req, res) => {
   try {
-    const {tag} = req.params;
-    const {page, limit} = req.query;
+    const {tag} = req.params as {tag: string};
+    const {page, limit} = req.query as Record<string, string | undefined>;
     const result = await listLocationsByTag({
       tag,
       userId: getViewerId(req),
-      page: parseInt(page, 10) || 1,
-      limit: parseInt(limit, 10) || 20
+      page: parseInt(page || "1", 10) || 1,
+      limit: parseInt(limit || "20", 10) || 20
     });
     sendSuccess(res, result);
   } catch (error) {
@@ -189,7 +200,7 @@ export const getLocationsByTag = async (req, res) => {
   }
 };
 
-export const getUniqueTags = async (req, res) => {
+export const getUniqueTags: AsyncRequestHandler = async (_req, res) => {
   try {
     const data = await listUniqueTags();
     sendSuccess(res, {data});
@@ -199,8 +210,8 @@ export const getUniqueTags = async (req, res) => {
   }
 };
 
-export const reverseGeocode = async (req, res) => {
-  const {lat, lng} = req.query;
+export const reverseGeocode: AsyncRequestHandler = async (req, res) => {
+  const {lat, lng} = req.query as Record<string, string | undefined>;
   if (!lat || !lng) {
     return sendError(res, {status: 400, code: "GEO_COORDS_REQUIRED", message: "Thiếu tọa độ"});
   }
@@ -212,19 +223,19 @@ export const reverseGeocode = async (req, res) => {
   try {
     const result = await reverseGeocodeWithGoong({lat, lng});
     sendSuccess(res, {data: result});
-  } catch (error) {
-    console.error("Goong reverse geocoding failed:", error.message);
+  } catch (error: any) {
+    console.error("Goong reverse geocoding failed:", error?.message);
     sendError(res, {status: 502, code: "GOONG_REVERSE_FAILED", message: "Không thể xác định địa chỉ từ Goong"});
   }
 };
 
-export const getDirections = async (req, res) => {
+export const getDirections: AsyncRequestHandler = async (req, res) => {
   try {
     if (!isConfiguredGoongKey()) {
       return sendError(res, {status: 503, code: "GOONG_NOT_CONFIGURED", message: "Chưa cấu hình GOONG_API_KEY"});
     }
 
-    const {start, end, points} = req.query;
+    const {start, end, points} = req.query as Record<string, string | undefined>;
     const routePoints = points
       ? points.split(";").map(parseLngLatString)
       : [parseLngLatString(start), parseLngLatString(end)];
@@ -241,9 +252,9 @@ export const getDirections = async (req, res) => {
   }
 };
 
-export const searchAddress = async (req, res) => {
+export const searchAddress: AsyncRequestHandler = async (req, res) => {
   try {
-    const {q, location, origin} = req.query;
+    const {q, location, origin} = req.query as Record<string, string | undefined>;
     if (!q) {
       return sendError(res, {status: 400, code: "SEARCH_QUERY_REQUIRED", message: "Thiếu từ khóa tìm kiếm"});
     }
@@ -260,9 +271,9 @@ export const searchAddress = async (req, res) => {
   }
 };
 
-export const getGoongPlace = async (req, res) => {
+export const getGoongPlace: AsyncRequestHandler = async (req, res) => {
   try {
-    const {place_id} = req.query;
+    const {place_id} = req.query as Record<string, string | undefined>;
     if (!place_id) {
       return sendError(res, {status: 400, code: "PLACE_ID_REQUIRED", message: "Thiếu place_id"});
     }
@@ -273,12 +284,12 @@ export const getGoongPlace = async (req, res) => {
 
     const data = await getGoongPlaceDetail(place_id);
     sendSuccess(res, {data});
-  } catch (error) {
+  } catch (error: any) {
     console.error("Goong place detail failed:", error);
     sendError(res, {
-      status: error.status || 502,
-      code: error.code || "GOONG_PLACE_FAILED",
-      message: error.message || "Không thể lấy chi tiết địa điểm từ Goong",
+      status: error?.status || 502,
+      code: error?.code || "GOONG_PLACE_FAILED",
+      message: error?.message || "Không thể lấy chi tiết địa điểm từ Goong",
     });
   }
 };

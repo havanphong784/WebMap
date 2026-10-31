@@ -1,28 +1,33 @@
+import type { LineGeometry, GoongPlace, GoongRoute, GoongSearchResult } from "../types/goong.js";
+import type { AppError } from "../types/common.js";
+
+export type { LineGeometry, GoongPlace, GoongRoute, GoongSearchResult };
+
 const GOONG_BASE_URL = "https://rsapi.goong.io";
 const GOONG_TIMEOUT_MS = 7000;
 const GOONG_ADMIN_UNIT_PARAMS = {
   has_deprecated_administrative_unit: "true",
 };
 
-const isConfiguredGoongKey = () => {
+const isConfiguredGoongKey = (): boolean => {
   const apiKey = process.env.GOONG_API_KEY;
   return Boolean(apiKey && apiKey !== "YOUR_GOONG_API_KEY");
 };
 
-const getGoongApiKey = () => {
+const getGoongApiKey = (): string => {
   if (!isConfiguredGoongKey()) {
     throw new Error("GOONG_API_KEY is not configured");
   }
-  return process.env.GOONG_API_KEY;
+  return process.env.GOONG_API_KEY as string;
 };
 
-const fetchJsonWithTimeout = async (url, timeout = GOONG_TIMEOUT_MS) => {
+const fetchJsonWithTimeout = async <T = any>(url: string, timeout = GOONG_TIMEOUT_MS): Promise<T> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
     const response = await fetch(url, {signal: controller.signal});
-    const data = await response.json().catch(() => null);
+    const data: any = await response.json().catch(() => null);
 
     if (!response.ok) {
       const message = data?.error_message || data?.message || `Goong request failed with status ${response.status}`;
@@ -30,24 +35,26 @@ const fetchJsonWithTimeout = async (url, timeout = GOONG_TIMEOUT_MS) => {
       throw new Error(message);
     }
 
-    return data;
+    return data as T;
   } finally {
     clearTimeout(timeoutId);
   }
 };
 
-const toFiniteNumber = (value) => {
+const toFiniteNumber = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === "") return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 };
 
-export const parseLngLatString = (value = "") => {
-  const [lng, lat] = value.split(",").map(item => toFiniteNumber(item?.trim()));
-  if (lng === null || lat === null) return null;
-  return [lng, lat];
+export const parseLngLatString = (value = ""): [number, number] | null => {
+  if (!value || typeof value !== "string") return null;
+  const parts = value.split(",").map(item => toFiniteNumber(item?.trim()));
+  if (parts.length < 2 || parts[0] === null || parts[1] === null) return null;
+  return [parts[0], parts[1]];
 };
 
-const normalizeLngLat = (point) => {
+const normalizeLngLat = (point: unknown): [number, number] | null => {
   if (!Array.isArray(point) || point.length < 2) return null;
   const lng = toFiniteNumber(point[0]);
   const lat = toFiniteNumber(point[1]);
@@ -55,13 +62,13 @@ const normalizeLngLat = (point) => {
   return [lng, lat];
 };
 
-const toGoongLatLng = (point) => {
+const toGoongLatLng = (point: unknown): string | null => {
   const normalized = normalizeLngLat(point);
   if (!normalized) return null;
   return `${normalized[1]},${normalized[0]}`;
 };
 
-const makeGoongUrl = (path, params) => {
+const makeGoongUrl = (path: string, params: Record<string, string>): string => {
   const url = new URL(path, GOONG_BASE_URL);
   const searchParams = new URLSearchParams(params);
   searchParams.set("api_key", getGoongApiKey());
@@ -69,23 +76,23 @@ const makeGoongUrl = (path, params) => {
   return url.toString();
 };
 
-export const makeLineGeometry = (points) => ({
+export const makeLineGeometry = (points: unknown[]): LineGeometry => ({
   type: "LineString",
   coordinates: points
     .map(normalizeLngLat)
-    .filter(Boolean),
+    .filter((p): p is [number, number] => p !== null),
 });
 
-export const decodePolylineToLineString = (encoded = "") => {
+export const decodePolylineToLineString = (encoded = ""): LineGeometry => {
   let index = 0;
   let lat = 0;
   let lng = 0;
-  const coordinates = [];
+  const coordinates: [number, number][] = [];
 
   while (index < encoded.length) {
     let result = 0;
     let shift = 0;
-    let byte = null;
+    let byte: number | null = null;
 
     do {
       byte = encoded.charCodeAt(index++) - 63;
@@ -117,7 +124,7 @@ export const decodePolylineToLineString = (encoded = "") => {
   };
 };
 
-const normalizeGoongRoute = (route, fallbackPoints) => {
+const normalizeGoongRoute = (route: any, fallbackPoints: unknown[]): GoongRoute => {
   const geometry = route?.geometry?.type === "LineString"
     ? route.geometry
     : route?.overview_polyline?.points
@@ -125,8 +132,8 @@ const normalizeGoongRoute = (route, fallbackPoints) => {
       : makeLineGeometry(fallbackPoints);
 
   const legs = Array.isArray(route?.legs) ? route.legs : [];
-  const distanceMeters = legs.reduce((sum, leg) => sum + Number(leg?.distance?.value || 0), 0) || null;
-  const durationSeconds = legs.reduce((sum, leg) => sum + Number(leg?.duration?.value || 0), 0) || null;
+  const distanceMeters = legs.reduce((sum: number, leg: any) => sum + Number(leg?.distance?.value || 0), 0) || null;
+  const durationSeconds = legs.reduce((sum: number, leg: any) => sum + Number(leg?.duration?.value || 0), 0) || null;
 
   return {
     geometry,
@@ -138,17 +145,17 @@ const normalizeGoongRoute = (route, fallbackPoints) => {
   };
 };
 
-const getRouteForSegment = async (originPoint, destinationPoint) => {
+const getRouteForSegment = async (originPoint: unknown, destinationPoint: unknown): Promise<GoongRoute> => {
   const origin = toGoongLatLng(originPoint);
   const destination = toGoongLatLng(destinationPoint);
   const url = makeGoongUrl("/v2/direction", {
-    origin,
-    destination,
+    origin: origin || "",
+    destination: destination || "",
     vehicle: "car",
     alternatives: "false",
   });
 
-  const data = await fetchJsonWithTimeout(url);
+  const data = await fetchJsonWithTimeout<any>(url);
   const route = data?.routes?.[0];
 
   if (!route) {
@@ -158,11 +165,11 @@ const getRouteForSegment = async (originPoint, destinationPoint) => {
   return normalizeGoongRoute(route, [originPoint, destinationPoint]);
 };
 
-export const getRouteForPoints = async (points = []) => {
-  const validPoints = points.map(normalizeLngLat).filter(Boolean);
+export const getRouteForPoints = async (points: unknown[] = []): Promise<GoongRoute | null> => {
+  const validPoints = points.map(normalizeLngLat).filter((p): p is [number, number] => p !== null);
   if (validPoints.length < 2) return null;
 
-  const segmentRoutes = [];
+  const segmentRoutes: GoongRoute[] = [];
   for (let index = 0; index < validPoints.length - 1; index += 1) {
     segmentRoutes.push(await getRouteForSegment(validPoints[index], validPoints[index + 1]));
   }
@@ -184,7 +191,7 @@ export const getRouteForPoints = async (points = []) => {
   };
 };
 
-export const normalizeGoongPlace = (place, fallback = {}) => {
+export const normalizeGoongPlace = (place: any, fallback: Record<string, any> = {}): GoongPlace => {
   const location = place?.geometry?.location || {};
   const lat = toFiniteNumber(location.lat ?? fallback.lat);
   const lng = toFiniteNumber(location.lng ?? fallback.lng ?? fallback.lon);
@@ -217,7 +224,7 @@ export const normalizeGoongPlace = (place, fallback = {}) => {
   };
 };
 
-export const reverseGeocodeWithGoong = async ({lat, lng}) => {
+export const reverseGeocodeWithGoong = async ({lat, lng}: {lat: number | string; lng: number | string}): Promise<GoongPlace> => {
   const latNumber = toFiniteNumber(lat);
   const lngNumber = toFiniteNumber(lng);
 
@@ -230,7 +237,7 @@ export const reverseGeocodeWithGoong = async ({lat, lng}) => {
     limit: "1",
     ...GOONG_ADMIN_UNIT_PARAMS,
   });
-  const data = await fetchJsonWithTimeout(url);
+  const data = await fetchJsonWithTimeout<any>(url);
   const result = data?.results?.[0];
 
   if (!result) {
@@ -240,9 +247,9 @@ export const reverseGeocodeWithGoong = async ({lat, lng}) => {
   return normalizeGoongPlace(result, {lat: latNumber, lng: lngNumber});
 };
 
-export const getGoongPlaceDetail = async (placeId) => {
+export const getGoongPlaceDetail = async (placeId: string): Promise<GoongPlace> => {
   if (!placeId) {
-    const error = new Error("place_id is required");
+    const error: AppError = new Error("place_id is required");
     error.status = 400;
     error.code = "GOONG_PLACE_ID_REQUIRED";
     throw error;
@@ -252,10 +259,10 @@ export const getGoongPlaceDetail = async (placeId) => {
     place_id: placeId,
     ...GOONG_ADMIN_UNIT_PARAMS,
   });
-  const data = await fetchJsonWithTimeout(url);
+  const data = await fetchJsonWithTimeout<any>(url);
   const result = data?.result;
   if (!result) {
-    const error = new Error(data?.status || "Goong did not return place detail");
+    const error: AppError = new Error(data?.status || "Goong did not return place detail");
     error.status = 404;
     error.code = "GOONG_PLACE_NOT_FOUND";
     throw error;
@@ -263,11 +270,11 @@ export const getGoongPlaceDetail = async (placeId) => {
   return normalizeGoongPlace(result);
 };
 
-export const searchAddressWithGoong = async (query, {limit = 5, location, origin} = {}) => {
+export const searchAddressWithGoong = async (query?: string, {limit = 5, location, origin}: {limit?: number; location?: string; origin?: string} = {}): Promise<GoongSearchResult[]> => {
   const input = query?.trim();
   if (!input) return [];
 
-  const params = {
+  const params: Record<string, string> = {
     input,
     limit: String(limit),
     more_compound: "true",
@@ -278,14 +285,14 @@ export const searchAddressWithGoong = async (query, {limit = 5, location, origin
   if (origin) params.origin = origin;
 
   const url = makeGoongUrl("/v2/place/autocomplete", params);
-  const data = await fetchJsonWithTimeout(url);
+  const data = await fetchJsonWithTimeout<any>(url);
   const predictions = Array.isArray(data?.predictions)
     ? data.predictions.slice(0, limit)
     : [];
 
-  const lightweightResults = predictions
-    .filter(prediction => prediction?.place_id)
-    .map(prediction => ({
+  const lightweightResults: GoongSearchResult[] = predictions
+    .filter((prediction: any) => prediction?.place_id)
+    .map((prediction: any) => ({
       id: prediction.place_id,
       source: "goong",
       kind: "goong_prediction",
@@ -305,6 +312,7 @@ export const searchAddressWithGoong = async (query, {limit = 5, location, origin
     }));
 
   const detailedResults = await Promise.all(lightweightResults.map(async (prediction) => {
+    if (!prediction.place_id) return prediction;
     try {
       const detail = await getGoongPlaceDetail(prediction.place_id);
       return {
@@ -316,8 +324,8 @@ export const searchAddressWithGoong = async (query, {limit = 5, location, origin
         structured_formatting: prediction.structured_formatting,
         distance_meters: prediction.distance_meters,
       };
-    } catch (error) {
-      console.warn("Goong Place Detail hydrate failed:", error.message);
+    } catch (error: any) {
+      console.warn("Goong Place Detail hydrate failed:", error?.message);
       return prediction;
     }
   }));
